@@ -2104,7 +2104,7 @@ const NODES=[
   {id:'snack',ch:1,name:'Snack Town',art:'golem',gas:10,lock:'slum',desc:'Khu chợ đồ hộp. Golem rác canh giữ kho mì tôm.',
     enemies:['golem','drone','rat','drone'],lvMul:2.0, rw:{junk:[800,1200],tape:[20,40],juice:[15,30],xp:60},rwTxt:'🪙 800–1200 · 🩹 20–40 · 🔋 15–30'},
   {id:'boss1',ch:1,name:'BOSS: Angry Vending Machine',art:'vending',gas:15,boss:true,lock:'snack',desc:'Nó nuốt xu của ai đó từ năm 2031 và vẫn còn cay.',
-    enemies:['vending','rat','rat'],lvMul:2.7, rw:{junk:[1500,2200],juice:[40,70],cans:1,xp:120},rwTxt:'🪙 1500–2200 · 🔋 40–70 · 🥫 1'},
+    enemies:['vending','rat','rat'],lvMul:1.95, rw:{junk:[1500,2200],juice:[40,70],cans:1,xp:120},rwTxt:'🪙 1500–2200 · 🔋 40–70 · 🥫 1'},
   /* ---- CHƯƠNG 2 (mốc F2P: ngày 4–8) ---- */
   {id:'parking',ch:2,name:'Bãi Xe Ma Ám',art:'rat',gas:10,tint:'hue-rotate(150deg) saturate(1.3)',pre:'Phóng Xạ ',
     desc:'Chuột ở đây uống nhầm nước làm mát lò phản ứng. Giờ chúng phát sáng.',
@@ -2116,20 +2116,20 @@ const NODES=[
     desc:'Golem ở đây làm từ 100% dầu chiên đông cứng. Kinh khủng theo mọi nghĩa.',
     enemies:['golem','toaster','drone','rat'],lvMul:3.4, rw:{junk:[1700,2400],tape:[35,60],juice:[25,45],xp:115},rwTxt:'🪙 1700–2400 · 🩹 35–60 · 🔋 25–45'},
   {id:'boss2',ch:2,name:'BOSS: Mutant Shopping Cart',art:'cart',gas:15,boss:true,lock:'foodcourt',desc:'Bánh xe kêu cót két là âm thanh cuối cùng bạn nghe.',
-    enemies:['cart','golem','drone'],lvMul:3.6, rw:{junk:[2800,3800],juice:[60,100],cans:2,tape:[40,80],xp:200},rwTxt:'🪙 2800–3800 · 🔋 60–100 · 🥫 2'},
+    enemies:['cart','golem','drone'],lvMul:2.55, rw:{junk:[2800,3800],juice:[60,100],cans:2,tape:[40,80],xp:200},rwTxt:'🪙 2800–3800 · 🔋 60–100 · 🥫 2'},
   /* ---- CHƯƠNG 3 (mốc F2P: ngày 9–14) ---- */
   {id:'office',ch:3,name:'Cao Ốc Văn Phòng Tỉnh Giấc',art:'drone',gas:12,tint:'hue-rotate(-90deg) saturate(1.5)',pre:'Văn Phòng ',
     desc:'Drone giao tài liệu vẫn chạy KPI sau tận thế. Đáng sợ hơn cả đột biến.',
-    enemies:['printer','drone','printer','golem'],lvMul:7.0, rw:{junk:[2200,3000],juice:[40,70],xp:140},rwTxt:'🪙 2200–3000 · 🔋 40–70'},
+    enemies:['printer','drone','printer','golem'],lvMul:5.8, rw:{junk:[2200,3000],juice:[40,70],xp:140},rwTxt:'🪙 2200–3000 · 🔋 40–70'},
   {id:'lab',ch:3,name:'Phòng Lab Năng Lượng',art:'golem',gas:12,lock:'office',tint:'hue-rotate(-90deg) saturate(1.5)',pre:'Văn Phòng ',
     desc:'Nơi "Oops" xảy ra. Vẫn còn tấm bảng: "0 ngày kể từ sự cố gần nhất".',
-    enemies:['golem','printer','mannequin','rat'],lvMul:7.4, rw:{junk:[2600,3500],tape:[50,85],juice:[35,60],xp:160},rwTxt:'🪙 2600–3500 · 🩹 50–85 · 🔋 35–60'},
+    enemies:['golem','printer','mannequin','rat'],lvMul:6.0, rw:{junk:[2600,3500],tape:[50,85],juice:[35,60],xp:160},rwTxt:'🪙 2600–3500 · 🩹 50–85 · 🔋 35–60'},
   {id:'rooftop',ch:3,name:'Sân Thượng Bão Tố',art:'vending',gas:15,lock:'lab',tint:'hue-rotate(-90deg) saturate(1.5)',pre:'Văn Phòng ',
     desc:'Hai máy bán nước canh cửa phòng họp. Chúng đã được thăng chức.',
-    enemies:['vending','golem','drone'],lvMul:5.2, rw:{junk:[3200,4200],juice:[55,90],cans:1,xp:190},rwTxt:'🪙 3200–4200 · 🔋 55–90 · 🥫 1'},
+    enemies:['vending','golem','drone'],lvMul:3.4, rw:{junk:[3200,4200],juice:[55,90],cans:1,xp:190},rwTxt:'🪙 3200–4200 · 🔋 55–90 · 🥫 1'},
   {id:'seasonboss',ch:3,name:'👑 TRÙM MÙA: THE MANAGER',art:'manager',gas:20,boss:true,lock:'rooftop',
     desc:'Bạn đòi gặp quản lý suốt cả mùa. Giờ thì... quản lý muốn gặp BẠN.',
-    enemies:['manager','vending','golem'],lvMul:3.68, rw:{junk:[6000,8000],juice:[120,180],cans:3,tape:[100,150],xp:400},rwTxt:'🪙 6000–8000 · 🔋 120–180 · 🥫 3 · 🩹 100–150'},
+    enemies:['manager','vending','golem'],lvMul:3.1, rw:{junk:[6000,8000],juice:[120,180],cans:3,tape:[100,150],xp:400},rwTxt:'🪙 6000–8000 · 🔋 120–180 · 🥫 3 · 🩹 100–150'},
 ];
 
 /* ITEMS: slot 'weapon'|'armor'|'hat' · rarity common/uncommon/rare · cost có thể yêu cầu món khác (chuỗi nâng cấp) */
@@ -3094,6 +3094,45 @@ function renderMap(){
   g.innerHTML=html;
   renderTut(); // gắn lại glow tutorial sau khi map render lại
 }
+/* ---------- Ước tính cửa thắng: sim nhanh 16 lượt với đội hiện tại ---------- */
+function estimateWin(node,trials=16){
+  if(!teamIds().length)return null;
+  let w=0;for(let i=0;i<trials;i++){if(simLoop(buildUnits(node)))w++}
+  return w/trials;
+}
+function winChanceTag(node){
+  const p=estimateWin(node);
+  if(p==null)return '';
+  const t=p>=0.75?['🟢','CỬA THẮNG: NGON','var(--green)','Vào đi, đội này cân được.']
+    :p>=0.35?['🟠','NĂM ĂN NĂM THUA','var(--orange)','Kịch tính đấy — muốn chắc thì nâng cấp thêm chút.']
+    :p>0?['🔴','CỬA THẮNG: THẤP','var(--red)','Thua nhiều hơn thắng. Nâng cấp / thêm hero trước đã.']
+    :['⚫','GẦN NHƯ KHÔNG CỬA','var(--red)','Đội hiện tại chưa với tới — cần lên level, đủ 5 hero, lắp đồ.'];
+  return `<div class="skillbox" style="border-color:${t[2]}"><h5 style="color:${t[2]}">${t[0]} ${t[1]}</h5>
+    <p style="font-size:12px">${t[3]} <span style="color:var(--muted)">(mô phỏng nhanh với đội hiện tại)</span></p></div>`;
+}
+/* ---------- Gợi ý sau khi thua: chỉ đường mạnh lên cụ thể ---------- */
+function lossTips(){
+  const tips=[];
+  const ids=teamIds();
+  if(ids.length<5)tips.push(`👥 Đội mới có <b>${ids.length}/5</b> — bấm ô trống ở thanh đội hình để thêm hero (đông = mạnh hơn NHIỀU).`);
+  const ready=Object.keys(S.shards).find(h=>S.shards[h]>=10);
+  const near=Object.keys(S.shards).filter(h=>S.shards[h]>=7&&S.shards[h]<10).sort((a,b)=>S.shards[b]-S.shards[a])[0];
+  if(ready)tips.push(`🧩 <b>${HEROES[ready].name}</b> đã ĐỦ 10 mảnh — vào tab Heroes nhận ngay!`);
+  else if(near)tips.push(`🧩 <b>${HEROES[near].name}</b> chỉ còn ${10-S.shards[near]} mảnh — mở 🥫 hoặc mua mảnh ở 🦫 Tiệm.`);
+  const up=ids.map(uid=>({c:upCost(uid),inst:instById(uid)})).filter(x=>x.inst.lvl<LVL_CAP()).sort((a,b)=>a.c-b.c)[0];
+  if(up&&S.junk>=up.c)tips.push(`⬆️ Đang có <b>${fmt(S.junk)} 🪙</b> — nâng ${HEROES[up.inst.heroId].name} lên level chỉ tốn ${fmt(up.c)} 🪙 (+9% chỉ số/level).`);
+  else tips.push(`🪙 Farm node thường (thắng dễ) lấy junk rồi <b>nâng level hero</b> — đó là nguồn sức mạnh chính.`);
+  if(S.juice>=20&&tips.length<3)tips.push(`💥 Có ${fmt(S.juice)} 🔋 — nâng SKILL trong hồ sơ hero (+10% lực kỹ năng/cấp).`);
+  if(tips.length<3&&ids.some(uid=>{const g=instById(uid).gear;return !g||!g.weapon||!g.armor||!g.hat}))
+    tips.push(`🗡️ Đội còn ô trang bị trống — chế ở 🦫 Tiệm & Xưởng (full đồ ≈ +25–35% sức mạnh).`);
+  return tips.slice(0,3);
+}
+function lossTipsBox(){
+  const tips=lossTips();
+  return tips.length?`<div class="skillbox" style="text-align:left;border-color:var(--cyan)">
+    <h5 style="color:var(--cyan)">💡 Để mạnh lên ngay:</h5>
+    <p>${tips.map(t=>'· '+t).join('<br>')}</p></div>`:'';
+}
 function openNodeSheet(id){
   const n=NODES.find(x=>x.id===id);if(!n)return;
   const beaten=!!S.beaten[id];
@@ -3108,6 +3147,7 @@ function openNodeSheet(id){
       </div>
     </div>
     <div class="skillbox"><h5 style="color:var(--yellow)">🎁 Phần thưởng</h5><p>${n.rwTxt} · ✨ ${n.rw.xp} XP</p></div>
+    ${winChanceTag(n)}
     <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:14px">
       <button class="btn ${n.boss?'pu':''}" onclick="closeModal('hd-bg');startBattle('${id}')" ${S.busy?'disabled':''}>⚔️ Đánh — ${n.gas} ⛽</button>
       <button class="btn cy" onclick="closeModal('hd-bg');openRaid('${id}')" ${S.busy?'disabled':''}>⚡ Nhanh ×N</button>
@@ -3126,6 +3166,7 @@ function openDgnSheet(){
     </div>
     <div class="skillbox"><h5 style="color:var(--cyan)">🎁 Phần thưởng</h5>
       <p>${d.rw.juice?'🔋 Juice lớn · ':''}${d.rw.tape?'🩹 Băng keo lớn · ':''}${d.rw.shards?'🧩 6–10 mảnh hero · ':''}${d.rw.cans?'🥫 Mystery Can · ':''}${d.rw.xp>=200?'⭐ XP lớn · ':''}🪙 — 1 lượt thắng/ngày · thua không tốn lượt · 12 ⛽</p></div>
+    ${teamLegal(dungeonNode()).ok?winChanceTag(dungeonNode()):'<div class="skillbox" style="border-color:var(--orange)"><h5 style="color:var(--orange)">⚠️ Đội chưa hợp luật hầm</h5><p style="font-size:12px">Chỉnh đội theo luật ở trên rồi vào.</p></div>'}
     <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:14px">
       <button class="btn cy" onclick="closeModal('hd-bg');startBattle(dungeonNode())" ${done||S.busy?'disabled':''}>⚔️ Vào hầm — 12 ⛽</button>
       <button class="btn gh" onclick="closeModal('hd-bg');quickBattle(dungeonNode(),1)" ${done||S.busy?'disabled':''}>⚡ Đánh nhanh</button>
@@ -3142,6 +3183,7 @@ function openTowerSheet(){
     </div>
     <div class="skillbox"><h5 style="color:var(--purple)">📊 Tiến độ</h5>
       <p>Đang ở tầng <b>${S.tower.floor}</b> · Kỷ lục: <b>${S.tower.best?'tầng '+S.tower.best:'chưa leo lần nào'}</b> · 4 ⛽/tầng · thưởng tăng theo độ cao</p></div>
+    ${winChanceTag(towerNode())}
     <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:14px">
       <button class="btn pu" onclick="closeModal('hd-bg');startTower()" ${S.busy?'disabled':''}>⚔️ Leo tầng ${S.tower.floor}</button>
       <button class="btn cy" onclick="closeModal('hd-bg');towerRush()" ${S.busy?'disabled':''}>⚡ Leo nhanh</button>
@@ -3231,8 +3273,8 @@ function buildUnits(node){
   node.enemies.forEach((eid,i)=>{
     let m=node.lvMul;
     if(!node.tower&&!node.dungeon&&S.seasonNo>1){
-      // MÙA 2+: nén đường cong quanh mốc trùm Mùa 1 (3.68) — vì nguồn tăng trưởng sau mùa 1 hẹp hơn nhiều
-      const SB=3.68,q=0.3;
+      // MÙA 2+: nén đường cong quanh mốc trùm Mùa 1 (3.1 — re-tune v2.33) — vì nguồn tăng trưởng sau mùa 1 hẹp hơn nhiều
+      const SB=3.1,q=0.3;
       m=SB*Math.pow(node.lvMul/SB,q)*seasonScale();
     } // mùa 1 giữ nguyên lvMul; tháp tự scale theo tầng; hầm tự cân theo đội
     const e=ENEMIES[eid];
@@ -4259,6 +4301,7 @@ function quickBattle(nodeId,n){
       <div class="rt ${T.wins?'win':'lose'}">QUÉT NHANH ×${n}</div>
       <div class="quip">Thắng <b>${T.wins}/${n}</b> trận · tốn ${cost} ⛽ — "${quip}"</div>
       <div class="lootrow">${lootChips(T).map(l=>`<span class="lootchip">${l}</span>`).join('')}</div>
+      ${T.wins===0?lossTipsBox():''}
       ${statRows(Object.values(T.stats))}
       <button class="btn" onclick="closeModal('res-bg')">${T.wins?'Hốt loot! 🎉':'Đứng dậy đánh tiếp 💪'}</button>
     </div>`;
@@ -4286,6 +4329,7 @@ function endBattle(win){
       <div class="rt ${win?'win':'lose'}">${win?'CHIẾN THẮNG!':'THUA RỒI'}</div>
       <div class="quip">"${quips[rnd(0,quips.length-1)]}"</div>
       <div class="lootrow">${lootChips(T).map(l=>`<span class="lootchip">${l}</span>`).join('')}</div>
+      ${win?'':lossTipsBox()}
       ${battleStats}
       <button class="btn" onclick="closeModal('res-bg')">${win?'Hốt loot! 🎉':'Đứng dậy đánh tiếp 💪'}</button>
     </div>`;
