@@ -915,8 +915,9 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
       <div id="hub-team"></div>
      </div>
     </div>
-    <p class="demonote">⛽ hồi 1 Gas / 10 giây (tốc độ bản thử nghiệm). · 💾 Tự động lưu trên trình duyệt này — đừng xóa lịch sử duyệt web nhé!
-      · 📝 Góp ý &amp; 📤 gửi dữ liệu: hai nút tròn bên trái màn hình.</p>
+    <p class="demonote">🎁 <b>ĐỢT TEST CÓ THƯỞNG:</b> TOP Bảng Xếp Hạng Online cuối đợt nhận <b>10$ (~250K)</b> — vào 🎭 Arena đăng ký tên để lên sóng!
+      · ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé!
+      · 📝 Góp ý: nút tròn bên trái màn hình.</p>
   </section>
 
   <section class="view" id="v-heroes">
@@ -2875,7 +2876,7 @@ function openResInfo(k){
   if(k==='gas'){
     const miss=S.maxGas-Math.floor(S.gas);
     extra=`<div class="skillbox" style="border-color:var(--orange)"><h5 style="color:var(--orange)">⏱️ Đồng hồ xăng</h5>
-      <p>${miss<=0?'Bình ĐẦY — đi đốt xăng thôi, để tràn là phí!':`Đầy bình sau <b>${Math.floor(miss*10/60)} phút ${(miss*10)%60} giây</b> nữa (demo 1/10s).`}</p></div>`;
+      <p>${miss<=0?'Bình ĐẦY — đi đốt xăng thôi, để tràn là phí!':`Đầy bình sau <b>${Math.floor(miss*7/60)>0?Math.floor(miss*7/60)+' giờ ':''}${Math.round(miss*7%60)} phút</b> nữa (1 ⛽/7 phút — nhịp bản chính thức).`}</p></div>`;
   }
   if(k==='cans'){
     extra=`<div class="skillbox" style="border-color:var(--yellow)"><h5 style="color:var(--yellow)">🎲 Trong lon có gì?</h5>
@@ -3280,6 +3281,7 @@ function openArena(){
     <p class="sub">PvP kiểu lịch sự: đánh BẢN SAO đội người khác — không ai phải thức canh điện thoại.</p>
     <div class="panel" style="margin:10px 0;border-color:var(--cyan)">
       <b style="color:var(--cyan)">🌐 ĐẤU TRƯỜNG ONLINE</b>
+      <p style="margin:4px 0 0;font-size:12px;color:var(--yellow)">🎁 <b>SỰ KIỆN:</b> TOP BXH cuối đợt test nhận <b>10$ (~250K)</b> — ngày chốt xem ở bài đăng!</p>
       ${S.net?`
       <p class="sub" style="margin:4px 0 6px">Bạn là <b>${S.net.name}</b> · 🏆 <b style="color:var(--yellow)">${S.net.tro!=null?S.net.tro:1000}</b> cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!</p>
       <div id="net-opps" style="margin:6px 0"><p class="sub">📡 Đang dò sóng tìm đối thủ…</p></div>
@@ -3534,8 +3536,9 @@ function openNodeSheet(id){
     ${winChanceTag(n)}
     <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:14px">
       <button class="btn ${n.boss?'pu':''}" onclick="closeModal('hd-bg');startBattle('${id}')" ${S.busy?'disabled':''}>⚔️ Đánh — ${n.gas} ⛽</button>
-      <button class="btn cy" onclick="closeModal('hd-bg');openRaid('${id}')" ${S.busy?'disabled':''}>⚡ Nhanh ×N</button>
-    </div>`;
+      ${beaten?`<button class="btn cy" onclick="closeModal('hd-bg');openRaid('${id}')" ${S.busy?'disabled':''}>⚡ Nhanh ×N</button>`:''}
+    </div>
+    ${beaten?'':'<p class="demonote" style="margin-top:8px">⚡ Đánh nhanh sẽ mở sau khi bạn phá màn này lần đầu — trận đầu phải xem đội quẩy chứ!</p>'}`;
   openModal('hd-bg');
 }
 function openDgnSheet(){
@@ -3702,7 +3705,7 @@ function startBattle(nodeId){
   S.gas-=node.gas;S.busy=true;ac();renderRes();renderMap();
 
   B={node,units:buildUnits(node),queue:[],over:false,ticks:0};
-  setupArena();
+  setupArena(); // setupArena tự quyết nút ⏭ theo trạng thái đã-phá của màn
   blog(`🔔 Trận chiến tại <span class="imp">${node.name}</span> bắt đầu!`,true);
   if(!S.team.front.some(x=>x!=null))blog('⚠️ <b>Tuyến trước trống</b> — địch sẽ nhắm thẳng vào tuyến sau (kể cả healer)!',true);
   B.timer=setInterval(tick,1050/spd());
@@ -3723,7 +3726,8 @@ function setupArena(){
   $('arena').style.background=n.arena?ARENA_BGS.arena:n.dungeon?ARENA_BGS.dgn:n.tower?ARENA_BGS.tower:(ARENA_BGS[n.ch]||ARENA_BGS[1]);
   const rb=$('roundbadge');rb.style.display='inline-block';rb.textContent='⚔️ Vòng 1';rb.classList.remove('warn');
   $('arena').classList.add('show');$('blog').classList.add('show');$('blog').innerHTML='';
-  $('skipbtn').style.display='inline-block';
+  // ⏭ skip chỉ mở khi màn đã phá lần đầu (arena/hầm/tháp luôn cho skip)
+  $('skipbtn').style.display=(n.arena||n.dungeon||n.tower||S.beaten[n.id])?'inline-block':'none';
   $('skyline').innerHTML=SKYLINE;$('vfx').innerHTML='';
   const L=$('unitlayer');L.innerHTML='';
   B.units.forEach(u=>{
@@ -4663,6 +4667,7 @@ function quickBattle(nodeId,n){
   if(S.busy)return;
   if(!teamIds().length)return toast('Đội hình trống! Vào tab 🦸 Heroes thêm người đã.');
   const node=typeof nodeId==='object'?nodeId:NODES.find(x=>x.id===nodeId);
+  if(!node.arena&&!node.dungeon&&!node.tower&&!S.beaten[node.id])return toast('⚡ Đánh nhanh chỉ mở sau khi phá màn lần đầu!');
   if(node.dungeon&&S.daily.dgn)return toast('Hầm hôm nay đã xong! Quay lại sau nửa đêm — ca mới, hầm mới.');
   if(node.arena&&!node.pvpOid){if((S.daily.arena||0)>=5)return toast('Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.');S.daily.arena=(S.daily.arena||0)+1}
   const L=teamLegal(node);if(!L.ok)return toast(L.msg);
@@ -5383,7 +5388,7 @@ function openExport(){
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>📤 Gửi dữ liệu chơi thử</h3>
-    <p class="sub" style="margin-top:4px">Copy toàn bộ mã bên dưới và gửi qua tin nhắn cho người tổ chức. Mã chỉ chứa số liệu chơi (số trận, tiến độ, góp ý) — KHÔNG có thông tin cá nhân.</p>
+    <p class="sub" style="margin-top:4px">Từ bản này số liệu chơi (số trận, tiến độ, góp ý — KHÔNG thông tin cá nhân) <b>tự gửi về máy chủ</b> rồi. Nút này chỉ là dự phòng khi mất mạng: copy mã gửi tay cho người tổ chức.</p>
     <textarea id="ex-code" readonly onclick="this.select()" style="width:100%;min-height:130px;background:var(--bg3);color:var(--cyan);border:2px solid var(--line);border-radius:10px;padding:8px;font-size:10.5px;word-break:break-all;font-family:monospace">${code}</textarea>
     <button class="btn" style="width:100%;margin-top:10px" onclick="copyExport()">📋 Copy mã</button>
     ${!S.tele.fb?'<p class="demonote" style="margin-top:8px">💡 Bạn chưa điền 📝 góp ý — điền trước khi gửi thì quý lắm đó!</p>':''}`;
@@ -5428,6 +5433,7 @@ function openNetJoin(){
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>🌐 THAM GIA BXH ONLINE</h3>
+    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 <b>SỰ KIỆN ĐANG CHẠY:</b> TOP BXH cuối đợt test nhận <b>10$ (~250K)</b>!</p>
     <p class="sub">Chọn tên hiển thị (2–14 ký tự). Tên sẽ nằm trên bảng xếp hạng TOÀN CẦU — chọn tên ngầu vào.</p>
     <input id="net-name" maxlength="14" placeholder="VD: TrùmBãiRác" style="width:100%;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--bg3);color:var(--text);font-family:inherit;font-size:15px;margin:8px 0">
     <button class="btn cy" style="width:100%" onclick="netRegister()">🚀 Lên sóng!</button>
@@ -5493,6 +5499,7 @@ async function netPvpReport(oid,win){
 async function openNetBoard(){
   $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>🌍 BXH ONLINE — TOÀN CẦU</h3>
+    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 TOP BXH cuối đợt test nhận <b>10$ (~250K)</b> — leo đi chứ còn chờ gì!</p>
     <p class="sub" id="net-bd">📡 Đang tải bảng xếp hạng…</p><div id="net-rows"></div>
     <button class="btn" style="width:100%;margin-top:10px" onclick="openArena()">← Về Arena</button>`;
   openModal('hd-bg');
@@ -5516,6 +5523,29 @@ async function openNetBoard(){
 }
 // sau mỗi đợt chơi đội mạnh lên → tự đẩy hồ sơ mới lên server (nhẹ, debounce, im lặng khi offline)
 window.addEventListener('load',()=>setTimeout(()=>{if(S.net)netSync(true)},2500));
+
+/* ---- telemetry tự gửi (thay cho copy mã thủ công — nút 📤 vẫn còn làm dự phòng) ---- */
+const AID=(()=>{ // id ẩn danh, cố định theo trình duyệt — không gắn thông tin cá nhân
+  try{let a=localStorage.getItem('wackos_aid');
+    if(!a||!/^[a-f0-9]{16}$/.test(a)){a=[...crypto.getRandomValues(new Uint8Array(8))].map(b=>b.toString(16).padStart(2,'0')).join('');localStorage.setItem('wackos_aid',a)}
+    return a}catch(e){return null}
+})();
+function teleUpload(){
+  if(!AID)return;
+  try{
+    teleInit();
+    const camp=NODES.filter(n=>!n.tower);
+    const payload={aid:AID,name:S.net?S.net.name:null,snap:{pt:PLAYTEST,tele:S.tele,plv:S.plv,seasonDay:seasonDay(),
+      roster:S.roster.length,beaten:Object.keys(S.beaten).filter(k=>camp.some(n=>n.id===k)).length,
+      towerBest:S.tower.best,arenaPts:S.arena.pts,netTro:S.net?S.net.tro:null,tut:S.tut}};
+    const body=JSON.stringify(payload);
+    // sendBeacon + text/plain: gửi được cả lúc đóng tab, không dính CORS preflight (server không kiểm content-type)
+    if(navigator.sendBeacon)navigator.sendBeacon(NET_URL+'/api/tele',new Blob([body],{type:'text/plain'}));
+    else fetch(NET_URL+'/api/tele',{method:'POST',body,keepalive:true}).catch(()=>{});
+  }catch(e){}
+}
+window.addEventListener('load',()=>setTimeout(teleUpload,4000));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')teleUpload()});
 
 /* ================= SAVE / LOAD (localStorage) ================= */
 const SAVE_KEY='wackos_save_v1';
@@ -5577,10 +5607,10 @@ function loadGame(){
     // dọn uid không còn tồn tại khỏi đội hình
     S.team.front=S.team.front.map(x=>instById(x)?x:null);
     S.team.back=S.team.back.map(x=>instById(x)?x:null);
-    // ⛽ hồi gas offline (demo: 1/10s)
-    const away=Math.floor((Date.now()-(d.ts||Date.now()))/10000);
+    // ⛽ hồi gas offline (1 gas/7 phút — nhịp bản thật)
+    const away=Math.floor((Date.now()-(d.ts||Date.now()))/420000);
     if(away>0&&S.gas<S.maxGas){
-      const gain=Math.min(away,S.maxGas-Math.floor(S.gas));
+      const gain=Math.min(away,Math.ceil(S.maxGas-S.gas));
       if(gain>0){S.gas=Math.min(S.maxGas,S.gas+gain);
         setTimeout(()=>toast(`⛽ Trong lúc bạn vắng mặt, đội đã đổ được <b>+${gain} Gas</b>!`),900)}
     }
@@ -5604,7 +5634,7 @@ if(LOADED){ // người chơi cũ: bỏ qua intro
   setTimeout(()=>toast('💾 Đã tải tiến trình — mừng trở lại vùng đất hoang!'),300);
 }
 setInterval(()=>{
-  if(S.gas<S.maxGas){S.gas=Math.min(S.maxGas,S.gas+1);renderRes()}
+  if(S.gas<S.maxGas){S.gas=Math.min(S.maxGas,S.gas+10/420);renderRes()} // 1 gas/7 phút — nhịp bản thật (mô hình cân bằng 200/ngày)
   if($('v-loot').classList.contains('on'))renderLoot(); // cập nhật đồng hồ ấp trứng
 },10000);
 $('intro-heroes').innerHTML=['spam','noodle','intern'].map(id=>
