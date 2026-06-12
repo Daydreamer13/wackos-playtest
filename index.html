@@ -3041,7 +3041,7 @@ function openHero(uid){
         <div class="pdcol">${pdslot('weapon')}${pdslot('armor')}</div>
         ${sprite(inst.heroId,118)}
         <div class="pdcol">${pdslot('hat')}
-          <div class="pdslot breedslot ${canBreed?'':'dis'}" onclick="heroBreed(${uid})"><span class="ghost">💞</span><span class="pd-tag">Breed</span></div>
+          <div class="pdslot empty dis" onclick="toast('🐾 Pet — ra mắt ở Mùa 2!')"><span class="ghost">🐾</span><span class="pd-tag">Pet</span></div>
         </div>
       </div>
       <div>
@@ -3050,7 +3050,6 @@ function openHero(uid){
         <span class="hd-lvl">Lv ${inst.lvl}/${LVL_CAP()}</span>
         <b class="rar-${inst.rarity}" style="font-size:12px;margin-left:6px">${RNAME[inst.rarity].toUpperCase()} (x${RSTAT[inst.rarity]} chỉ số)</b>
         <div class="quote">${h.quote}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:3px">🧬 Breed còn ${BREED_MAX-inst.breeds}/${BREED_MAX} lần</div>
       </div>
     </div>
     <div id="pd-chooser"></div>
@@ -3066,7 +3065,7 @@ function openHero(uid){
     <div class="hd-actions">
       <button class="btn" onclick="upgradeHero(${uid})" ${inst.lvl>=LVL_CAP()?'disabled':''}>⬆️ Lv ${inst.lvl}→${inst.lvl+1}<small>${inst.lvl>=LVL_CAP()?`🔒 trần Lv ${LVL_CAP()}`:`<span style="${S.junk<upCost(uid)?'color:#7a1f1f':''}">${fmt(upCost(uid))} 🪙</span>`}</small></button>
       <button class="btn cy" onclick="upgradeSkill(${uid})">💥 Skill ${inst.skill}→${inst.skill+1}<small><span style="${S.juice<skillCost(uid)?'color:#7a1f1f':''}">${skillCost(uid)} 🔋</span></small></button>
-      <button class="btn pu" onclick="toggleTeam(${uid})">${inTeam?'➖ Rời đội':'➕ Vào đội'}<small>${inTeam?'về nghỉ ngơi':'xuất trận ngay'}</small></button>
+      <button class="btn pu" onclick="heroBreed(${uid})">💞 Breed<small>${inst.breeds>=BREED_MAX?'hết lượt':inst.lvl<BREED_MIN_LVL?'🔒 cần Lv '+BREED_MIN_LVL:`còn ${BREED_MAX-inst.breeds}/${BREED_MAX} lần`}</small></button>
     </div>`;
   openModal('hd-bg');
   if(pdSlot)pdPick(uid,pdSlot); // đang mở bảng chọn đồ → giữ mở sau khi lắp/tháo
@@ -5543,6 +5542,7 @@ ui:{
 '⚔️ Vũ khí —':'⚔️ Weapon —','🛡️ Giáp —':'🛡️ Armor —','🎩 Mũ —':'🎩 Hat —',
 '⚔️ Vũ khí — ô đang trống':'⚔️ Weapon — slot is empty','🛡️ Giáp — ô đang trống':'🛡️ Armor — slot is empty','🎩 Mũ — ô đang trống':'🎩 Hat — slot is empty',
 '✕ Tháo ra':'✕ Remove','Kho trống — chế thêm tại 🩹 Xưởng Băng Keo.':'Storage empty — craft more at the 🩹 Workshop.',
+'🐾 Pet — ra mắt ở Mùa 2!':'🐾 Pets — coming in Season 2!','hết lượt':'out of uses',
 '➖ Rời đội':'➖ Leave team','➕ Vào đội':'➕ Join team','về nghỉ ngơi':'take a break','xuất trận ngay':'fight right away',
 '🎭 MEME ARENA':'🎭 MEME ARENA','🌐 ĐẤU TRƯỜNG ONLINE':'🌐 ONLINE ARENA','🤖 LUYỆN TẬP VỚI BOT':'🤖 BOT PRACTICE',
 '😌 Dễ':'😌 Easy','😤 Ngang cơ':'😤 Even','😈 Khó':'😈 Hard',
@@ -5751,6 +5751,8 @@ rx:[
 [/^Hướng dẫn (\d+)\/(\d+)$/,'Tutorial $1/$2'],
 [/^💀 (.+) bị nướng chín bởi vết bỏng!$/,'💀 $1 was cooked well-done by burns!'],
 [/^💞 Hero cần đạt Lv (\d+) mới breed được \(đang Lv (\d+)\) — nuôi lớn đã!$/,'💞 Heroes must reach Lv $1 to breed (currently Lv $2) — raise them first!'],
+[/^🔒 cần Lv (\d+)$/,'🔒 needs Lv $1'],
+[/^còn (\d)\/(\d) lần$/,'$1/$2 uses left'],
 [/^💞 Đã chọn (.+) #(\d+) — giờ chọn bố\/mẹ thứ 2!$/,'💞 Selected $1 #$2 — now pick the second parent!'],
 [/^🎒 (.+) #(\d+) đã lắp (.+)!$/,'🎒 $1 #$2 equipped $3!'],
 [/^(.+) #(\d+) về nhà nghỉ ngơi\.$/,'$1 #$2 went home to rest.'],
@@ -5987,6 +5989,7 @@ ui:{
 '⚔️ Vũ khí —':'⚔️ 武器 —','🛡️ Giáp —':'🛡️ 护甲 —','🎩 Mũ —':'🎩 帽子 —',
 '⚔️ Vũ khí — ô đang trống':'⚔️ 武器 — 空槽','🛡️ Giáp — ô đang trống':'🛡️ 护甲 — 空槽','🎩 Mũ — ô đang trống':'🎩 帽子 — 空槽',
 '✕ Tháo ra':'✕ 卸下','Kho trống — chế thêm tại 🩹 Xưởng Băng Keo.':'仓库是空的——去 🩹 胶带工坊制作。',
+'🐾 Pet — ra mắt ở Mùa 2!':'🐾 宠物——第2赛季推出！','hết lượt':'次数用完',
 '➖ Rời đội':'➖ 离队','➕ Vào đội':'➕ 入队','về nghỉ ngơi':'回去休息','xuất trận ngay':'立刻出战',
 '🌐 ĐẤU TRƯỜNG ONLINE':'🌐 在线竞技场','🤖 LUYỆN TẬP VỚI BOT':'🤖 人机练习',
 '😌 Dễ':'😌 简单','😤 Ngang cơ':'😤 势均力敌','😈 Khó':'😈 困难',
@@ -6128,6 +6131,7 @@ ui:{
 '⚔️ Vũ khí —':'⚔️ 武器 —','🛡️ Giáp —':'🛡️ 防具 —','🎩 Mũ —':'🎩 帽子 —',
 '⚔️ Vũ khí — ô đang trống':'⚔️ 武器 — 空きスロット','🛡️ Giáp — ô đang trống':'🛡️ 防具 — 空きスロット','🎩 Mũ — ô đang trống':'🎩 帽子 — 空きスロット',
 '✕ Tháo ra':'✕ 外す','Kho trống — chế thêm tại 🩹 Xưởng Băng Keo.':'倉庫が空っぽ——🩹 工房でクラフトしよう。',
+'🐾 Pet — ra mắt ở Mùa 2!':'🐾 ペット——シーズン2で登場！','hết lượt':'回数切れ',
 '➖ Rời đội':'➖ 編成から外す','➕ Vào đội':'➕ 編成に入れる','về nghỉ ngơi':'休ませる','xuất trận ngay':'即出撃',
 '🌐 ĐẤU TRƯỜNG ONLINE':'🌐 オンラインアリーナ','🤖 LUYỆN TẬP VỚI BOT':'🤖 BOT練習',
 '😌 Dễ':'😌 かんたん','😤 Ngang cơ':'😤 互角','😈 Khó':'😈 むずかしい',
