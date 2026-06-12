@@ -3328,16 +3328,18 @@ function openArena(){
     <p class="sub">PvP kiểu lịch sự: đánh BẢN SAO đội người khác — không ai phải thức canh điện thoại.</p>
     <div class="panel" style="margin:10px 0;border-color:var(--cyan)">
       <b style="color:var(--cyan)">🌐 ĐẤU TRƯỜNG ONLINE</b>
-      <p style="margin:4px 0 0;font-size:12px;color:var(--yellow)">🎁 <b>GIẢI 100$:</b> 20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — ngày chốt xem ở bài đăng!</p>
+      <p style="margin:4px 0 0;font-size:12px;color:var(--yellow)">🎁 <b>GIẢI 100$:</b> 20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — chốt 23:59 ngày 26/06!</p>
       ${S.net?`
       <p class="sub" style="margin:4px 0 6px">Bạn là <b>${S.net.name}</b> · 🏆 <b style="color:var(--yellow)">${S.net.tro!=null?S.net.tro:1000}</b> cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!</p>
       <div id="net-opps" style="margin:6px 0"><p class="sub">📡 Đang dò sóng tìm đối thủ…</p></div>
       <div style="display:flex;gap:6px">
         <button class="btn sm cy" style="flex:1" onclick="openNetBoard()">🌍 BXH Online</button>
         <button class="btn sm gh" onclick="netLoadOpps()">🔄 Đổi đối thủ</button>
+        <button class="btn sm gh" onclick="openClaim()" title="Mã nhận thưởng & chuyển máy">🎟️</button>
       </div>`:`
       <p class="sub" style="margin:4px 0 6px">Đặt tên là lên sóng: BXH toàn cầu trực tiếp + đánh đội hình THẬT của người chơi khác. Không tốn gas, không giới hạn lượt.</p>
-      <button class="btn cy" style="width:100%" onclick="openNetJoin()">🚀 Tham gia BXH Online</button>`}
+      <button class="btn cy" style="width:100%" onclick="openNetJoin()">🚀 Tham gia BXH Online</button>
+      <button class="btn sm gh" style="width:100%;margin-top:6px" onclick="openClaim()">🎟️ Mã nhận thưởng & chuyển máy</button>`}
     </div>
     <p style="margin:8px 0 0;font-size:12px;color:var(--muted)"><b>🤖 LUYỆN TẬP VỚI BOT</b> — Điểm: <b style="color:var(--yellow)">${S.arena.pts}</b> · ${arenaRank(S.arena.pts)} · còn <b>${left}/5</b> lượt hôm nay (miễn phí gas)</p>
     ${rvs.map((rv,i)=>{const t=ARENA_TIERS[i];return`
@@ -5566,9 +5568,14 @@ ui:{
 '20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝':'$20 for leaderboard TOP 1 · $40 raffled to 4 players · $40 raffled to 4 feedback writers 📝',
 '— vào 🎭 Arena đăng ký tên để lên sóng!':'— open 🎭 Arena and register a name to join!',
 '· ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.':'· ⛽ 1 Gas/7 min (official pacing) · 💾 Auto-saves in this browser — don\'t clear your history! · 📝 Feedback: round button on the left.',
-'20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — ngày chốt xem ở bài đăng!':'$20 TOP 1 · $40 raffled to 4 players · $40 raffled to 4 feedback writers 📝 — end date in the announcement post!',
-'20$ TOP 1 BXH + bốc thăm 80$ cho người chơi & người góp ý!':'$20 for TOP 1 + $80 raffled to players & feedback writers!',
-'🎁 GIẢI 100$: 20$ cho TOP 1 cuối đợt + bốc thăm 80$ — leo đi chứ còn chờ gì!':'🎁 $100 PRIZES: $20 for TOP 1 at the end + $80 in raffles — start climbing!',
+'20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — chốt 23:59 ngày 26/06!':'$20 TOP 1 · $40 raffled to 4 players · $40 raffled to 4 feedback writers 📝 — ends June 26, 23:59 (GMT+7)!',
+'20$ TOP 1 BXH + bốc thăm 80$ — chốt 23:59 ngày 26/06!':'$20 for TOP 1 + $80 in raffles — ends June 26, 23:59 (GMT+7)!',
+'🎟️ Mã nhận thưởng & chuyển máy':'🎟️ Claim code & device transfer','🎟️ Mã định danh của bạn':'🎟️ Your identity code',
+'Dùng để':'Use it to','NHẬN THƯỞNG':'CLAIM PRIZES','cuối đợt (gửi mã cho người tổ chức để xác minh bạn đúng là người trúng) và':'at the end (send the code to the organizer to prove you\'re the winner) and',
+'CHUYỂN MÁY':'TRANSFER DEVICES','(giữ tên + cúp BXH). Đừng đưa cho ai khác!':'(keeps your name + trophies). Don\'t share it with anyone else!',
+'📥 Khôi phục trên máy mới':'📥 Restore on a new device','Dán mã từ máy cũ — tên & cúp BXH theo về ngay (tiến trình chơi vẫn riêng từng máy).':'Paste the code from your old device — your name & trophies follow instantly (game progress stays per-device).',
+'📥 Khôi phục':'📥 Restore','🎟️ Đã khôi phục định danh — tải lại để áp dụng đầy đủ!':'🎟️ Identity restored — reloading to apply!','Mã không hợp lệ — kiểm tra lại nhé.':'Invalid code — double-check it.','📋 Đã copy mã!':'📋 Code copied!',
+'🎁 GIẢI 100$ — chốt 23:59 ngày 26/06: 20$ TOP 1 + bốc thăm 80$. Leo đi chứ còn chờ gì!':'🎁 $100 PRIZES — ends June 26, 23:59 (GMT+7): $20 for TOP 1 + $80 in raffles. Start climbing!',
 '🎁 Mỗi góp ý có nội dung = 1 vé bốc thăm':'🎁 Every real piece of feedback = 1 raffle ticket for','(4 giải cuối đợt)!':'($10 × 4 winners at the end)!',
 '📝 Góp ý nhanh (1 phút)':'📝 Quick feedback (1 minute)','Trả lời lúc nào cũng được, sửa lại được — dữ liệu tự gửi về máy chủ.':'Answer anytime, edit anytime — data uploads automatically.',
 '😄 Game có VUI không?':'😄 Is the game FUN?','🧠 Game có DỄ HIỂU không?':'🧠 Is the game EASY TO UNDERSTAND?','🔁 Có MUỐN CHƠI TIẾP ngày mai không?':'🔁 Would you PLAY AGAIN tomorrow?',
@@ -6014,9 +6021,14 @@ ui:{
 '20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝':'排行榜TOP1得20$ · 40$抽4名玩家 · 40$抽4名反馈作者 📝',
 '— vào 🎭 Arena đăng ký tên để lên sóng!':'——打开 🎭 竞技场注册昵称参战！',
 '· ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.':'· ⛽ 1油/7分钟（正式版节奏）· 💾 自动存档在本浏览器——别清浏览记录！· 📝 反馈：左侧圆形按钮。',
-'20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — ngày chốt xem ở bài đăng!':'TOP1得20$ · 40$抽4名玩家 · 40$抽4名反馈作者 📝 ——截止日期见公告帖！',
-'20$ TOP 1 BXH + bốc thăm 80$ cho người chơi & người góp ý!':'排行榜TOP1得20$ + 80$抽奖给玩家和反馈作者！',
-'🎁 GIẢI 100$: 20$ cho TOP 1 cuối đợt + bốc thăm 80$ — leo đi chứ còn chờ gì!':'🎁 100$奖池：结束时TOP1得20$ + 80$抽奖——还等什么，开爬！',
+'20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — chốt 23:59 ngày 26/06!':'TOP1得20$ · 40$抽4名玩家 · 40$抽4名反馈作者 📝 ——6月26日23:59截止（GMT+7）！',
+'20$ TOP 1 BXH + bốc thăm 80$ — chốt 23:59 ngày 26/06!':'TOP1得20$ + 80$抽奖——6月26日23:59截止（GMT+7）！',
+'🎟️ Mã nhận thưởng & chuyển máy':'🎟️ 领奖码＆换机码','🎟️ Mã định danh của bạn':'🎟️ 你的身份码',
+'Dùng để':'用于','NHẬN THƯỞNG':'领奖','cuối đợt (gửi mã cho người tổ chức để xác minh bạn đúng là người trúng) và':'（结束时把码发给主办方证明你是中奖者）和',
+'CHUYỂN MÁY':'换设备','(giữ tên + cúp BXH). Đừng đưa cho ai khác!':'（保留昵称+奖杯）。别给其他任何人！',
+'📥 Khôi phục trên máy mới':'📥 在新设备上恢复','Dán mã từ máy cũ — tên & cúp BXH theo về ngay (tiến trình chơi vẫn riêng từng máy).':'粘贴旧设备的码——昵称和奖杯立刻跟过来（游戏进度仍各设备独立）。',
+'📥 Khôi phục':'📥 恢复','🎟️ Đã khôi phục định danh — tải lại để áp dụng đầy đủ!':'🎟️ 身份已恢复——刷新后生效！','Mã không hợp lệ — kiểm tra lại nhé.':'码无效——请检查。','📋 Đã copy mã!':'📋 已复制！',
+'🎁 GIẢI 100$ — chốt 23:59 ngày 26/06: 20$ TOP 1 + bốc thăm 80$. Leo đi chứ còn chờ gì!':'🎁 100$奖池——6月26日23:59截止（GMT+7）：TOP1得20$ + 80$抽奖。还等什么，开爬！',
 '🎁 Mỗi góp ý có nội dung = 1 vé bốc thăm':'🎁 每条有内容的反馈 = 1张抽奖券，奖金','(4 giải cuối đợt)!':'（结束时抽4名）！',
 '📝 Góp ý nhanh (1 phút)':'📝 快速反馈（1分钟）','Trả lời lúc nào cũng được, sửa lại được — dữ liệu tự gửi về máy chủ.':'随时回答、随时修改——数据自动上传。',
 '😄 Game có VUI không?':'😄 游戏好玩吗？','🧠 Game có DỄ HIỂU không?':'🧠 游戏容易上手吗？','🔁 Có MUỐN CHƠI TIẾP ngày mai không?':'🔁 明天还想继续玩吗？',
@@ -6155,9 +6167,14 @@ ui:{
 '20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝':'ランキングTOP1に20$ · 40$をプレイヤー4名に抽選 · 40$をフィードバック投稿者4名に抽選 📝',
 '— vào 🎭 Arena đăng ký tên để lên sóng!':'——🎭 アリーナで名前を登録して参戦！',
 '· ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.':'· ⛽ 1ガス/7分（製品版ペース）· 💾 このブラウザに自動セーブ——履歴を消さないで！· 📝 フィードバック：左の丸ボタン。',
-'20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — ngày chốt xem ở bài đăng!':'TOP1に20$ · 40$をプレイヤー4名に抽選 · 40$をフィードバック4名に抽選 📝 ——締切日は告知ポストで！',
-'20$ TOP 1 BXH + bốc thăm 80$ cho người chơi & người góp ý!':'TOP1に20$ + 80$をプレイヤー＆フィードバック投稿者に抽選！',
-'🎁 GIẢI 100$: 20$ cho TOP 1 cuối đợt + bốc thăm 80$ — leo đi chứ còn chờ gì!':'🎁 賞金100$：終了時TOP1に20$ + 抽選80$——さあ、登れ！',
+'20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — chốt 23:59 ngày 26/06!':'TOP1に20$ · 40$をプレイヤー4名に抽選 · 40$をフィードバック4名に抽選 📝 ——6/26 23:59締切（GMT+7）！',
+'20$ TOP 1 BXH + bốc thăm 80$ — chốt 23:59 ngày 26/06!':'TOP1に20$ + 抽選80$——6/26 23:59締切（GMT+7）！',
+'🎟️ Mã nhận thưởng & chuyển máy':'🎟️ 賞金受取＆機種変更コード','🎟️ Mã định danh của bạn':'🎟️ あなたのIDコード',
+'Dùng để':'用途：','NHẬN THƯỞNG':'賞金の受け取り','cuối đợt (gửi mã cho người tổ chức để xác minh bạn đúng là người trúng) và':'（終了時、主催者にコードを送って当選者本人と証明）と',
+'CHUYỂN MÁY':'機種変更','(giữ tên + cúp BXH). Đừng đưa cho ai khác!':'（名前＋トロフィーを引き継ぎ）。他人には絶対渡さないで！',
+'📥 Khôi phục trên máy mới':'📥 新しい端末で復元','Dán mã từ máy cũ — tên & cúp BXH theo về ngay (tiến trình chơi vẫn riêng từng máy).':'旧端末のコードを貼り付け——名前とトロフィーが即引き継がれる（ゲーム進行は端末ごと）。',
+'📥 Khôi phục':'📥 復元','🎟️ Đã khôi phục định danh — tải lại để áp dụng đầy đủ!':'🎟️ 復元完了——リロードして反映！','Mã không hợp lệ — kiểm tra lại nhé.':'コードが無効——確認してね。','📋 Đã copy mã!':'📋 コピーしました！',
+'🎁 GIẢI 100$ — chốt 23:59 ngày 26/06: 20$ TOP 1 + bốc thăm 80$. Leo đi chứ còn chờ gì!':'🎁 賞金100$——6/26 23:59締切（GMT+7）：TOP1に20$ + 抽選80$。さあ、登れ！',
 '🎁 Mỗi góp ý có nội dung = 1 vé bốc thăm':'🎁 内容のあるフィードバック1件 = 抽選券1枚、賞金','(4 giải cuối đợt)!':'（終了時に4名抽選）！',
 '📝 Góp ý nhanh (1 phút)':'📝 クイックフィードバック（1分）','Trả lời lúc nào cũng được, sửa lại được — dữ liệu tự gửi về máy chủ.':'いつ答えても、後から直してもOK——データは自動送信。',
 '😄 Game có VUI không?':'😄 ゲームは楽しい？','🧠 Game có DỄ HIỂU không?':'🧠 わかりやすい？','🔁 Có MUỐN CHƠI TIẾP ngày mai không?':'🔁 明日もまた遊びたい？',
@@ -6276,7 +6293,7 @@ function openNetJoin(){
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>🌐 THAM GIA BXH ONLINE</h3>
-    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 <b>GIẢI 100$ ĐANG CHẠY:</b> 20$ TOP 1 BXH + bốc thăm 80$ cho người chơi & người góp ý!</p>
+    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 <b>GIẢI 100$ ĐANG CHẠY:</b> 20$ TOP 1 BXH + bốc thăm 80$ — chốt 23:59 ngày 26/06!</p>
     <p class="sub">Chọn tên hiển thị (2–14 ký tự). Tên sẽ nằm trên bảng xếp hạng TOÀN CẦU — chọn tên ngầu vào.</p>
     <input id="net-name" maxlength="14" placeholder="VD: TrùmBãiRác" style="width:100%;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--bg3);color:var(--text);font-family:inherit;font-size:15px;margin:8px 0">
     <button class="btn cy" style="width:100%" onclick="netRegister()">🚀 Lên sóng!</button>
@@ -6342,7 +6359,7 @@ async function netPvpReport(oid,win){
 async function openNetBoard(){
   $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>🌍 BXH ONLINE — TOÀN CẦU</h3>
-    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 GIẢI 100$: 20$ cho TOP 1 cuối đợt + bốc thăm 80$ — leo đi chứ còn chờ gì!</p>
+    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 GIẢI 100$ — chốt 23:59 ngày 26/06: 20$ TOP 1 + bốc thăm 80$. Leo đi chứ còn chờ gì!</p>
     <p class="sub" id="net-bd">📡 Đang tải bảng xếp hạng…</p><div id="net-rows"></div>
     <button class="btn" style="width:100%;margin-top:10px" onclick="openArena()">← Về Arena</button>`;
   openModal('hd-bg');
@@ -6363,6 +6380,32 @@ async function openNetBoard(){
       <span class="v" style="min-width:38px;text-align:left">#${r.me.rank}</span><span class="nm2">🌟 ${r.me.name}</span>
       <span style="flex:1"></span><span class="v" style="color:var(--yellow)">🏆 ${r.me.trophies}</span></div>`:'');
   }catch(e){$('net-bd').textContent='📡 Mất sóng server — thử lại sau nhé.'}
+}
+/* ---- mã định danh: nhận thưởng cuối đợt + chuyển máy giữ tên/cúp BXH ---- */
+function openClaim(){
+  let code='';
+  try{code=btoa(unescape(encodeURIComponent(JSON.stringify({v:1,aid:typeof AID!=='undefined'?AID:null,net:S.net}))))}catch(e){}
+  $('hd-modal').innerHTML=`
+    <button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <h3>🎟️ Mã định danh của bạn</h3>
+    <p class="sub" style="margin-top:4px">Dùng để <b>NHẬN THƯỞNG</b> cuối đợt (gửi mã cho người tổ chức để xác minh bạn đúng là người trúng) và <b>CHUYỂN MÁY</b> (giữ tên + cúp BXH). Đừng đưa cho ai khác!</p>
+    <textarea readonly onclick="this.select()" style="width:100%;min-height:84px;background:var(--bg3);color:var(--cyan);border:2px solid var(--line);border-radius:10px;padding:8px;font-size:10.5px;word-break:break-all;font-family:monospace">${code}</textarea>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="(function(){const t=$('hd-modal').querySelector('textarea');t.select();try{navigator.clipboard.writeText(t.value)}catch(e){document.execCommand('copy')}toast('📋 Đã copy mã!')})()">📋 Copy mã</button>
+    <div class="skillbox" style="margin-top:14px"><h5 style="color:var(--green)">📥 Khôi phục trên máy mới</h5>
+      <p style="font-size:12px;color:var(--muted);margin-top:3px">Dán mã từ máy cũ — tên & cúp BXH theo về ngay (tiến trình chơi vẫn riêng từng máy).</p>
+      <input id="claim-in" placeholder="Dán mã vào đây" style="width:100%;padding:9px;border-radius:10px;border:2px solid var(--line);background:var(--bg3);color:var(--text);font-family:monospace;font-size:11px;margin:8px 0">
+      <button class="btn cy" style="width:100%" onclick="restoreClaim()">📥 Khôi phục</button></div>`;
+  openModal('hd-bg');
+}
+function restoreClaim(){
+  try{
+    const d=JSON.parse(decodeURIComponent(escape(atob(($('claim-in').value||'').trim()))));
+    if(!d||d.v!==1)throw 0;
+    if(d.aid&&/^[a-f0-9]{8,32}$/.test(d.aid))try{localStorage.setItem('wackos_aid',d.aid)}catch(e){}
+    if(d.net&&d.net.id&&d.net.secret){S.net={id:d.net.id,secret:d.net.secret,name:d.net.name||'?',tro:d.net.tro!=null?d.net.tro:1000};saveGame()}
+    toast('🎟️ Đã khôi phục định danh — tải lại để áp dụng đầy đủ!');
+    setTimeout(()=>location.reload(),1200);
+  }catch(e){toast('Mã không hợp lệ — kiểm tra lại nhé.')}
 }
 // sau mỗi đợt chơi đội mạnh lên → tự đẩy hồ sơ mới lên server (nhẹ, debounce, im lặng khi offline)
 window.addEventListener('load',()=>setTimeout(()=>{if(S.net)netSync(true)},2500));
