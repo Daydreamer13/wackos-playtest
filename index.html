@@ -591,6 +591,21 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .corkboard .bonusnote:hover{transform:rotate(0)}
 .corkboard .bonusnote .btn{align-self:center}
 
+/* ---------- v2.34: kệ hộp hero + khóa tính năng ---------- */
+.boxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:12px}
+.boxcard{background:var(--bg3);border:3px solid var(--line);border-radius:14px;padding:12px 8px;text-align:center;
+  cursor:pointer;display:flex;flex-direction:column;gap:3px;align-items:center;transition:.15s}
+.boxcard:hover{transform:translateY(-3px)}
+.boxcard .bx-e{font-size:38px;line-height:1.1;filter:drop-shadow(0 4px 3px rgba(0,0,0,.4))}
+.boxcard .bx-st{font-size:10.5px;font-weight:800;color:var(--muted)}
+.boxcard.bxready{animation:tutPulse 1.6s ease-in-out infinite}
+.boxcard.bxready .bx-st{color:var(--yellow)}
+.nav button.locked{opacity:.35;filter:grayscale(1)}
+.labtabs .btn.locked{opacity:.45;filter:grayscale(.8)}
+.maplm.lmlock{filter:grayscale(1) brightness(.55) drop-shadow(0 5px 9px rgba(0,0,0,.5))}
+.bld.bldlock{filter:grayscale(.9) brightness(.6)}
+.bld.bldlock .bsign-txt{opacity:.45}
+
 /* ---------- v2.17: tutorial coach ---------- */
 .coach{position:fixed;left:50%;transform:translateX(-50%);bottom:86px;z-index:90;display:flex;gap:10px;align-items:center;
   background:linear-gradient(135deg,#2d2547,#1b2440);border:2px solid var(--yellow);border-radius:16px;
@@ -785,7 +800,7 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
             <rect x="86" y="116" width="22" height="42" fill="#1d1638"/>
           </svg>
         </div>
-        <div class="bld" style="--g:#ffd23f" onclick="go('loot')" title="Mở đồ hộp bí ẩn — kho loot">
+        <div class="bld" data-key="loot" style="--g:#ffd23f" onclick="go('loot')" title="Mở đồ hộp bí ẩn — kho loot">
           <svg viewBox="0 0 120 158">
             <g class="bsign-g"><rect x="8" y="14" width="104" height="25" rx="6" fill="#0d0a20" stroke="#ffd23f" stroke-width="2"/>
               <text class="bsign-txt" x="60" y="31.5" font-size="12" font-weight="900" text-anchor="middle" fill="#ffd23f" textLength="92" lengthAdjust="spacingAndGlyphs">ĐỒ HỘP BÍ ẨN</text></g>
@@ -798,7 +813,7 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
             <rect x="80" y="120" width="22" height="18" fill="#171130"/><rect x="84" y="112" width="14" height="8" fill="#171130"/>
           </svg>
         </div>
-        <div class="bld" style="--g:#5ee06a" onclick="go('missions')" title="Việc cần làm hôm nay — nhiệm vụ ngày">
+        <div class="bld" data-key="missions" style="--g:#5ee06a" onclick="go('missions')" title="Việc cần làm hôm nay — nhiệm vụ ngày">
           <svg viewBox="0 0 120 158">
             <g class="bsign-g"><rect x="8" y="4" width="104" height="25" rx="6" fill="#0d0a20" stroke="#5ee06a" stroke-width="2"/>
               <text class="bsign-txt" x="60" y="21.5" font-size="12" font-weight="900" text-anchor="middle" fill="#5ee06a" textLength="92" lengthAdjust="spacingAndGlyphs">VIỆC HÔM NAY</text></g>
@@ -847,9 +862,14 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
       <div class="hq-sign">📋 HỒ SƠ QUÂN ĐOÀN — <span id="hq-count">0</span></div>
       <div class="hgrid" id="hero-grid"></div>
     </div>
-    <div class="wantedboard">
-      <div class="wb-head">🧩 BẢNG TRUY TÌM — gom đủ 10 mảnh = chiêu mộ 1 bản Common (bản dư dùng cho 🧬 Lab)</div>
-      <div class="hgrid" id="shard-grid"></div>
+    <div class="panel" style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:32px">🧩</span>
+      <div style="flex:1;min-width:200px">
+        <b>Mảnh Hộp Hero: <span id="hq-pieces">0</span>/10</b>
+        <div class="shardbar" style="margin-top:5px"><i id="hq-piecesbar" style="width:0%"></i></div>
+        <p class="demonote" style="margin-top:4px">Rơi từ 🥫 lon, nhiệm vụ ngày, hầm T5, 🦫 Tiệm. Đủ 10 mảnh → ghép hộp, mở ra <b>chọn 1 trong 3 hero</b>.</p>
+      </div>
+      <button class="btn sm cy" onclick="go('loot')">📦 Tới Kệ Hộp</button>
     </div>
   </section>
 
@@ -898,7 +918,14 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
       <span class="can" id="thecan" onclick="openCan()">🥫</span>
       <span class="can-shadow"></span>
       <div class="openresult" id="openresult">Bấm vào lon để mở (1 🥫)</div>
-      <p class="demonote">Mảnh hero (🧩 x10) sẽ mở khóa hero mới. Boss và nhiệm vụ cho thêm lon.</p>
+      <p class="demonote">Trong lon có tài nguyên + 🧩 mảnh hộp. Boss và nhiệm vụ cho thêm lon.</p>
+    </div>
+    <div class="panel" style="margin-top:12px">
+      <h2 class="sec" style="font-size:18px;margin:0 0 4px">📦 Kệ Hộp Hero</h2>
+      <p class="sub" style="margin-bottom:10px">📦 hộp ghép từ mảnh — mở ra <b>chọn 1 trong 3</b> · 🥚 trứng Lab nở theo giờ (2% sinh đôi!) · ♻️ hộp tái chế.</p>
+      <div id="pieces-bar" style="font-size:14px;margin-bottom:10px"></div>
+      <button class="btn sm" id="buildbox-btn" onclick="buildBoxFromPieces()">🧩 ×10 → Ghép Hộp Hero</button>
+      <div class="boxgrid" id="boxshelf-list"></div>
     </div>
   </section>
 
@@ -1905,7 +1932,12 @@ const rBadge=r=>`<b class="rar-${r}">${RNAME[r]}</b>`;
 /* ---- Breed & Enhance ---- */
 const BREED_COST={junk:800,tape:30};
 const BREED_MAX=3;       // mỗi bản hero breed tối đa 3 lần
+const BREED_MIN_LVL=6;   // cả bố lẫn mẹ phải đạt Lv này mới đẻ được
+const INCUBATE_MIN=[3,6,10]; // phút ấp trứng (demo) theo lần đẻ thứ 1/2/3 — bản thật sẽ là giờ
+const TWIN_CHANCE=0.02;  // 2% trứng nở SINH ĐÔI
 const ENH_NEED=5;        // 5 bản CÙNG rarity -> 1 bản rarity cao hơn
+/* ---- Hộp Hero ---- */
+const PIECES_PER_BOX=10; // 10 mảnh hộp = 1 Hộp Hero (mở ra CHỌN 1 trong 3)
 const enhCost=r=>600*(rIdx(r)+1); // phí junk theo bậc
 const HEROES={
   spam:{id:'spam',name:'Sir Spam-a-Lot',cls:'tank',starter:true,
@@ -2173,7 +2205,7 @@ const SLOT_VI={weapon:'⚔️ Vũ khí',armor:'🛡️ Giáp',hat:'🎩 Mũ'};
 
 const S={
   gas:60,maxGas:100,junk:1000,juice:50,tape:30,cans:2,plv:1,xp:0,
-  roster:[],nextUid:1,shards:{},
+  roster:[],nextUid:1,pieces:0,boxes:[],nextBoxUid:1,unlocked:{},
   team:{front:[null,null],back:[null,null,null]},
   inv:{},beaten:{},busy:false,speed:1,
   tower:{floor:1,best:0},seasonStart:Date.now(),
@@ -2210,16 +2242,44 @@ function removeInstance(uid){ // trả toàn bộ trang bị về kho + gỡ kh�
   S.team.back=S.team.back.map(x=>x===uid?null:x);
   S.roster=S.roster.filter(i=>i.uid!==uid);
 }
-Object.keys(HEROES).forEach(id=>S.shards[id]=0);
 // 3 starter — bản Common (rarity giờ nâng qua Breed/Enhance)
 S.team.front[0]=addInstance('spam','common').uid;
 S.team.back[0]=addInstance('noodle','common').uid;
 S.team.back[1]=addInstance('intern','common').uid;
 
+/* ================= MỞ KHÓA DẦN TÍNH NĂNG ================= */
+const UNLOCK_DEFS={
+  loot:    {label:'🥫 Kho Loot',        hint:'Thắng 1 trận PvE để mở', cond:()=>S.seasonStats.wins>0||Object.keys(S.beaten).length>0},
+  missions:{label:'✅ Bảng Việc',        hint:'Thắng 1 trận PvE để mở', cond:()=>S.seasonStats.wins>0||Object.keys(S.beaten).length>0},
+  craft:   {label:'🩹 Xưởng Băng Keo',   hint:'Phá Battery Slum để mở', cond:()=>!!S.beaten.slum},
+  shop:    {label:'🦫 Tiệm Chú Hải Ly',  hint:'Phá Snack Town để mở',   cond:()=>!!S.beaten.snack},
+  arena:   {label:'🎭 Meme Arena',       hint:'Phá Snack Town để mở',   cond:()=>!!S.beaten.snack},
+  lab:     {label:'🧬 Phòng Lab (Breed)',hint:'Hạ Boss chương 1 để mở', cond:()=>!!S.beaten.boss1},
+  dgn:     {label:'🕳️ Hầm Ngục Ngày',   hint:'Hạ Boss chương 1 để mở', cond:()=>!!S.beaten.boss1},
+  tower:   {label:'🗼 Tháp Hỗn Mang',    hint:'Phá node đầu Chương 2 để mở',cond:()=>!!S.beaten.parking},
+  enhance: {label:'⬆️ Enhance',          hint:'Phá node đầu Chương 2 để mở',cond:()=>!!S.beaten.parking},
+  recycle: {label:'♻️ Máy Tái Chế',      hint:'Hạ Boss chương 2 để mở', cond:()=>!!S.beaten.boss2},
+};
+const isU=k=>!!S.unlocked[k];
+function checkUnlocks(quiet){
+  const news=[];
+  Object.entries(UNLOCK_DEFS).forEach(([k,d])=>{
+    if(!S.unlocked[k]&&d.cond()){S.unlocked[k]=true;news.push(d.label)}
+  });
+  if(news.length){
+    if(!quiet){SFX.levelup();toast('🔓 <b>MỞ KHÓA:</b> '+news.join(' · ')+'!')}
+    renderNavLocks();scheduleSave();
+  }
+}
+const VIEW_LOCK={lab:'lab',craft:'craft',loot:'loot',missions:'missions'};
+function renderNavLocks(){
+  Object.entries(VIEW_LOCK).forEach(([v,k])=>{const b=$('nb-'+v);if(b)b.classList.toggle('locked',!isU(k))});
+}
+
 const MISSIONS=[
   {id:'pve',e:'⚔️',t:'Thắng 3 trận PvE',need:3,key:'pve',rw:{junk:500},rwTxt:'+500 🪙'},
   {id:'upg',e:'⬆️',t:'Nâng cấp 1 hero',need:1,key:'upg',rw:{juice:20},rwTxt:'+20 🔋'},
-  {id:'can',e:'🥫',t:'Mở 1 Mystery Can',need:1,key:'can',rw:{tape:30},rwTxt:'+30 🩹'},
+  {id:'can',e:'🥫',t:'Mở 1 Mystery Can',need:1,key:'can',rw:{pieces:3},rwTxt:'+3 🧩 mảnh hộp'},
   {id:'boss',e:'👹',t:'Hạ 1 boss',need:1,key:'boss',rw:{cans:1},rwTxt:'+1 🥫'},
   {id:'craft',e:'🩹',t:'Chế 1 món đồ',need:1,key:'craft',rw:{junk:300},rwTxt:'+300 🪙'},
 ];
@@ -2349,6 +2409,10 @@ function renderRes(){
   $('mdot').classList.toggle('show',anyClaim);
 }
 function go(v){
+  if(VIEW_LOCK[v]&&!isU(VIEW_LOCK[v])){
+    const d=UNLOCK_DEFS[VIEW_LOCK[v]];
+    return toast(`🔒 ${d.label} — ${d.hint}!`);
+  }
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('on'));
   $('v-'+v).classList.add('on');
@@ -2360,6 +2424,7 @@ function go(v){
   if(v==='missions')renderMissions();
   if(v==='gallery')renderGallery();
   if(v==='hub')renderHub();
+  if(v==='loot')renderLoot();
   if(v==='battle')tutAdvance(0);
   if(v==='heroes')tutAdvance(2);
   if(v==='loot')tutAdvance(4);
@@ -2437,6 +2502,10 @@ function renderHub(){
   if(!teamIds().length)box.innerHTML=`<div class="hs-empty" onclick="go('battle');openPicker('front',0)">＋ Thêm hero vào đội</div>`;
   const hs=$('hubscene'); // mobile: canh giữa sân khấu lần đầu (vuốt ngang xem cả khu phố)
   if(hs&&!hs._centered&&hs.scrollWidth>hs.clientWidth+4){hs.scrollLeft=(hs.scrollWidth-hs.clientWidth)/2;hs._centered=true}
+  ['loot','missions'].forEach(k=>{ // tòa nhà bị khóa thì tối đèn
+    const bl=document.querySelector(`.bld[data-key="${k}"]`);
+    if(bl)bl.classList.toggle('bldlock',!isU(k));
+  });
 }
 /* ---------- tương tác hub scene ---------- */
 const TRASH_FINDS=['vài đồng xu dính... thứ gì đó','nửa cái sandwich hóa thạch (bán được!)','quỹ đen của ai đó giấu rất kỹ',
@@ -2523,7 +2592,7 @@ function openResInfo(k){
   }
   if(k==='cans'){
     extra=`<div class="skillbox" style="border-color:var(--yellow)"><h5 style="color:var(--yellow)">🎲 Trong lon có gì?</h5>
-      <p>🪙 500–1.500 Junk — <b>30%</b><br>🧩 3–5 mảnh hero ngẫu nhiên — <b>28%</b><br>🩹 30–80 Băng keo — <b>18%</b><br>🔋 30–90 Juice — <b>15%</b><br>🎰 JACKPOT (đầy ⛽ + 2.500–3.500 🪙) — <b>5%</b><br>🗡️ Trang bị ngẫu nhiên — <b>4%</b></p></div>`;
+      <p>🪙 500–1.500 Junk — <b>30%</b><br>🧩 3–5 mảnh hộp (10 mảnh = 1 📦 Hộp Hero) — <b>28%</b><br>🩹 30–80 Băng keo — <b>18%</b><br>🔋 30–90 Juice — <b>15%</b><br>🎰 JACKPOT (đầy ⛽ + 2.500–3.500 🪙) — <b>5%</b><br>🗡️ Trang bị ngẫu nhiên — <b>4%</b></p></div>`;
   }
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
@@ -2557,16 +2626,8 @@ function renderHeroes(){
   const g=$('hero-grid');g.innerHTML='';
   sortedRoster().forEach(inst=>{g.innerHTML+=instCard(inst,`openHero(${inst.uid})`)});
   const cnt=$('hq-count');if(cnt)cnt.textContent=S.roster.length+' bản hero';
-  // Bảng truy tìm: 10 🧩 = 1 bản Common (kể cả hero đã có — bản dư dùng để Breed/Enhance)
-  const w=$('shard-grid');w.innerHTML='';
-  Object.values(HEROES).forEach(h=>{
-    const sh=S.shards[h.id];
-    w.innerHTML+=`<div class="hcard locked wanted" onclick="claimShards('${h.id}')">
-      ${sprite(h.id,96,false)}<h4>${h.name}</h4>
-      <span class="tag ${h.cls}">${CLS_VI[h.cls]}</span>
-      <div class="shardbar"><i style="width:${Math.min(100,sh*10)}%"></i></div>
-      <div class="q">🧩 ${sh}/10 mảnh${sh>=10?' — bấm để nhận!':''}</div></div>`;
-  });
+  const hp=$('hq-pieces');if(hp)hp.textContent=S.pieces;
+  const hpb=$('hq-piecesbar');if(hpb)hpb.style.width=Math.min(100,S.pieces/PIECES_PER_BOX*100)+'%';
   renderTut(); // gắn lại glow tutorial sau khi grid render lại
 }
 /* ================= GALLERY / CODEX ================= */
@@ -2635,7 +2696,7 @@ function openCodex(id){
         <h3>${h.name}</h3>
         <span class="tag ${h.cls}">${CLS_VI[h.cls]}</span>
         <div class="quote">${h.quote}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">${owned.length?`Đang sở hữu ${owned.length} bản: ${owned.map(i=>`#${i.uid} ${RNAME[i.rarity]}`).join(', ')}`:'Chưa sở hữu — săn 🧩 mảnh hoặc thử vận may 🧬 Breed đột biến!'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">${owned.length?`Đang sở hữu ${owned.length} bản: ${owned.map(i=>`#${i.uid} ${RNAME[i.rarity]}`).join(', ')}`:'Chưa sở hữu — mở 📦 Hộp Hero hoặc thử vận may 🧬 Breed đột biến!'}</div>
       </div>
     </div>
     <div class="statgrid">
@@ -2649,14 +2710,6 @@ function openCodex(id){
     <div class="skillbox"><h5 style="color:var(--green)">🔁 Nội tại</h5><p>${h.passive}</p></div>
     <div class="skillbox trait"><h5>🤪 Funny Trait</h5><p>${h.trait}</p></div>`;
   openModal('hd-bg');
-}
-function claimShards(heroId){
-  if(S.shards[heroId]>=10){
-    S.shards[heroId]-=10;
-    const inst=addInstance(heroId,'common');
-    confettiBurst();SFX.levelup();renderHeroes();renderRes();
-    toast(`🎉 Nhận <b>${HEROES[heroId].name}</b> (Common #${inst.uid})! ${HEROES[heroId].quote}`);
-  }else toast(`Cần 🧩 10 mảnh (đang có ${S.shards[heroId]}). Mở Mystery Cans để săn mảnh!`);
 }
 let hdUid=null; // hero đang mở trong modal — để giữ vị trí scroll khi render lại
 function openHero(uid){
@@ -2861,7 +2914,7 @@ const DUNGEONS=[ // index = getDay(): 0=CN
     rw:{junk:[1400,2000],xp:85}},
   {key:'thu',e:'🧩',name:'Hầm Mảnh Vỡ',desc:'Quái ở đây TÀNG HÌNH LƯỢT ĐẦU — đòn đơn mù tịt, AoE vẫn quét trúng.',
     rule:null,mod:'stealth1',enemies:['pigeon','printer','rat','drone'],k:3.7,
-    rw:{shards:[6,10],junk:[300,500],xp:80}},
+    rw:{pieces:[6,10],junk:[300,500],xp:80}},
   {key:'fri',e:'⏱️',name:'Hầm Tăng Ca',desc:'Đồng hồ chấm công chỉ chạy 250 nhịp + quái NHANH HƠN 30%. Hết giờ = thua. Đem burst hoặc làm chậm.',
     rule:null,mod:'fast',tickLimit:250,enemies:['pigeon','drone','pigeon','printer'],k:3.1,
     rw:{xp:260,junk:[500,800]}},
@@ -3052,9 +3105,10 @@ function renderMap(){
       <span class="mn-label">${n.boss?'👑 ':''}${NODE_SHORT[n.id]}</span>
     </div>`;
   });
-  // landmark = KIẾN TRÚC trong cảnh: lều đấu trường / cửa hầm / tháp nghiêng
+  // landmark = KIẾN TRÚC trong cảnh: lều đấu trường / cửa hầm / tháp nghiêng (mở khóa dần)
   const d=dungeonToday();
-  html+=`<div class="maplm" style="left:11%;top:11%;--g:var(--orange)" onclick="openArena()" title="Meme Arena — PvP, miễn phí gas">
+  const lockA=!isU('arena'),lockD=!isU('dgn'),lockT=!isU('tower');
+  html+=`<div class="maplm ${lockA?'lmlock':''}" style="left:11%;top:11%;--g:var(--orange)" onclick="${lockA?`toast('🔒 ${UNLOCK_DEFS.arena.label} — ${UNLOCK_DEFS.arena.hint}!')`:'openArena()'}" title="Meme Arena — PvP, miễn phí gas">
       <svg viewBox="0 0 130 96" style="width:102px">
         <ellipse cx="65" cy="78" rx="58" ry="14" fill="#241c45" stroke="#171130" stroke-width="2.5"/>
         <path d="M14 76 a51 30 0 0 1 102 0" fill="#2e2454" stroke="#171130" stroke-width="2.5"/>
@@ -3065,8 +3119,8 @@ function renderMap(){
         <path d="M65 2 l13 4 l-13 5 Z" fill="#ff5d6c" stroke="#171130" stroke-width="1.5"/>
         <text x="65" y="36" font-size="16" text-anchor="middle">🎭</text>
       </svg>
-      <span class="mn-label">Arena · ${5-(S.daily.arena||0)}/5</span></div>
-    <div class="maplm" style="left:9%;top:39%;--g:var(--cyan)" onclick="openDgnSheet()" title="${d.name}">
+      <span class="mn-label">${lockA?'🔒 Arena':'Arena · '+(5-(S.daily.arena||0))+'/5'}</span></div>
+    <div class="maplm ${lockD?'lmlock':''}" style="left:9%;top:39%;--g:var(--cyan)" onclick="${lockD?`toast('🔒 ${UNLOCK_DEFS.dgn.label} — ${UNLOCK_DEFS.dgn.hint}!')`:'openDgnSheet()'}" title="${d.name}">
       <svg viewBox="0 0 100 86" style="width:84px">
         <path d="M4 80 Q14 46 50 42 Q86 46 96 80 Z" fill="#1c3a3e" stroke="#0f2326" stroke-width="2.5"/>
         <path d="M30 80 L30 60 Q50 44 70 60 L70 80 Z" fill="#08130f"/>
@@ -3076,8 +3130,8 @@ function renderMap(){
         <rect x="6" y="36" width="26" height="19" rx="3" fill="#4a3526" stroke="#171130" stroke-width="2"/>
         <text x="19" y="51" font-size="13" text-anchor="middle">${d.e}</text>
       </svg>
-      <span class="mn-label">Hầm ngày ${S.daily.dgn?'✓':''}</span></div>
-    <div class="maplm" style="left:92%;top:44%;--g:var(--purple)" onclick="openTowerSheet()" title="Tháp Hỗn Mang — vô tận">
+      <span class="mn-label">${lockD?'🔒 Hầm ngày':'Hầm ngày '+(S.daily.dgn?'✓':'')}</span></div>
+    <div class="maplm ${lockT?'lmlock':''}" style="left:92%;top:44%;--g:var(--purple)" onclick="${lockT?`toast('🔒 ${UNLOCK_DEFS.tower.label} — ${UNLOCK_DEFS.tower.hint}!')`:'openTowerSheet()'}" title="Tháp Hỗn Mang — vô tận">
       <svg viewBox="0 0 80 170" style="width:62px">
         <path d="M24 168 L20 30 L40 14 L58 30 L56 168 Z" fill="#33255c" stroke="#1c123d" stroke-width="2.5"/>
         <path d="M21 60 h36 M22 92 h34 M23 124 h33" stroke="#1c123d" stroke-width="2"/>
@@ -3090,7 +3144,7 @@ function renderMap(){
         <line x1="40" y1="14" x2="40" y2="2" stroke="#1c123d" stroke-width="3"/>
         <circle cx="40" cy="2" r="5" fill="#b36bff" stroke="#1c123d" stroke-width="2"/>
       </svg>
-      <span class="mn-label">🗼 Tầng ${S.tower.floor}</span></div>`;
+      <span class="mn-label">${lockT?'🔒 Tháp':'🗼 Tầng '+S.tower.floor}</span></div>`;
   g.innerHTML=html;
   renderTut(); // gắn lại glow tutorial sau khi map render lại
 }
@@ -3115,10 +3169,9 @@ function lossTips(){
   const tips=[];
   const ids=teamIds();
   if(ids.length<5)tips.push(`👥 Đội mới có <b>${ids.length}/5</b> — bấm ô trống ở thanh đội hình để thêm hero (đông = mạnh hơn NHIỀU).`);
-  const ready=Object.keys(S.shards).find(h=>S.shards[h]>=10);
-  const near=Object.keys(S.shards).filter(h=>S.shards[h]>=7&&S.shards[h]<10).sort((a,b)=>S.shards[b]-S.shards[a])[0];
-  if(ready)tips.push(`🧩 <b>${HEROES[ready].name}</b> đã ĐỦ 10 mảnh — vào tab Heroes nhận ngay!`);
-  else if(near)tips.push(`🧩 <b>${HEROES[near].name}</b> chỉ còn ${10-S.shards[near]} mảnh — mở 🥫 hoặc mua mảnh ở 🦫 Tiệm.`);
+  if(S.boxes.some(b=>boxReady(b)))tips.push(`📦 Có HỘP đang chờ mở ở Kệ Hộp (tab 🥫 Loot) — mở ra hero mới ngay!`);
+  else if(S.pieces>=PIECES_PER_BOX)tips.push(`🧩 Đủ ${PIECES_PER_BOX} mảnh hộp — vào tab 🥫 Loot GHÉP HỘP, mở ra chọn 1 trong 3 hero!`);
+  else if(S.pieces>=PIECES_PER_BOX-4)tips.push(`🧩 Chỉ còn ${PIECES_PER_BOX-S.pieces} mảnh nữa là ghép được Hộp Hero — mở 🥫 hoặc mua mảnh ở 🦫 Tiệm.`);
   const up=ids.map(uid=>({c:upCost(uid),inst:instById(uid)})).filter(x=>x.inst.lvl<LVL_CAP()).sort((a,b)=>a.c-b.c)[0];
   if(up&&S.junk>=up.c)tips.push(`⬆️ Đang có <b>${fmt(S.junk)} 🪙</b> — nâng ${HEROES[up.inst.heroId].name} lên level chỉ tốn ${fmt(up.c)} 🪙 (+9% chỉ số/level).`);
   else tips.push(`🪙 Farm node thường (thắng dễ) lấy junk rồi <b>nâng level hero</b> — đó là nguồn sức mạnh chính.`);
@@ -3165,7 +3218,7 @@ function openDgnSheet(){
       <div class="quote">${d.desc}</div></div>
     </div>
     <div class="skillbox"><h5 style="color:var(--cyan)">🎁 Phần thưởng</h5>
-      <p>${d.rw.juice?'🔋 Juice lớn · ':''}${d.rw.tape?'🩹 Băng keo lớn · ':''}${d.rw.shards?'🧩 6–10 mảnh hero · ':''}${d.rw.cans?'🥫 Mystery Can · ':''}${d.rw.xp>=200?'⭐ XP lớn · ':''}🪙 — 1 lượt thắng/ngày · thua không tốn lượt · 12 ⛽</p></div>
+      <p>${d.rw.juice?'🔋 Juice lớn · ':''}${d.rw.tape?'🩹 Băng keo lớn · ':''}${d.rw.pieces?'🧩 6–10 mảnh hộp · ':''}${d.rw.cans?'🥫 Mystery Can · ':''}${d.rw.xp>=200?'⭐ XP lớn · ':''}🪙 — 1 lượt thắng/ngày · thua không tốn lượt · 12 ⛽</p></div>
     ${teamLegal(dungeonNode()).ok?winChanceTag(dungeonNode()):'<div class="skillbox" style="border-color:var(--orange)"><h5 style="color:var(--orange)">⚠️ Đội chưa hợp luật hầm</h5><p style="font-size:12px">Chỉnh đội theo luật ở trên rồi vào.</p></div>'}
     <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:14px">
       <button class="btn cy" onclick="closeModal('hd-bg');startBattle(dungeonNode())" ${done||S.busy?'disabled':''}>⚔️ Vào hầm — 12 ⛽</button>
@@ -4167,11 +4220,11 @@ function grantRewards(node,win,pandaAlive,T){
     if(r.tape){const v=rnd(...r.tape);S.tape+=v;T.tape+=v}
     if(r.juice){const v=rnd(...r.juice);S.juice+=v;T.juice+=v}
     if(r.cans){S.cans+=r.cans;T.cans+=r.cans}
-    if(r.shards){const v=rnd(...r.shards);const ids=Object.keys(HEROES);
-      const hid=ids[rnd(0,ids.length-1)];S.shards[hid]=(S.shards[hid]||0)+v;
-      T.shardTxt=`🧩 +${v} mảnh ${HEROES[hid].name} (${S.shards[hid]}/10)`}
+    if(r.pieces){const v=rnd(...r.pieces);S.pieces+=v;
+      T.shardTxt=`🧩 +${v} mảnh hộp (${S.pieces}/${PIECES_PER_BOX})`}
     if(pandaAlive&&Math.random()<0.5){const v=rnd(5,15);S.tape+=v;T.pandaTape+=v}
     const xp=r.xp||30;addXp(xp);T.xp+=xp;
+    checkUnlocks(); // tiến độ mới → có thể mở khóa tính năng
   }else{
     T.loss++;S.seasonStats.loss++;
     if(S.tele)S.tele.loss++;
@@ -4410,10 +4463,10 @@ function shopStock(){
       buy:()=>{S.juice+=20}},
     {key:'can',e:'🥫',name:'Mystery Can',price:3000,limit:1,desc:'Chú hải ly thề là chưa lắc thử.',
       buy:()=>{S.cans+=1}},
-    {key:'shard',e:'🧩',name:`Mảnh ${HEROES[hod].name} ×1`,price:150,limit:5,
-      desc:`Hero của ngày! Mai đổi người khác — mua đi kẻo tiếc.`,
-      buy:()=>{S.shards[hod]=(S.shards[hod]||0)+1;
-        if(S.shards[hod]>=10)toast(`🧩 Đủ 10 mảnh ${HEROES[hod].name} — vào tab Heroes nhận bản Common!`)}},
+    {key:'shard',e:'🧩',name:'Mảnh Hộp Hero ×1',price:150,limit:5,
+      desc:'Chú hải ly nhặt được cạnh đường ray. Gom 10 mảnh ghép 1 📦 Hộp Hero.',
+      buy:()=>{S.pieces+=1;
+        if(S.pieces>=PIECES_PER_BOX)toast(`🧩 Đủ ${PIECES_PER_BOX} mảnh — vào tab 🥫 Loot ghép Hộp Hero!`)}},
     {key:'item',e:iod.e,name:`${iod.name} (giảm 20%)`,price:Math.round((iod.cost.junk||0)*0.8),
       tape:Math.round((iod.cost.tape||0)*0.8),juice:Math.round((iod.cost.juice||0)*0.8),limit:1,
       desc:iod.cost.items?'Hôm nay ra món chuỗi — chú hải ly không bán đồ hàn sẵn. Mai quay lại!':`Món của ngày, bậc ${RNAME[iod.rarity]}. Giảm 20% TOÀN BỘ nguyên liệu.`,
@@ -4469,6 +4522,7 @@ function openItemSheet(id){
   openModal('hd-bg');
 }
 function buyShop(key){
+  if(!isU('shop'))return toast(`🔒 ${UNLOCK_DEFS.shop.label} — ${UNLOCK_DEFS.shop.hint}!`);
   const s=shopStock().find(x=>x.key===key);
   if(!s||s.disabled)return;
   if(!S.daily.shop)S.daily.shop={};
@@ -4495,7 +4549,11 @@ function renderCraft(){
   if(!S.daily.shop)S.daily.shop={};
   $('shop-talk').innerHTML=`<b>🦫:</b> "${SHOP_TALK[dayHash()%SHOP_TALK.length]}" <span style="font-size:11px;opacity:.7">· hàng đổi mỗi ngày</span>`;
   let h='';
-  // kệ 1: hàng tiệm hôm nay
+  // kệ 1: hàng tiệm hôm nay (mở sau Snack Town)
+  if(!isU('shop')){
+    h+=`<div class="shelf"><div class="shelf-label">🦫 Hàng hôm nay</div>
+      <div style="padding:8px 8px 18px;color:#caa36a;font-weight:700;font-size:13px">🔒 ${UNLOCK_DEFS.shop.hint} — chú hải ly đang dọn kệ chờ bạn.</div></div>`;
+  }else{
   h+=`<div class="shelf"><div class="shelf-label">🦫 Hàng hôm nay — giới hạn suất, đổi mỗi ngày</div><div class="shelf-row">`;
   shopStock().forEach(s=>{
     const used=S.daily.shop[s.key]||0,left=s.limit-used;
@@ -4507,6 +4565,7 @@ function renderCraft(){
       <span class="si-price">🪙 ${fmt(s.price)}</span></div>`;
   });
   h+=`</div></div>`;
+  }
   // kệ 2–4: xưởng chế theo slot
   SLOTS.forEach(sl=>{
     h+=`<div class="shelf"><div class="shelf-label">${SLOT_VI[sl]} — xưởng chế</div><div class="shelf-row">`;
@@ -4557,11 +4616,11 @@ function openCan(){
     else if(roll<0.52){const v=rnd(30,80);S.tape+=v;msg=`🩹 +${v} Duct Tape! Lon này 100% băng keo. Tuyệt vời.`}
     else if(roll<0.67){const v=rnd(30,90);S.juice+=v;msg=`🔋 +${v} Battery Juice! Vị hơi tê tê. Đúng chuẩn.`}
     else if(roll<0.95){
-      const ids=Object.keys(HEROES);
-      const hid=ids[rnd(0,ids.length-1)];const v=rnd(3,5);
-      S.shards[hid]+=v;
-      msg=`🧩 +${v} mảnh <b>${HEROES[hid].name}</b> (${S.shards[hid]}/10)!`;
-      if(S.shards[hid]>=10)msg+=' — Đủ đổi 1 bản Common! Vào tab Heroes nhận.';
+      const v=rnd(3,5);
+      S.pieces+=v;
+      msg=`🧩 +${v} mảnh hộp (${S.pieces}/${PIECES_PER_BOX})!`;
+      if(S.pieces>=PIECES_PER_BOX)msg+=' — Đủ ghép 1 📦 Hộp Hero ngay bên dưới!';
+      renderLoot();
     }
     else{S.gas=S.maxGas;const v=rnd(2500,3500);S.junk+=v;msg=`🎰 JACKPOT! ⛽ đầy bình + 🪙 +${fmt(v)}!`;confettiBurst()}
     roll<0.95?SFX.coin():SFX.jackpot();
@@ -4571,7 +4630,11 @@ function openCan(){
 
 /* ================= LAB: BREED & ENHANCE ================= */
 let labMode='breed',labSel=[];
-function goLab(m){labMode=m;labSel=[];renderLab()}
+function goLab(m){
+  if(m==='enh'&&!isU('enhance'))return toast(`🔒 ${UNLOCK_DEFS.enhance.label} — ${UNLOCK_DEFS.enhance.hint}!`);
+  if(m==='rec'&&!isU('recycle'))return toast(`🔒 ${UNLOCK_DEFS.recycle.label} — ${UNLOCK_DEFS.recycle.hint}!`);
+  labMode=m;labSel=[];renderLab();
+}
 function labTap(uid){
   const max=labMode==='enh'?ENH_NEED:2;
   if(labSel.includes(uid)){labSel=labSel.filter(x=>x!==uid)}
@@ -4587,8 +4650,8 @@ function labTap(uid){
 }
 function renderLab(){
   $('labtab-breed').className='btn sm'+(labMode==='breed'?'':' gh');
-  $('labtab-enh').className='btn sm'+(labMode==='enh'?'':' gh');
-  $('labtab-rec').className='btn sm'+(labMode==='rec'?'':' gh');
+  $('labtab-enh').className='btn sm'+(labMode==='enh'?'':' gh')+(isU('enhance')?'':' locked');
+  $('labtab-rec').className='btn sm'+(labMode==='rec'?'':' gh')+(isU('recycle')?'':' locked');
   const info=$('lab-info');
   if(labMode==='rec'){
     const ready=labSel.length===2;
@@ -4614,12 +4677,13 @@ function renderLab(){
       const tA=rIdx(a.rarity),tB=rIdx(b.rarity),hiT=Math.max(tA,tB);
       add(tA,45);add(tB,45);add(hiT+1,8);add(hiT+2,2);
       const probTxt=RARITIES.filter(r=>probs[r]).map(r=>`<b>${probs[r]}%</b> ${RNAME[r]}`).join(' · ');
-      preview=`<p style="font-size:13px;margin-top:8px">Hero con: <b>49%</b> ${HEROES[a.heroId].name} · <b>49%</b> ${HEROES[b.heroId].name} · <b style="color:var(--purple)">2%</b> 🧬 đột biến ra hero khác hẳn!<br>
-        Rarity con (di truyền từ cặp này): ${probTxt}${hiT+1>RARITY_CAP?' <span style="color:var(--muted)">(đụng trần Rare)</span>':' ✨'}</p>`;
+      preview=`<p style="font-size:13px;margin-top:8px">Hero trong trứng: <b>49%</b> ${HEROES[a.heroId].name} · <b>49%</b> ${HEROES[b.heroId].name} · <b style="color:var(--purple)">2%</b> 🧬 đột biến ra hero khác hẳn!<br>
+        Rarity TRỨNG (di truyền từ cặp này): ${probTxt}${hiT+1>RARITY_CAP?' <span style="color:var(--muted)">(đụng trần Rare)</span>':' ✨'}
+        ${(a.lvl<BREED_MIN_LVL||b.lvl<BREED_MIN_LVL)?`<br><b style="color:var(--red)">⚠️ Cần cả hai đạt Lv ${BREED_MIN_LVL} (đang Lv ${a.lvl} & Lv ${b.lvl})</b>`:''}</p>`;
     }
     info.innerHTML=`
-      <h4>💞 Breed — 2 hero tạo 1 hero mới</h4>
-      <p style="font-size:13px;color:var(--muted);margin-top:4px">Chọn 2 bố mẹ bên dưới (bố mẹ KHÔNG mất, mỗi bản breed tối đa ${BREED_MAX} lần). Có tỉ lệ nhỏ ra con rarity cao hơn cả bố mẹ!</p>
+      <h4>💞 Breed — 2 hero đẻ 1 quả TRỨNG 🥚</h4>
+      <p style="font-size:13px;color:var(--muted);margin-top:4px">Cần cả bố lẫn mẹ <b>Lv ${BREED_MIN_LVL}+</b> · bố mẹ KHÔNG mất, mỗi bản đẻ tối đa ${BREED_MAX} lần · trứng <b>ấp ${INCUBATE_MIN.join('/')} phút</b> theo lần đẻ rồi nở ở 📦 Kệ Hộp · <b>2% SINH ĐÔI!</b> Có tỉ lệ nhỏ trứng rarity cao hơn cả bố mẹ.</p>
       <p style="font-size:13px;margin-top:6px">Đã chọn: ${names.length?names.join(' + '):'<i>chưa chọn ai</i>'}</p>
       ${preview}
       <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap">
@@ -4660,55 +4724,35 @@ function doRecycle(){
   if(!a||!b)return;
   const outRar=RARITIES[Math.max(rIdx(a.rarity),rIdx(b.rarity))];
   const inIds=[a.heroId,b.heroId];
-  const all=Object.keys(HEROES);
-  const owned=new Set(S.roster.map(i=>i.heroId));
-  const unowned=all.filter(h=>!owned.has(h));
-  let pool;
-  if(unowned.length&&Math.random()<0.7)pool=unowned; // máy ưu tiên nhả hero mới
-  else{pool=all.filter(h=>!inIds.includes(h));if(!pool.length)pool=all}
-  const newId=pool[rnd(0,pool.length-1)];
   S.junk-=500;
   removeInstance(labSel[0]);removeInstance(labSel[1]);
-  const inst=addInstance(newId,outRar);
+  addBox('rec',outRar,{parents:inIds}); // mở ngay được — 70% ưu tiên hero chưa sở hữu lúc mở
   labSel=[];
-  confettiBurst();SFX.breed();feat('recycle');
-  toast(`♻️ Máy lắc lắc, kêu vài tiếng đáng ngại... và nhả ra <b>${HEROES[newId].name}</b> (${RNAME[outRar]})! ${unowned.includes(newId)?'🆕 HERO MỚI!':''}`);
+  SFX.breed();feat('recycle');
+  toast(`♻️ Máy lắc lắc, kêu vài tiếng đáng ngại... và nhả ra một <b>Hộp Tái Chế ${RNAME[outRar]}</b>! Mở ở 📦 Kệ Hộp (tab 🥫 Loot).`);
   renderLab();renderRes();
 }
 function doBreed(){
   if(labSel.length!==2)return;
   const a=instById(labSel[0]),b=instById(labSel[1]);
+  if(a.lvl<BREED_MIN_LVL||b.lvl<BREED_MIN_LVL)
+    return toast(`💞 Cả bố lẫn mẹ phải đạt <b>Lv ${BREED_MIN_LVL}</b> (đang Lv ${a.lvl} & Lv ${b.lvl}). Trẻ con không đẻ trẻ con!`);
   if(a.breeds>=BREED_MAX)return toast(`${HEROES[a.heroId].name} #${a.uid} đã hết lượt breed (${BREED_MAX}/${BREED_MAX}).`);
   if(b.breeds>=BREED_MAX)return toast(`${HEROES[b.heroId].name} #${b.uid} đã hết lượt breed (${BREED_MAX}/${BREED_MAX}).`);
   if(S.junk<BREED_COST.junk)return toast('🪙 Không đủ Junk Coins!');
   if(S.tape<BREED_COST.tape)return toast('🩹 Không đủ băng keo! Khoa học cần băng keo.');
   S.junk-=BREED_COST.junk;S.tape-=BREED_COST.tape;
   a.breeds++;b.breeds++;
-  // 49% bố / 49% mẹ / 2% ĐỘT BIẾN ra hero khác hẳn
-  const hr=Math.random();let childHero,mutated=false;
-  if(hr<0.02){
-    const pool=Object.keys(HEROES).filter(h=>h!==a.heroId&&h!==b.heroId);
-    if(pool.length){childHero=pool[rnd(0,pool.length-1)];mutated=true}
-    else childHero=a.heroId;
-  }else childHero=hr<0.51?a.heroId:b.heroId;
-  // Rarity con — di truyền gene: 45% bậc bố · 45% bậc mẹ · 8% max+1 · 2% max+2
+  // Rarity TRỨNG roll ngay (gene 45/45/8/2) — hiện trên vỏ; hero bên trong roll lúc nở
   const tA=rIdx(a.rarity),tB=rIdx(b.rarity),hiT=Math.max(tA,tB);
   const rr=Math.random();
   let t=rr<0.45?tA:rr<0.90?tB:rr<0.98?hiT+1:hiT+2;
-  const lucky=rr>=0.90;
-  const capped=t>RARITY_CAP;if(capped)t=RARITY_CAP;
-  const child=addInstance(childHero,RARITIES[t]);
+  if(t>RARITY_CAP)t=RARITY_CAP;
+  const idx=Math.min(INCUBATE_MIN.length-1,Math.max(a.breeds,b.breeds)-1);
+  const egg=addBox('egg',RARITIES[t],{parents:[a.heroId,b.heroId],ready:Date.now()+INCUBATE_MIN[idx]*60000});
   SFX.breed();feat('breed');
   labSel=[];renderLab();renderRes();
-  if((lucky&&!capped)||mutated)confettiBurst();
-  $('res-modal').innerHTML=`
-    <div class="result">
-      ${sprite(childHero,110)}
-      <div class="rt ${lucky||mutated?'win':''}" style="font-size:24px;margin-top:6px">${mutated?'🧬 ĐỘT BIẾN!!':lucky?'🎰 BREED RA HÀNG XỊN!':'💞 BREED THÀNH CÔNG!'}</div>
-      <div class="quip">Chào đời: <b>${HEROES[childHero].name}</b> #${child.uid} — ${rBadge(child.rarity)}${mutated?'<br>🧬 Không giống bố, chẳng giống mẹ — khoa học vùng đất hoang là thế!':''}${capped?'<br>🔒 (đáng lẽ cao hơn nữa, nhưng Epic mở ở bản sau!)':''}<br>"${HEROES[childHero].quote}"</div>
-      <button class="btn" onclick="closeModal('res-bg')">Tuyệt vời! 🎉</button>
-    </div>`;
-  openModal('res-bg');
+  toast(`🥚 Trứng <b>${RNAME[egg.rar]}</b> đang ấp — nở sau ~${INCUBATE_MIN[idx]} phút. Xem ở 📦 Kệ Hộp (tab 🥫 Loot)!`);
 }
 function doEnhance(){
   if(labSel.length!==ENH_NEED)return;
@@ -4731,6 +4775,111 @@ function doEnhance(){
       <button class="btn" onclick="closeModal('res-bg')">Mạnh hẳn lên! 💪</button>
     </div>`;
   openModal('res-bg');
+}
+
+/* ================= HỘP HERO: ghép mảnh / trứng lab / hộp tái chế ================= */
+const BOX_VI={std:'Hộp Hero',egg:'Trứng Lab',rec:'Hộp Tái Chế'};
+const BOX_E={std:'📦',egg:'🥚',rec:'♻️'};
+function addBox(t,rar,extra={}){
+  const b={uid:S.nextBoxUid++,t,rar,ready:0,...extra};
+  S.boxes.push(b);return b;
+}
+function boxReady(b){return !b.ready||Date.now()>=b.ready}
+function buildBoxFromPieces(){
+  if(S.pieces<PIECES_PER_BOX)return toast(`🧩 Cần ${PIECES_PER_BOX} mảnh hộp (đang có ${S.pieces}). Mảnh rơi từ 🥫 lon, nhiệm vụ, hầm T5, 🦫 Tiệm.`);
+  S.pieces-=PIECES_PER_BOX;
+  addBox('std','common');
+  SFX.buy();toast('📦 Ghép xong 1 <b>Hộp Hero</b>! Bấm vào hộp để mở — được CHỌN 1 trong 3.');
+  renderLoot();renderRes();
+}
+function openBox(uid){
+  const b=S.boxes.find(x=>x.uid===uid);if(!b)return;
+  if(!boxReady(b)){
+    const mins=Math.max(1,Math.ceil((b.ready-Date.now())/60000));
+    return toast(`🥚 Trứng chưa nở — còn ~${mins} phút. Kiên nhẫn, khoa học cần thời gian ấp.`);
+  }
+  if(b.t==='std'){ // mở ra 3 ứng viên — CHỌN 1
+    const ids=Object.keys(HEROES),picks=[];
+    while(picks.length<3&&picks.length<ids.length){
+      const h=ids[rnd(0,ids.length-1)];if(!picks.includes(h))picks.push(h);
+    }
+    $('hd-modal').innerHTML=`
+      <button class="close" onclick="closeModal('hd-bg')">✕</button>
+      <h3>📦 Hộp bật nắp... 3 ứng viên nhảy ra!</h3>
+      <p class="sub" style="margin-top:4px">Chọn MỘT người gia nhập (bậc ${RNAME[b.rar]}). Hai người còn lại chui về hộp.</p>
+      <div class="hgrid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">${picks.map(h=>`
+        <div class="hcard" onclick="pickFromBox(${b.uid},'${h}')">
+          ${sprite(h,90)}<h4>${HEROES[h].name}</h4>
+          <span class="tag ${HEROES[h].cls}">${CLS_VI[HEROES[h].cls]}</span>
+          <div class="q">${S.roster.some(i=>i.heroId===h)?'Đã có '+S.roster.filter(i=>i.heroId===h).length+' bản':'🆕 CHƯA SỞ HỮU'}</div>
+        </div>`).join('')}</div>`;
+    openModal('hd-bg');
+    return;
+  }
+  // egg / rec: roll tại chỗ
+  let outs=[];
+  if(b.t==='egg'){
+    const roll=()=>{const r=Math.random();
+      if(r<0.02){const pool=Object.keys(HEROES).filter(h=>!b.parents.includes(h));
+        if(pool.length)return{h:pool[rnd(0,pool.length-1)],mut:true}}
+      return{h:r<0.51?b.parents[0]:b.parents[1],mut:false}};
+    outs.push(roll());
+    if(Math.random()<TWIN_CHANCE)outs.push(roll()); // 👯 SINH ĐÔI!
+  }else{ // rec: 70% ưu tiên hero chưa sở hữu
+    const all=Object.keys(HEROES);
+    const owned=new Set(S.roster.map(i=>i.heroId));
+    const unowned=all.filter(h=>!owned.has(h));
+    let pool=(unowned.length&&Math.random()<0.7)?unowned:all.filter(h=>!(b.parents||[]).includes(h));
+    if(!pool.length)pool=all;
+    outs.push({h:pool[rnd(0,pool.length-1)],mut:false});
+  }
+  S.boxes=S.boxes.filter(x=>x.uid!==uid);
+  const insts=outs.map(o=>addInstance(o.h,b.rar));
+  confettiBurst();SFX.breed();
+  const twin=outs.length>1,mut=outs.some(o=>o.mut);
+  $('res-modal').innerHTML=`
+    <div class="result">
+      <div style="display:flex;justify-content:center;gap:10px">${outs.map(o=>sprite(o.h,100)).join('')}</div>
+      <div class="rt win" style="font-size:24px;margin-top:6px">${twin?'👯 SINH ĐÔI!!':mut?'🧬 ĐỘT BIẾN!!':b.t==='egg'?'🐣 TRỨNG NỞ!':'♻️ MÁY NHẢ HÀNG!'}</div>
+      <div class="quip">${outs.map((o,i)=>`<b>${HEROES[o.h].name}</b> #${insts[i].uid} — ${rBadge(b.rar)}`).join('<br>')}
+        ${mut?'<br>🧬 Không giống bố, chẳng giống mẹ — khoa học vùng đất hoang là thế!':''}
+        ${twin?'<br>👯 Một trứng HAI hero — xác suất 2%, hôm nay là ngày của bạn!':''}</div>
+      <button class="btn" onclick="closeModal('res-bg')">Tuyệt vời! 🎉</button>
+    </div>`;
+  openModal('res-bg');
+  renderLoot();renderRes();
+}
+function pickFromBox(uid,heroId){
+  const b=S.boxes.find(x=>x.uid===uid);if(!b||!HEROES[heroId])return;
+  S.boxes=S.boxes.filter(x=>x.uid!==uid);
+  const inst=addInstance(heroId,b.rar);
+  closeModal('hd-bg');
+  confettiBurst();SFX.levelup();
+  $('res-modal').innerHTML=`
+    <div class="result">
+      ${sprite(heroId,110)}
+      <div class="rt win" style="font-size:24px;margin-top:6px">📦 CHÀO LÍNH MỚI!</div>
+      <div class="quip"><b>${HEROES[heroId].name}</b> #${inst.uid} — ${rBadge(b.rar)}<br>"${HEROES[heroId].quote}"</div>
+      <button class="btn" onclick="closeModal('res-bg')">Vào đội! 🎉</button>
+    </div>`;
+  openModal('res-bg');
+  renderLoot();renderRes();
+}
+function renderLoot(){
+  const g=$('boxshelf-list');if(!g)return;
+  $('pieces-bar').innerHTML=`🧩 Mảnh hộp: <b>${S.pieces}</b>/${PIECES_PER_BOX}
+    <span class="shardbar" style="display:block;height:10px;margin-top:5px"><i style="width:${Math.min(100,S.pieces/PIECES_PER_BOX*100)}%"></i></span>`;
+  const bb=$('buildbox-btn');if(bb)bb.disabled=S.pieces<PIECES_PER_BOX;
+  g.innerHTML=S.boxes.length?S.boxes.map(b=>{
+    const ready=boxReady(b);
+    const mins=ready?0:Math.max(1,Math.ceil((b.ready-Date.now())/60000));
+    return `<div class="boxcard ${ready?'bxready':''}" style="border-color:var(--r-${b.rar==='legendary'?'leg':b.rar})" onclick="openBox(${b.uid})" title="${BOX_VI[b.t]}">
+      <span class="bx-e">${BOX_E[b.t]}</span>
+      <b>${BOX_VI[b.t]}</b>
+      <span class="rar-${b.rar}" style="font-size:10px;font-weight:900;letter-spacing:.06em">${RNAME[b.rar].toUpperCase()}</span>
+      <span class="bx-st">${ready?'✨ MỞ NGAY':'⏳ nở sau ~'+mins+' phút'}</span>
+    </div>`}).join('')
+    :'<p class="demonote" style="grid-column:1/-1">Kệ trống. Ghép hộp từ 🧩 mảnh, hoặc 💞 đẻ trứng ở Lab.</p>';
 }
 
 /* ================= MISSIONS ================= */
@@ -4757,6 +4906,7 @@ function claimMission(id){
   S.daily.claimed[id]=true;SFX.coin();
   if(m.rw.junk)S.junk+=m.rw.junk;if(m.rw.juice)S.juice+=m.rw.juice;
   if(m.rw.tape)S.tape+=m.rw.tape;if(m.rw.cans)S.cans+=m.rw.cans;
+  if(m.rw.pieces)S.pieces+=m.rw.pieces;
   toast(`✅ ${m.t} — ${m.rwTxt}. Bạn sống sót thêm một ngày nữa. Tuyệt.`);
   renderMissions();
 }
@@ -4779,8 +4929,8 @@ const TUT=[
   {e:'⚔️',msg:'Đánh <b>Junkyard District</b> (5 ⛽). Trận đấu hoàn toàn tự động — chiến thuật nằm ở xếp đội!',sel:'#tut-junkyard'},
   {e:'🏆',msg:'Thắng rồi! Vào tab <b>🦸 Heroes</b> để nâng cấp đội bằng 🪙 vừa nhặt.',sel:'#nb-heroes'},
   {e:'⬆️',msg:'Bấm vào một hero rồi bấm <b>⬆️ Nâng Lv</b> — mỗi level +9% chỉ số.',sel:'#hero-grid .hcard'},
-  {e:'🥫',msg:'Mở tab <b>🥫 Loot</b> — đồ hộp bí ẩn chứa 🧩 mảnh hero mới.',sel:'#nb-loot'},
-  {e:'🧩',msg:'Bấm vào lon để mở! Gom đủ <b>10 🧩 cùng loại</b> là nhận được hero mới.',sel:'#thecan'},
+  {e:'🥫',msg:'Mở tab <b>🥫 Loot</b> — lon bí ẩn chứa 🧩 mảnh hộp hero.',sel:'#nb-loot'},
+  {e:'🧩',msg:'Bấm vào lon để mở! Gom <b>10 🧩</b> ghép Hộp Hero — mở hộp được CHỌN 1 trong 3 hero.',sel:'#thecan'},
   {e:'✅',msg:'Cuối cùng: tab <b>✅ Việc</b> — làm nhiệm vụ ngày để nhận rương thưởng!',sel:'#nb-missions'},
 ];
 let coachEl=null;
@@ -4845,7 +4995,7 @@ function saveFeedback(){
   fbKeep();
   S.tele.fb={q1:fbTmp.q1||null,q2:fbTmp.q2||null,q3:fbTmp.q3||null,like:fbTmp.like||'',hate:fbTmp.hate||'',ts:Date.now()};
   scheduleSave();closeModal('hd-bg');
-  toast('📝 Đã lưu góp ý — cảm ơn! Nhớ bấm 📤 xuất mã gửi cho người tổ chức.');
+  toast('📝 Đã lưu góp ý — cảm ơn! Nhớ bấm 📤 xuất gửi cho người tổ chức!');
 }
 function buildExport(){
   teleInit();
@@ -4881,7 +5031,8 @@ function saveGame(){
   try{
     localStorage.setItem(SAVE_KEY,JSON.stringify({ver:1,ts:Date.now(),day:new Date().toDateString(),
       gas:S.gas,maxGas:S.maxGas,junk:S.junk,juice:S.juice,tape:S.tape,cans:S.cans,
-      plv:S.plv,xp:S.xp,roster:S.roster,nextUid:S.nextUid,shards:S.shards,
+      plv:S.plv,xp:S.xp,roster:S.roster,nextUid:S.nextUid,
+      pieces:S.pieces,boxes:S.boxes,nextBoxUid:S.nextBoxUid,unlocked:S.unlocked,
       team:S.team,inv:S.inv,beaten:S.beaten,daily:S.daily,
       tower:S.tower,seasonStart:S.seasonStart,seasonNo:S.seasonNo,seasonStats:S.seasonStats,trophies:S.trophies,arena:S.arena,tut:S.tut,sfx:S.sfx,tele:S.tele}));
   }catch(e){/* private mode v.v. — bỏ qua, game vẫn chạy in-memory */}
@@ -4894,9 +5045,13 @@ function loadGame(){
     const d=JSON.parse(raw);
     if(d.ver!==1||!Array.isArray(d.roster)||!d.roster.length)return false;
     Object.assign(S,{gas:d.gas,maxGas:d.maxGas,junk:d.junk,juice:d.juice,tape:d.tape,cans:d.cans,
-      plv:d.plv,xp:d.xp,roster:d.roster,nextUid:d.nextUid,shards:d.shards||{},
+      plv:d.plv,xp:d.xp,roster:d.roster,nextUid:d.nextUid,
       team:d.team,inv:d.inv||{},beaten:d.beaten||{},daily:d.daily});
-    Object.keys(HEROES).forEach(id=>{if(S.shards[id]==null)S.shards[id]=0}); // hero thêm sau save
+    // v2.34: hệ HỘP thay mảnh-từng-hero — save cũ quy đổi tổng mảnh 1:1, không ai mất gì
+    S.pieces=d.pieces!=null?d.pieces:Object.values(d.shards||{}).reduce((a,b)=>a+(b||0),0);
+    S.boxes=d.boxes||[];
+    S.nextBoxUid=d.nextBoxUid||1;
+    S.unlocked=d.unlocked||{};
     S.roster.forEach(i=>{if(i.breeds==null)i.breeds=0});
     S.roster.forEach(i=>{ // v2.10: equip 1 ô cũ -> gear 3 ô
       if(!i.gear)i.gear={weapon:null,armor:null,hat:null};
@@ -4913,6 +5068,8 @@ function loadGame(){
     S.tut=d.tut!=null?d.tut:99; // save cũ (trước khi có tutorial): coi như đã học xong
     S.sfx=d.sfx!=null?d.sfx:true;
     S.tele=d.tele||null; // teleInit ở init sẽ backfill nếu thiếu
+    checkUnlocks(true); // backfill mở khóa từ tiến độ hiện có (im lặng)
+    if(S.seasonNo>1||S.plv>=10)Object.keys(UNLOCK_DEFS).forEach(k=>S.unlocked[k]=true); // người chơi kỳ cựu: mở hết
     if(S.daily){ // backfill field daily cho save cũ
       if(S.daily.shop==null)S.daily.shop={};
       if(S.daily.arena==null)S.daily.arena=0;
@@ -4951,10 +5108,14 @@ if(LOADED){ // người chơi cũ: bỏ qua intro
   $('intro-bg').classList.remove('open');
   setTimeout(()=>toast('💾 Đã tải tiến trình — mừng trở lại vùng đất hoang!'),300);
 }
-setInterval(()=>{if(S.gas<S.maxGas){S.gas=Math.min(S.maxGas,S.gas+1);renderRes()}},10000);
+setInterval(()=>{
+  if(S.gas<S.maxGas){S.gas=Math.min(S.maxGas,S.gas+1);renderRes()}
+  if($('v-loot').classList.contains('on'))renderLoot(); // cập nhật đồng hồ ấp trứng
+},10000);
 $('intro-heroes').innerHTML=['spam','noodle','intern'].map(id=>
   `<div style="text-align:center">${sprite(id,72)}<br><b style="font-size:12px">${HEROES[id].name}</b><br><span style="font-size:11px;color:var(--muted)">${CLS_VI[HEROES[id].cls]}</span></div>`).join('');
 renderRes();renderHub();renderTeam();renderMap();renderTut();renderSfxBtn();
+checkUnlocks(true);renderNavLocks();
 document.addEventListener('pointerdown',()=>{if(S.sfx)ac()},{once:true}); // autoplay policy: tạo AudioContext sau cử chỉ đầu tiên
 /* telemetry playtest: đếm phiên + ngày chơi */
 teleInit();S.tele.sessions++;S.tele.days[new Date().toDateString()]=1;scheduleSave();
