@@ -916,9 +916,7 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
       <div id="hub-team"></div>
      </div>
     </div>
-    <p class="demonote">🎁 <b>ĐỢT TEST CÓ THƯỞNG:</b> TOP Bảng Xếp Hạng Online cuối đợt nhận <b>10$ (~250K)</b> — vào 🎭 Arena đăng ký tên để lên sóng!
-      · ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé!
-      · 📝 Góp ý: nút tròn bên trái màn hình.</p>
+    <p class="demonote">🎁 <b>GIẢI THƯỞNG 100$:</b> 20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 <b>— vào 🎭 Arena đăng ký tên để lên sóng!</b> <span>· ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.</span></p>
   </section>
 
   <section class="view" id="v-heroes">
@@ -3289,7 +3287,7 @@ function openArena(){
     <p class="sub">PvP kiểu lịch sự: đánh BẢN SAO đội người khác — không ai phải thức canh điện thoại.</p>
     <div class="panel" style="margin:10px 0;border-color:var(--cyan)">
       <b style="color:var(--cyan)">🌐 ĐẤU TRƯỜNG ONLINE</b>
-      <p style="margin:4px 0 0;font-size:12px;color:var(--yellow)">🎁 <b>SỰ KIỆN:</b> TOP BXH cuối đợt test nhận <b>10$ (~250K)</b> — ngày chốt xem ở bài đăng!</p>
+      <p style="margin:4px 0 0;font-size:12px;color:var(--yellow)">🎁 <b>GIẢI 100$:</b> 20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — ngày chốt xem ở bài đăng!</p>
       ${S.net?`
       <p class="sub" style="margin:4px 0 6px">Bạn là <b>${S.net.name}</b> · 🏆 <b style="color:var(--yellow)">${S.net.tro!=null?S.net.tro:1000}</b> cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!</p>
       <div id="net-opps" style="margin:6px 0"><p class="sub">📡 Đang dò sóng tìm đối thủ…</p></div>
@@ -5365,7 +5363,8 @@ function openFeedback(){
   $('hd-modal').innerHTML=`
     <button class="close" onclick="fbKeep();closeModal('hd-bg')">✕</button>
     <h3>📝 Góp ý nhanh (1 phút)</h3>
-    <p class="sub" style="margin-top:4px">Trả lời lúc nào cũng được, sửa lại được. Nhớ bấm 📤 gửi dữ liệu khi xong đợt chơi nhé!</p>
+    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 Mỗi góp ý có nội dung = 1 vé bốc thăm <b>10$</b> (4 giải cuối đợt)!</p>
+    <p class="sub" style="margin-top:4px">Trả lời lúc nào cũng được, sửa lại được — dữ liệu tự gửi về máy chủ.</p>
     ${L('q1','😄 Game có VUI không?')}
     ${L('q2','🧠 Game có DỄ HIỂU không?')}
     ${L('q3','🔁 Có MUỐN CHƠI TIẾP ngày mai không?')}
@@ -5380,7 +5379,8 @@ function saveFeedback(){
   fbKeep();
   S.tele.fb={q1:fbTmp.q1||null,q2:fbTmp.q2||null,q3:fbTmp.q3||null,like:fbTmp.like||'',hate:fbTmp.hate||'',ts:Date.now()};
   scheduleSave();closeModal('hd-bg');
-  toast('📝 Đã lưu góp ý — cảm ơn! Nhớ bấm 📤 xuất gửi cho người tổ chức!');
+  teleUpload(); // góp ý = thứ quý nhất — đẩy lên server ngay, không chờ hết phiên
+  toast('📝 Đã lưu góp ý — cảm ơn! Bạn đã có vé bốc thăm 10$ cuối đợt 🎁');
 }
 function buildExport(){
   teleInit();
@@ -5517,6 +5517,22 @@ ui:{
 'SỰ KIỆN:':'EVENT:','SỰ KIỆN ĐANG CHẠY:':'EVENT LIVE NOW:','TOP BXH cuối đợt test nhận':'TOP of the leaderboard at the end of the test wins',
 '— ngày chốt xem ở bài đăng!':'— see the announcement post for the end date!','— leo đi chứ còn chờ gì!':'— start climbing!',
 'ĐỢT TEST CÓ THƯỞNG:':'PLAYTEST WITH PRIZES:','TOP Bảng Xếp Hạng Online cuối đợt nhận':'TOP of the Online Leaderboard at the end wins',
+'GIẢI THƯỞNG 100$:':'$100 PRIZE POOL:','GIẢI 100$:':'$100 PRIZES:','GIẢI 100$ ĐANG CHẠY:':'$100 EVENT LIVE:',
+'20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝':'$20 for leaderboard TOP 1 · $40 raffled to 4 players · $40 raffled to 4 feedback writers 📝',
+'— vào 🎭 Arena đăng ký tên để lên sóng!':'— open 🎭 Arena and register a name to join!',
+'· ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.':'· ⛽ 1 Gas/7 min (official pacing) · 💾 Auto-saves in this browser — don\'t clear your history! · 📝 Feedback: round button on the left.',
+'20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — ngày chốt xem ở bài đăng!':'$20 TOP 1 · $40 raffled to 4 players · $40 raffled to 4 feedback writers 📝 — end date in the announcement post!',
+'20$ TOP 1 BXH + bốc thăm 80$ cho người chơi & người góp ý!':'$20 for TOP 1 + $80 raffled to players & feedback writers!',
+'🎁 GIẢI 100$: 20$ cho TOP 1 cuối đợt + bốc thăm 80$ — leo đi chứ còn chờ gì!':'🎁 $100 PRIZES: $20 for TOP 1 at the end + $80 in raffles — start climbing!',
+'🎁 Mỗi góp ý có nội dung = 1 vé bốc thăm':'🎁 Every real piece of feedback = 1 raffle ticket for','(4 giải cuối đợt)!':'($10 × 4 winners at the end)!',
+'📝 Góp ý nhanh (1 phút)':'📝 Quick feedback (1 minute)','Trả lời lúc nào cũng được, sửa lại được — dữ liệu tự gửi về máy chủ.':'Answer anytime, edit anytime — data uploads automatically.',
+'😄 Game có VUI không?':'😄 Is the game FUN?','🧠 Game có DỄ HIỂU không?':'🧠 Is the game EASY TO UNDERSTAND?','🔁 Có MUỐN CHƠI TIẾP ngày mai không?':'🔁 Would you PLAY AGAIN tomorrow?',
+'👍 Thích nhất điều gì?':'👍 What did you like most?','👎 Khó chịu nhất điều gì?':'👎 What annoyed you most?','💾 Lưu góp ý':'💾 Save feedback','1 = tệ · 5 = tuyệt':'1 = bad · 5 = great',
+'📝 Đã lưu góp ý — cảm ơn! Bạn đã có vé bốc thăm 10$ cuối đợt 🎁':'📝 Feedback saved — thanks! You\'ve got a ticket for the $10 raffle 🎁',
+'📤 Gửi dữ liệu chơi thử':'📤 Send playtest data','Từ bản này số liệu chơi (số trận, tiến độ, góp ý — KHÔNG thông tin cá nhân)':'In this build, play data (battles, progress, feedback — NO personal info)',
+'tự gửi về máy chủ':'uploads automatically','rồi. Nút này chỉ là dự phòng khi mất mạng: copy mã gửi tay cho người tổ chức.':'. This button is just a backup for offline cases: copy the code and send it manually.',
+'📋 Copy mã':'📋 Copy code','💡 Bạn chưa điền 📝 góp ý — điền trước khi gửi thì quý lắm đó!':'💡 You haven\'t filled in 📝 feedback yet — it would mean a lot!',
+'📋 Đã copy! Dán vào tin nhắn gửi đi nhé.':'📋 Copied! Paste it into a message.','📋 Đã copy!':'📋 Copied!',
 'lượt hôm nay (miễn phí gas)':'tries today (gas-free)','— Điểm:':'— Score:',
 '📦 Thùng Các-tông':'📦 Cardboard Box','🥫 Đồng Nát':'🥫 Scrap Tin','🩹 Băng Keo Bạc':'🩹 Silver Tape','🪙 Vàng Phế Liệu':'🪙 Junk Gold','💎 Kim Cương Vỡ':'💎 Cracked Diamond',
 '🟢 CỬA THẮNG: NGON':'🟢 WIN CHANCE: LOOKING GOOD','🟠 NĂM ĂN NĂM THUA':'🟠 COIN FLIP','🔴 CỬA THẮNG: THẤP':'🔴 WIN CHANCE: LOW','⚫ GẦN NHƯ KHÔNG CỬA':'⚫ BASICALLY HOPELESS',
@@ -5941,6 +5957,18 @@ ui:{
 'SỰ KIỆN:':'活动：','SỰ KIỆN ĐANG CHẠY:':'活动进行中：','TOP BXH cuối đợt test nhận':'测试结束时排行榜TOP将获得',
 '— ngày chốt xem ở bài đăng!':'——截止日期见公告帖！','— leo đi chứ còn chờ gì!':'——还等什么，开爬！',
 'ĐỢT TEST CÓ THƯỞNG:':'有奖测试：','TOP Bảng Xếp Hạng Online cuối đợt nhận':'测试结束时在线排行榜TOP将获得',
+'GIẢI THƯỞNG 100$:':'奖池 100$：','GIẢI 100$:':'100$ 奖池：','GIẢI 100$ ĐANG CHẠY:':'100$ 活动进行中：',
+'20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝':'排行榜TOP1得20$ · 40$抽4名玩家 · 40$抽4名反馈作者 📝',
+'— vào 🎭 Arena đăng ký tên để lên sóng!':'——打开 🎭 竞技场注册昵称参战！',
+'· ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.':'· ⛽ 1油/7分钟（正式版节奏）· 💾 自动存档在本浏览器——别清浏览记录！· 📝 反馈：左侧圆形按钮。',
+'20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — ngày chốt xem ở bài đăng!':'TOP1得20$ · 40$抽4名玩家 · 40$抽4名反馈作者 📝 ——截止日期见公告帖！',
+'20$ TOP 1 BXH + bốc thăm 80$ cho người chơi & người góp ý!':'排行榜TOP1得20$ + 80$抽奖给玩家和反馈作者！',
+'🎁 GIẢI 100$: 20$ cho TOP 1 cuối đợt + bốc thăm 80$ — leo đi chứ còn chờ gì!':'🎁 100$奖池：结束时TOP1得20$ + 80$抽奖——还等什么，开爬！',
+'🎁 Mỗi góp ý có nội dung = 1 vé bốc thăm':'🎁 每条有内容的反馈 = 1张抽奖券，奖金','(4 giải cuối đợt)!':'（结束时抽4名）！',
+'📝 Góp ý nhanh (1 phút)':'📝 快速反馈（1分钟）','Trả lời lúc nào cũng được, sửa lại được — dữ liệu tự gửi về máy chủ.':'随时回答、随时修改——数据自动上传。',
+'😄 Game có VUI không?':'😄 游戏好玩吗？','🧠 Game có DỄ HIỂU không?':'🧠 游戏容易上手吗？','🔁 Có MUỐN CHƠI TIẾP ngày mai không?':'🔁 明天还想继续玩吗？',
+'👍 Thích nhất điều gì?':'👍 最喜欢什么？','👎 Khó chịu nhất điều gì?':'👎 最不爽什么？','💾 Lưu góp ý':'💾 保存反馈','1 = tệ · 5 = tuyệt':'1 = 差 · 5 = 棒',
+'📝 Đã lưu góp ý — cảm ơn! Bạn đã có vé bốc thăm 10$ cuối đợt 🎁':'📝 反馈已保存——谢谢！你已获得10$抽奖券 🎁',
 'lượt hôm nay (miễn phí gas)':'次（今日 · 不耗油）','— Điểm:':'— 积分：',
 '📦 Thùng Các-tông':'📦 纸箱段位','🥫 Đồng Nát':'🥫 废铁段位','🩹 Băng Keo Bạc':'🩹 银胶带段位','🪙 Vàng Phế Liệu':'🪙 废品黄金段位','💎 Kim Cương Vỡ':'💎 碎钻段位',
 '🟢 CỬA THẮNG: NGON':'🟢 胜率：稳','🟠 NĂM ĂN NĂM THUA':'🟠 五五开','🔴 CỬA THẮNG: THẤP':'🔴 胜率：低','⚫ GẦN NHƯ KHÔNG CỬA':'⚫ 几乎没戏',
@@ -6066,6 +6094,18 @@ ui:{
 'SỰ KIỆN:':'イベント：','SỰ KIỆN ĐANG CHẠY:':'イベント開催中：','TOP BXH cuối đợt test nhận':'テスト終了時のランキングTOPに',
 '— ngày chốt xem ở bài đăng!':'——締切日は告知ポストで！','— leo đi chứ còn chờ gì!':'——さあ、登れ！',
 'ĐỢT TEST CÓ THƯỞNG:':'賞金付きテスト：','TOP Bảng Xếp Hạng Online cuối đợt nhận':'テスト終了時のオンラインランキングTOPに',
+'GIẢI THƯỞNG 100$:':'賞金総額 100$：','GIẢI 100$:':'100$ 賞金：','GIẢI 100$ ĐANG CHẠY:':'100$ イベント開催中：',
+'20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝':'ランキングTOP1に20$ · 40$をプレイヤー4名に抽選 · 40$をフィードバック投稿者4名に抽選 📝',
+'— vào 🎭 Arena đăng ký tên để lên sóng!':'——🎭 アリーナで名前を登録して参戦！',
+'· ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.':'· ⛽ 1ガス/7分（製品版ペース）· 💾 このブラウザに自動セーブ——履歴を消さないで！· 📝 フィードバック：左の丸ボタン。',
+'20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — ngày chốt xem ở bài đăng!':'TOP1に20$ · 40$をプレイヤー4名に抽選 · 40$をフィードバック4名に抽選 📝 ——締切日は告知ポストで！',
+'20$ TOP 1 BXH + bốc thăm 80$ cho người chơi & người góp ý!':'TOP1に20$ + 80$をプレイヤー＆フィードバック投稿者に抽選！',
+'🎁 GIẢI 100$: 20$ cho TOP 1 cuối đợt + bốc thăm 80$ — leo đi chứ còn chờ gì!':'🎁 賞金100$：終了時TOP1に20$ + 抽選80$——さあ、登れ！',
+'🎁 Mỗi góp ý có nội dung = 1 vé bốc thăm':'🎁 内容のあるフィードバック1件 = 抽選券1枚、賞金','(4 giải cuối đợt)!':'（終了時に4名抽選）！',
+'📝 Góp ý nhanh (1 phút)':'📝 クイックフィードバック（1分）','Trả lời lúc nào cũng được, sửa lại được — dữ liệu tự gửi về máy chủ.':'いつ答えても、後から直してもOK——データは自動送信。',
+'😄 Game có VUI không?':'😄 ゲームは楽しい？','🧠 Game có DỄ HIỂU không?':'🧠 わかりやすい？','🔁 Có MUỐN CHƠI TIẾP ngày mai không?':'🔁 明日もまた遊びたい？',
+'👍 Thích nhất điều gì?':'👍 一番良かったところは？','👎 Khó chịu nhất điều gì?':'👎 一番イラッとしたところは？','💾 Lưu góp ý':'💾 保存する','1 = tệ · 5 = tuyệt':'1 = ダメ · 5 = 最高',
+'📝 Đã lưu góp ý — cảm ơn! Bạn đã có vé bốc thăm 10$ cuối đợt 🎁':'📝 保存しました——ありがとう！10$抽選券をゲット 🎁',
 'lượt hôm nay (miễn phí gas)':'回（本日・ガス無料）','— Điểm:':'— スコア：',
 '📦 Thùng Các-tông':'📦 ダンボール級','🥫 Đồng Nát':'🥫 スクラップ級','🩹 Băng Keo Bạc':'🩹 銀テープ級','🪙 Vàng Phế Liệu':'🪙 ガラクタゴールド級','💎 Kim Cương Vỡ':'💎 ヒビ割れダイヤ級',
 '🟢 CỬA THẮNG: NGON':'🟢 勝率：イケる','🟠 NĂM ĂN NĂM THUA':'🟠 五分五分','🔴 CỬA THẮNG: THẤP':'🔴 勝率：低い','⚫ GẦN NHƯ KHÔNG CỬA':'⚫ ほぼ無理',
@@ -6179,7 +6219,7 @@ function openNetJoin(){
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>🌐 THAM GIA BXH ONLINE</h3>
-    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 <b>SỰ KIỆN ĐANG CHẠY:</b> TOP BXH cuối đợt test nhận <b>10$ (~250K)</b>!</p>
+    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 <b>GIẢI 100$ ĐANG CHẠY:</b> 20$ TOP 1 BXH + bốc thăm 80$ cho người chơi & người góp ý!</p>
     <p class="sub">Chọn tên hiển thị (2–14 ký tự). Tên sẽ nằm trên bảng xếp hạng TOÀN CẦU — chọn tên ngầu vào.</p>
     <input id="net-name" maxlength="14" placeholder="VD: TrùmBãiRác" style="width:100%;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--bg3);color:var(--text);font-family:inherit;font-size:15px;margin:8px 0">
     <button class="btn cy" style="width:100%" onclick="netRegister()">🚀 Lên sóng!</button>
@@ -6245,7 +6285,7 @@ async function netPvpReport(oid,win){
 async function openNetBoard(){
   $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>🌍 BXH ONLINE — TOÀN CẦU</h3>
-    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 TOP BXH cuối đợt test nhận <b>10$ (~250K)</b> — leo đi chứ còn chờ gì!</p>
+    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 GIẢI 100$: 20$ cho TOP 1 cuối đợt + bốc thăm 80$ — leo đi chứ còn chờ gì!</p>
     <p class="sub" id="net-bd">📡 Đang tải bảng xếp hạng…</p><div id="net-rows"></div>
     <button class="btn" style="width:100%;margin-top:10px" onclick="openArena()">← Về Arena</button>`;
   openModal('hd-bg');
