@@ -153,8 +153,10 @@ h2.sec{font-size:22px;font-weight:900;margin:18px 2px 4px;letter-spacing:.3px}
 .skillbox p{font-size:13px;color:var(--muted);margin-top:3px}
 .trait{border-color:rgba(179,107,255,.5)}
 .trait h5{color:var(--purple)}
-.hd-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-.hd-actions .btn{flex:1;min-width:140px}
+.hd-actions{display:flex;gap:8px;margin-top:14px}
+.hd-actions .btn{flex:1;min-width:0;padding:9px 6px;font-size:13px;border-radius:12px;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.hd-actions .btn small{display:block;font-size:10.5px;font-weight:800;opacity:.85;margin-top:2px}
 
 /* ---------- map ---------- */
 .mapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:12px;margin-top:12px}
@@ -2763,9 +2765,9 @@ function openHero(uid){
       <p class="demonote" style="margin:2px 0 0">Chế thêm tại 🩹 Xưởng Băng Keo.</p>
     </div>
     <div class="hd-actions">
-      <button class="btn" onclick="upgradeHero(${uid})" ${inst.lvl>=LVL_CAP()?'disabled':''}>⬆️ Nâng Lv ${inst.lvl}→${inst.lvl+1}<br><small>${inst.lvl>=LVL_CAP()?`🔒 trần Lv ${LVL_CAP()} (cấp tài khoản +4)`:`<span style="${S.junk<upCost(uid)?'color:#ff8a96':''}">${fmt(upCost(uid))} 🪙</span>`}</small></button>
-      <button class="btn cy" onclick="upgradeSkill(${uid})">💥 Nâng skill Lv ${inst.skill}→${inst.skill+1}<br><small><span style="${S.juice<skillCost(uid)?'color:#ff8a96':''}">${skillCost(uid)} 🔋</span></small></button>
-      <button class="btn pu" onclick="toggleTeam(${uid})">${inTeam?'➖ Rời đội hình':'➕ Vào đội hình'}</button>
+      <button class="btn" onclick="upgradeHero(${uid})" ${inst.lvl>=LVL_CAP()?'disabled':''}>⬆️ Lv ${inst.lvl}→${inst.lvl+1}<small>${inst.lvl>=LVL_CAP()?`🔒 trần Lv ${LVL_CAP()}`:`<span style="${S.junk<upCost(uid)?'color:#7a1f1f':''}">${fmt(upCost(uid))} 🪙</span>`}</small></button>
+      <button class="btn cy" onclick="upgradeSkill(${uid})">💥 Skill ${inst.skill}→${inst.skill+1}<small><span style="${S.juice<skillCost(uid)?'color:#7a1f1f':''}">${skillCost(uid)} 🔋</span></small></button>
+      <button class="btn pu" onclick="toggleTeam(${uid})">${inTeam?'➖ Rời đội':'➕ Vào đội'}<small>${inTeam?'về nghỉ ngơi':'xuất trận ngay'}</small></button>
     </div>`;
   openModal('hd-bg');
   $('hd-modal').scrollTop=keepScroll; // giữ vị trí đang xem khi nâng cấp liên tục
@@ -3159,7 +3161,7 @@ function renderMap(){
         <text x="65" y="36" font-size="16" text-anchor="middle">🎭</text>
       </svg>
       <span class="mn-label">${lockA?'🔒 Arena':'Arena · '+(5-(S.daily.arena||0))+'/5'}</span></div>
-    <div class="maplm ${lockD?'lmlock':''}" style="left:9%;top:39%;--g:var(--cyan)" onclick="${lockD?`toast('🔒 ${UNLOCK_DEFS.dgn.label} — ${UNLOCK_DEFS.dgn.hint}!')`:'openDgnSheet()'}" title="${d.name}">
+    <div class="maplm ${lockD?'lmlock':''}" style="left:8%;top:30%;--g:var(--cyan)" onclick="${lockD?`toast('🔒 ${UNLOCK_DEFS.dgn.label} — ${UNLOCK_DEFS.dgn.hint}!')`:'openDgnSheet()'}" title="${d.name}">
       <svg viewBox="0 0 100 86" style="width:84px">
         <path d="M4 80 Q14 46 50 42 Q86 46 96 80 Z" fill="#1c3a3e" stroke="#0f2326" stroke-width="2.5"/>
         <path d="M30 80 L30 60 Q50 44 70 60 L70 80 Z" fill="#08130f"/>
