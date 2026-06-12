@@ -5273,8 +5273,8 @@ function grantRewards(node,win,pandaAlive,T){
     if(r.cans){S.cans+=r.cans;T.cans+=r.cans}
     if(r.pieces){const v=rnd(...r.pieces);S.pieces+=v;
       T.shardTxt=`🧩 +${v} mảnh hộp (${S.pieces}/${PIECES_PER_BOX})`}
-    if(pandaAlive&&Math.random()<0.5){const v=rnd(5,15);S.tape+=v;T.pandaTape+=v}
-    const xp=r.xp||30;addXp(xp);T.xp+=xp;
+    if(pandaAlive&&Math.random()<0.5&&!node.pvpOid){const v=rnd(5,15);S.tape+=v;T.pandaTape+=v} // PvP: không rơi tape
+    const xp=node.pvpOid?0:(r.xp||30);addXp(xp);T.xp+=xp; // PvP online không cho XP (chống farm lên cấp)
     checkUnlocks(); // tiến độ mới → có thể mở khóa tính năng
     if(S.net)netSync(); // hồ sơ online: đội vừa mạnh lên / tiến độ mới
     else if(isU('arena')&&!window._nagNet){window._nagNet=1; // phễu đăng ký: nhắc 1 lần/phiên
@@ -5285,8 +5285,8 @@ function grantRewards(node,win,pandaAlive,T){
     if(node.arena){if(node.pvpOid){netPvpReport(node.pvpOid,false);T.arenaTxt='🌐 Trận xếp hạng online — chờ cúp về…'}
       else{S.arena.pts=Math.max(0,S.arena.pts+node.ptsL);S.arena.loss++;
       T.arenaTxt=`🏅 ${node.ptsL} điểm Arena (${S.arena.pts})`}};
-    const v=rnd(50,120);S.junk+=v;T.junk+=v;
-    addXp(10);T.xp+=10;
+    if(!node.pvpOid){const v=rnd(50,120);S.junk+=v;T.junk+=v} // PvP online: thua KHÔNG có vàng an ủi (chống farm)
+    addXp(node.pvpOid?0:10);T.xp+=node.pvpOid?0:10;
   }
 }
 function lootChips(T){
@@ -7140,9 +7140,10 @@ async function netLoadOpps(){
   }catch(e){el.innerHTML='<p class="sub">📡 Mất sóng server — bấm 🔄 thử lại.</p>'}
 }
 function pvpNode(o){
+  // PvP online = chế độ THI ĐẤU, thưởng là CÚP + BXH + giải, KHÔNG cho vàng (chống farm vô hạn vì gas=0).
   return{id:'pvplive',arena:true,pvpOid:o.oid,name:'🌐 '+o.name,gas:0,boss:false,
     rival:(o.def||[]).filter(d=>d&&HEROES[d.h]).slice(0,5).map(d=>({heroId:d.h,abs:d})),
-    ptsW:0,ptsL:0,rw:{junk:[300,500],xp:60},rwTxt:''};
+    ptsW:0,ptsL:0,rw:{},rwTxt:''};
 }
 function startNetFight(i,quick){
   const o=NET_OPPS[i];if(!o)return;
