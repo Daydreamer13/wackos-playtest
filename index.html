@@ -2361,11 +2361,14 @@ const RARITIES=['common','uncommon','rare','epic','legendary'];
 const RARITY_CAP=2; // bản này mở đến RARE (index 2); Epic & Legendary mở ở bản sau
 const RNAME={common:'Common',uncommon:'Uncommon',rare:'Rare',epic:'Epic',legendary:'Legendary'};
 const RSTAT={common:1.0,uncommon:1.15,rare:1.32,epic:1.55,legendary:1.85}; // nhân HP/ATK/DEF
-const RCOST={common:1.0,uncommon:1.15,rare:1.3,epic:1.8,legendary:2.5};    // nhân giá nâng cấp
+const RCOST={common:1.0,uncommon:1.45,rare:2.1,epic:3.0,legendary:4.2};    // nhân giá nâng cấp — rarity cao tốn rõ rệt hơn
 const rIdx=r=>RARITIES.indexOf(r);
 const rBadge=r=>`<b class="rar-${r}">${RNAME[r]}</b>`;
 /* ---- Breed & Enhance ---- */
-const BREED_COST={junk:800,tape:30};
+const BREED_BASE={junk:800,tape:30};
+const BREED_RMUL=[1,1.7,2.8,4.5,6.5]; // nhân phí breed theo bậc CAO NHẤT của bố mẹ (common→legendary)
+function breedCost(a,b){const m=BREED_RMUL[Math.max(rIdx(a.rarity),rIdx(b.rarity))]||1;
+  return{junk:Math.round(BREED_BASE.junk*m/10)*10,tape:Math.round(BREED_BASE.tape*m)};}
 const BREED_MAX=3;       // mỗi bản hero breed tối đa 3 lần
 const BREED_MIN_LVL=6;   // cả bố lẫn mẹ phải đạt Lv này mới đẻ được
 const INCUBATE_MIN=[3,6,10]; // phút ấp trứng (demo) theo lần đẻ thứ 1/2/3 — bản thật sẽ là giờ
@@ -5718,19 +5721,19 @@ function renderLab(){
       const probs={};
       const add=(ti,p)=>{const k=RARITIES[Math.min(ti,RARITY_CAP)];probs[k]=(probs[k]||0)+p};
       const tA=rIdx(a.rarity),tB=rIdx(b.rarity),hiT=Math.max(tA,tB);
-      add(tA,45);add(tB,45);add(hiT+1,8);add(hiT+2,2);
-      const probTxt=RARITIES.filter(r=>probs[r]).map(r=>`<b>${probs[r]}%</b> ${RNAME[r]}`).join(' · ');
+      add(tA,48.5);add(tB,48.5);add(hiT+1,2.5);add(hiT+2,0.5);
+      const probTxt=RARITIES.filter(r=>probs[r]).map(r=>`<b>${+probs[r].toFixed(1)}%</b> ${RNAME[r]}`).join(' · ');
       preview=`<p style="font-size:13px;margin-top:8px">Hero trong trứng: <b>49%</b> ${HEROES[a.heroId].name} · <b>49%</b> ${HEROES[b.heroId].name} · <b style="color:var(--purple)">2%</b> 🧬 đột biến ra hero khác hẳn!<br>
         Rarity TRỨNG (di truyền từ cặp này): ${probTxt}${hiT+1>RARITY_CAP?' <span style="color:var(--muted)">(đụng trần Rare)</span>':' ✨'}
         ${(a.lvl<BREED_MIN_LVL||b.lvl<BREED_MIN_LVL)?`<br><b style="color:var(--red)">⚠️ Cần cả hai đạt Lv ${BREED_MIN_LVL} (đang Lv ${a.lvl} & Lv ${b.lvl})</b>`:''}</p>`;
     }
     info.innerHTML=`
       <h4>💞 Breed — 2 hero đẻ 1 quả TRỨNG 🥚</h4>
-      <p style="font-size:13px;color:var(--muted);margin-top:4px">Cần cả bố lẫn mẹ <b>Lv ${BREED_MIN_LVL}+</b> · bố mẹ KHÔNG mất, mỗi bản đẻ tối đa ${BREED_MAX} lần · trứng <b>ấp ${INCUBATE_MIN.join('/')} phút</b> theo lần đẻ rồi nở ở 📦 Kệ Hộp · <b>2% SINH ĐÔI!</b> Có tỉ lệ nhỏ trứng rarity cao hơn cả bố mẹ.</p>
+      <p style="font-size:13px;color:var(--muted);margin-top:4px">Cần cả bố lẫn mẹ <b>Lv ${BREED_MIN_LVL}+</b> · bố mẹ KHÔNG mất, mỗi bản đẻ tối đa ${BREED_MAX} lần · trứng <b>ấp ${INCUBATE_MIN.join('/')} phút</b> theo lần đẻ rồi nở ở 📦 Kệ Hộp · <b>2% SINH ĐÔI!</b> Phí breed cao hơn theo rarity bố mẹ · vượt cấp rất hiếm.</p>
       <p style="font-size:13px;margin-top:6px">Đã chọn: ${names.length?names.join(' + '):'<i>chưa chọn ai</i>'}</p>
       ${preview}
       <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap">
-        <span style="font-size:13px;color:var(--beige)">Phí: 🪙 ${fmt(BREED_COST.junk)} + 🩹 ${BREED_COST.tape}</span>
+        <span style="font-size:13px;color:var(--beige)">Phí: ${ready?`🪙 ${fmt(breedCost(instById(labSel[0]),instById(labSel[1])).junk)} + 🩹 ${breedCost(instById(labSel[0]),instById(labSel[1])).tape}`:`🪙 ${fmt(BREED_BASE.junk)}+ · 🩹 ${BREED_BASE.tape}+ (theo rarity)`}</span>
         <button class="btn sm pu" onclick="doBreed()" ${ready?'':'disabled'}>💞 Breed!</button>
       </div>`;
   }else{
@@ -5782,14 +5785,15 @@ function doBreed(){
     return toast(`💞 Cả bố lẫn mẹ phải đạt <b>Lv ${BREED_MIN_LVL}</b> (đang Lv ${a.lvl} & Lv ${b.lvl}). Trẻ con không đẻ trẻ con!`);
   if(a.breeds>=BREED_MAX)return toast(`${HEROES[a.heroId].name} #${a.uid} đã hết lượt breed (${BREED_MAX}/${BREED_MAX}).`);
   if(b.breeds>=BREED_MAX)return toast(`${HEROES[b.heroId].name} #${b.uid} đã hết lượt breed (${BREED_MAX}/${BREED_MAX}).`);
-  if(S.junk<BREED_COST.junk)return toast('🪙 Không đủ Junk Coins!');
-  if(S.tape<BREED_COST.tape)return toast('🩹 Không đủ băng keo! Khoa học cần băng keo.');
-  S.junk-=BREED_COST.junk;S.tape-=BREED_COST.tape;
+  const bc=breedCost(a,b);
+  if(S.junk<bc.junk)return toast('🪙 Không đủ Junk Coins!');
+  if(S.tape<bc.tape)return toast('🩹 Không đủ băng keo! Khoa học cần băng keo.');
+  S.junk-=bc.junk;S.tape-=bc.tape;
   a.breeds++;b.breeds++;
-  // Rarity TRỨNG roll ngay (gene 45/45/8/2) — hiện trên vỏ; hero bên trong roll lúc nở
+  // Rarity TRỨNG roll ngay (gene 48.5/48.5/2.5/0.5) — vượt cấp RẤT hiếm; hero bên trong roll lúc nở
   const tA=rIdx(a.rarity),tB=rIdx(b.rarity),hiT=Math.max(tA,tB);
   const rr=Math.random();
-  let t=rr<0.45?tA:rr<0.90?tB:rr<0.98?hiT+1:hiT+2;
+  let t=rr<0.485?tA:rr<0.97?tB:rr<0.995?hiT+1:hiT+2;
   if(t>RARITY_CAP)t=RARITY_CAP;
   const idx=Math.min(INCUBATE_MIN.length-1,Math.max(a.breeds,b.breeds)-1);
   const egg=addBox('egg',RARITIES[t],{parents:[a.heroId,b.heroId],ready:Date.now()+INCUBATE_MIN[idx]*60000});
@@ -6316,7 +6320,8 @@ ui:{
 '♻️ Tái Chế':'♻️ Recycle','💞 Breed — 2 hero đẻ 1 quả TRỨNG 🥚':'💞 Breed — 2 heroes make 1 EGG 🥚','Cần cả bố lẫn mẹ':'Both parents must be',
 '· bố mẹ KHÔNG mất, mỗi bản đẻ tối đa 3 lần · trứng':'· parents are NOT consumed, each copy breeds max 3 times · the egg',
 'ấp 3/6/10 phút':'incubates 3/6/10 min','theo lần đẻ rồi nở ở 📦 Kệ Hộp ·':'by breed count, then hatches on the 📦 Box Shelf ·','2% SINH ĐÔI!':'2% TWINS!',
-'Có tỉ lệ nhỏ trứng rarity cao hơn cả bố mẹ.':'Small chance the egg is a higher rarity than both parents.','Đã chọn:':'Selected:','chưa chọn ai':'nobody selected','Phí: 🪙 800 + 🩹 30':'Cost: 🪙 800 + 🩹 30',
+'Có tỉ lệ nhỏ trứng rarity cao hơn cả bố mẹ.':'Small chance the egg is a higher rarity than both parents.','Phí breed cao hơn theo rarity bố mẹ · vượt cấp rất hiếm.':'Breed cost scales with parent rarity · rank-ups are very rare.','Đã chọn:':'Selected:','chưa chọn ai':'nobody selected',
+'Rarity TRỨNG (di truyền từ cặp này):':'Egg rarity (inherited from this pair):','🧬 đột biến ra hero khác hẳn!':'🧬 mutation into a completely different hero!','(đụng trần Rare)':'(hits the Rare cap)',
 'Breed chỉ cần đúng 2 bố mẹ.':'Breeding needs exactly 2 parents.','Đủ 5 bản rồi!':'Already have 5 copies!','Chọn đúng 2 bản hero để tái chế.':'Pick exactly 2 hero copies to recycle.','Cần 5 bản CÙNG rarity!':'Need 5 copies of the SAME rarity!',
 '🔒 Rare là bậc cao nhất bản này — Epic & Legendary mở sau!':'🔒 Rare is the cap in this build — Epic & Legendary come later!','🔒 Rare là trần bản này — Epic & Legendary mở sau!':'🔒 Rare is the cap in this build — Epic & Legendary come later!',
 '🪙 Thiếu 500 phí vận hành. Con raccoon kỹ sư trưởng không làm miễn phí.':'🪙 Missing the 500 operating fee. The chief-engineer raccoon doesn\'t work for free.',
@@ -6408,6 +6413,9 @@ rx:[
 [/^🔒 Trần Lv (\d+) \(cấp tài khoản (\d+) \+ 4\)\. Đánh thêm để lên cấp tài khoản đã!$/,'🔒 Level cap $1 (account level $2 + 4). Battle more to raise your account level!'],
 [/^🔒 trần Lv (\d+)$/,'🔒 Lv $1 cap'],
 [/^CÓ ×(\d+)$/,'OWNED ×$1'],
+[/^Phí: 🪙 ([\d.,]+) \+ 🩹 (\d+)$/,'Cost: 🪙 $1 + 🩹 $2'],
+[/^Phí: 🪙 ([\d.,—]+)$/,'Cost: 🪙 $1'],
+[/^🪙 ([\d.,]+)\+ · 🩹 (\d+)\+ \(theo rarity\)$/,'🪙 $1+ · 🩹 $2+ (by rarity)'],
 [/^⏳ Vừa đánh người này xong.*$/,'⏳ You just fought this player — wait 5 minutes for trophies to count again.'],
 [/^⏳ Đã đánh 30 trận online.*$/,'⏳ 30 online battles in an hour — take a breather!'],
 [/^🧬 Breed còn (\d+)\/(\d+) lần$/,'🧬 Breeds left: $1/$2'],
