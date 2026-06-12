@@ -159,6 +159,22 @@ h2.sec{font-size:22px;font-weight:900;margin:18px 2px 4px;letter-spacing:.3px}
 .hd-actions .btn{flex:1;min-width:0;padding:9px 6px;font-size:13px;border-radius:12px;line-height:1.25;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 3px 0 rgba(0,0,0,.35)}
 .hd-actions .btn small{display:block;font-size:10.5px;font-weight:800;opacity:.85;margin-top:2px}
+/* paper-doll: ô trang bị ốp hai bên hero như game nhập vai */
+.pdoll{display:flex;gap:8px;align-items:center;justify-content:center;flex-shrink:0}
+.pdcol{display:flex;flex-direction:column;gap:12px}
+.pdslot{width:50px;height:50px;border-radius:12px;background:var(--bg3);border:2px solid var(--line);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:.15s;padding:4px}
+.pdslot:hover{transform:scale(1.1);border-color:var(--cyan)}
+.pdslot.empty{border-style:dashed;opacity:.8}
+.pdslot.empty .ghost{font-size:21px;opacity:.4}
+.pdslot .spr{width:38px}
+.pdslot .pd-tag{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);font-size:8.5px;font-weight:900;
+  background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:0 4px;white-space:nowrap;color:var(--muted);letter-spacing:.3px}
+.pdslot.breedslot{border-color:rgba(179,107,255,.55)}
+.pdslot.breedslot .ghost{opacity:.9}
+.pdslot.breedslot:hover{border-color:var(--purple);box-shadow:0 0 10px rgba(179,107,255,.35)}
+.pdslot.dis{opacity:.45;cursor:not-allowed}
+@media(max-width:560px){.hd-top{gap:10px}.hd-top>.pdoll+div h3{font-size:18px}.pdoll{gap:6px}.pdslot{width:44px;height:44px}.pdslot .spr{width:32px}}
 
 /* ---------- map ---------- */
 .mapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:12px;margin-top:12px}
@@ -3011,20 +3027,23 @@ function openHero(uid){
   const h=HEROES[inst.heroId],s=heroStats(uid);
   const inTeam=teamIds().includes(uid);
   const keepScroll=hdUid===uid?$('hd-modal').scrollTop:0;hdUid=uid;
-  const gearBox=SLOTS.map(s=>{
-    const cur=inst.gear&&inst.gear[s]?ITEMS[inst.gear[s]]:null;
-    const opts=Object.keys(S.inv).filter(k=>S.inv[k]>0&&ITEMS[k].slot===s);
-    return`<div style="margin-bottom:8px">
-      <b style="font-size:12.5px">${SLOT_VI[s]}: ${cur?`<span class="rar-${cur.rarity}">${cur.e} ${cur.name}</span>
-        <button class="btn sm gh" style="padding:2px 8px;font-size:10.5px" onclick="unequipItem(${uid},'${s}')">✕ tháo</button>`:'<i style="color:var(--muted)">— trống —</i>'}</b>
-      ${opts.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">`+
-        opts.map(k=>`<button class="btn sm gh" style="font-size:11px" onclick="equipItem(${uid},'${k}')">${ITEMS[k].e} ${ITEMS[k].name} <span class="rar-${ITEMS[k].rarity}">●</span></button>`).join('')+`</div>`:''}
-    </div>`;
-  }).join('');
+  if(hdUid!==uid)pdSlot=null; // đổi hero thì đóng bảng chọn đồ
+  const pdMeta={weapon:{e:'⚔️'},armor:{e:'🛡️'},hat:{e:'🎩'}};
+  const pdslot=sl=>{const cur=inst.gear&&inst.gear[sl]?ITEMS[inst.gear[sl]]:null;
+    return cur
+      ?`<div class="pdslot" style="border-color:var(--r-${cur.rarity==='legendary'?'leg':cur.rarity})" onclick="pdPick(${uid},'${sl}')" title="${cur.name}">${itemIcon(cur.id,38)}<span class="pd-tag">${pdMeta[sl].e}</span></div>`
+      :`<div class="pdslot empty" onclick="pdPick(${uid},'${sl}')"><span class="ghost">${pdMeta[sl].e}</span><span class="pd-tag">+</span></div>`};
+  const canBreed=inst.breeds<BREED_MAX&&inst.lvl>=BREED_MIN_LVL;
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
     <div class="hd-top">
-      ${sprite(inst.heroId,118)}
+      <div class="pdoll">
+        <div class="pdcol">${pdslot('weapon')}${pdslot('armor')}</div>
+        ${sprite(inst.heroId,118)}
+        <div class="pdcol">${pdslot('hat')}
+          <div class="pdslot breedslot ${canBreed?'':'dis'}" onclick="heroBreed(${uid})"><span class="ghost">💞</span><span class="pd-tag">Breed</span></div>
+        </div>
+      </div>
       <div>
         <h3>${h.name} <small style="color:var(--muted);font-size:13px">#${inst.uid}</small></h3>
         <span class="tag ${h.cls}">${CLS_VI[h.cls]}</span>
@@ -3034,6 +3053,7 @@ function openHero(uid){
         <div style="font-size:12px;color:var(--muted);margin-top:3px">🧬 Breed còn ${BREED_MAX-inst.breeds}/${BREED_MAX} lần</div>
       </div>
     </div>
+    <div id="pd-chooser"></div>
     <div class="statgrid">
       <div class="stat">❤️ Máu <b>${fmt(s.hp)}</b></div>
       <div class="stat">⚔️ Tấn công <b>${fmt(s.atk)}</b></div>
@@ -3043,17 +3063,39 @@ function openHero(uid){
     <div class="skillbox"><h5>💥 ${h.skill.name} — Lv ${inst.skill} (x${s.skillMult.toFixed(2)})</h5><p>${h.skill.desc}</p></div>
     <div class="skillbox"><h5 style="color:var(--green)">🔁 Nội tại</h5><p>${h.passive}</p></div>
     <div class="skillbox trait"><h5>🤪 Funny Trait</h5><p>${h.trait}</p></div>
-    <div class="skillbox"><h5 style="color:var(--beige)">🎒 Trang bị (3 ô)</h5>
-      <div style="margin-top:8px">${gearBox}</div>
-      <p class="demonote" style="margin:2px 0 0">Chế thêm tại 🩹 Xưởng Băng Keo.</p>
-    </div>
     <div class="hd-actions">
       <button class="btn" onclick="upgradeHero(${uid})" ${inst.lvl>=LVL_CAP()?'disabled':''}>⬆️ Lv ${inst.lvl}→${inst.lvl+1}<small>${inst.lvl>=LVL_CAP()?`🔒 trần Lv ${LVL_CAP()}`:`<span style="${S.junk<upCost(uid)?'color:#7a1f1f':''}">${fmt(upCost(uid))} 🪙</span>`}</small></button>
       <button class="btn cy" onclick="upgradeSkill(${uid})">💥 Skill ${inst.skill}→${inst.skill+1}<small><span style="${S.juice<skillCost(uid)?'color:#7a1f1f':''}">${skillCost(uid)} 🔋</span></small></button>
       <button class="btn pu" onclick="toggleTeam(${uid})">${inTeam?'➖ Rời đội':'➕ Vào đội'}<small>${inTeam?'về nghỉ ngơi':'xuất trận ngay'}</small></button>
     </div>`;
   openModal('hd-bg');
+  if(pdSlot)pdPick(uid,pdSlot); // đang mở bảng chọn đồ → giữ mở sau khi lắp/tháo
   $('hd-modal').scrollTop=keepScroll; // giữ vị trí đang xem khi nâng cấp liên tục
+}
+let pdSlot=null; // ô trang bị đang mở bảng chọn
+function pdPick(uid,slot){
+  const inst=instById(uid);if(!inst)return;
+  pdSlot=slot;
+  const cur=inst.gear&&inst.gear[slot]?ITEMS[inst.gear[slot]]:null;
+  const opts=Object.keys(S.inv).filter(k=>S.inv[k]>0&&ITEMS[k].slot===slot);
+  $('pd-chooser').innerHTML=`<div class="skillbox" style="border-color:var(--cyan);margin-top:14px">
+    <h5 style="color:var(--cyan)">${SLOT_VI[slot]} ${cur?`— <span class="rar-${cur.rarity}">${cur.name}</span>`:'— ô đang trống'}
+      <button class="close" style="float:right;width:24px;height:24px;font-size:11px" onclick="pdSlot=null;$('pd-chooser').innerHTML=''">✕</button></h5>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      ${cur?`<button class="btn sm gh" onclick="unequipItem(${uid},'${slot}')">✕ Tháo ra</button>`:''}
+      ${opts.map(k=>`<button class="btn sm gh" style="font-size:11.5px" onclick="equipItem(${uid},'${k}')">${ITEMS[k].e} ${ITEMS[k].name} <span class="rar-${ITEMS[k].rarity}">●</span> ×${S.inv[k]}</button>`).join('')}
+      ${!opts.length&&!cur?`<span style="font-size:12px;color:var(--muted)">Kho trống — chế thêm tại 🩹 Xưởng Băng Keo.</span>`:''}
+    </div></div>`;
+}
+function heroBreed(uid){
+  const inst=instById(uid);if(!inst)return;
+  if(!isU('lab'))return toast(`🔒 ${UNLOCK_DEFS.lab.label} — ${UNLOCK_DEFS.lab.hint}!`);
+  if(inst.breeds>=BREED_MAX)return toast(`${HEROES[inst.heroId].name} #${uid} đã hết lượt breed (${BREED_MAX}/${BREED_MAX}).`);
+  if(inst.lvl<BREED_MIN_LVL)return toast(`💞 Hero cần đạt Lv ${BREED_MIN_LVL} mới breed được (đang Lv ${inst.lvl}) — nuôi lớn đã!`);
+  closeModal('hd-bg');
+  labMode='breed';labSel=[uid];
+  go('lab');
+  toast(`💞 Đã chọn ${HEROES[inst.heroId].name} #${uid} — giờ chọn bố/mẹ thứ 2!`);
 }
 const LVL_CAP=()=>S.plv+4; // trần level hero theo cấp tài khoản — nhịp mùa
 function refreshActiveView(){ // render lại view đang mở phía sau modal — level/chỉ số cập nhật tức thì
@@ -5498,6 +5540,9 @@ ui:{
 '❤️ Máu':'❤️ HP','⚔️ Tấn công':'⚔️ Attack','🛡️ Phòng thủ':'🛡️ Defense','⚡ Tốc độ':'⚡ Speed',
 '🔁 Nội tại':'🔁 Passive','🎒 Trang bị (3 ô)':'🎒 Gear (3 slots)','✕ tháo':'✕ remove','— trống —':'— empty —',
 'Chế thêm tại 🩹 Xưởng Băng Keo.':'Craft more at the 🩹 Workshop.','⚔️ Vũ khí:':'⚔️ Weapon:','🛡️ Giáp:':'🛡️ Armor:','🎩 Mũ:':'🎩 Hat:',
+'⚔️ Vũ khí —':'⚔️ Weapon —','🛡️ Giáp —':'🛡️ Armor —','🎩 Mũ —':'🎩 Hat —',
+'⚔️ Vũ khí — ô đang trống':'⚔️ Weapon — slot is empty','🛡️ Giáp — ô đang trống':'🛡️ Armor — slot is empty','🎩 Mũ — ô đang trống':'🎩 Hat — slot is empty',
+'✕ Tháo ra':'✕ Remove','Kho trống — chế thêm tại 🩹 Xưởng Băng Keo.':'Storage empty — craft more at the 🩹 Workshop.',
 '➖ Rời đội':'➖ Leave team','➕ Vào đội':'➕ Join team','về nghỉ ngơi':'take a break','xuất trận ngay':'fight right away',
 '🎭 MEME ARENA':'🎭 MEME ARENA','🌐 ĐẤU TRƯỜNG ONLINE':'🌐 ONLINE ARENA','🤖 LUYỆN TẬP VỚI BOT':'🤖 BOT PRACTICE',
 '😌 Dễ':'😌 Easy','😤 Ngang cơ':'😤 Even','😈 Khó':'😈 Hard',
@@ -5705,6 +5750,8 @@ rx:[
 [/^🌟 Cấp Tài Khoản (\d+)$/,'🌟 Account Level $1'],
 [/^Hướng dẫn (\d+)\/(\d+)$/,'Tutorial $1/$2'],
 [/^💀 (.+) bị nướng chín bởi vết bỏng!$/,'💀 $1 was cooked well-done by burns!'],
+[/^💞 Hero cần đạt Lv (\d+) mới breed được \(đang Lv (\d+)\) — nuôi lớn đã!$/,'💞 Heroes must reach Lv $1 to breed (currently Lv $2) — raise them first!'],
+[/^💞 Đã chọn (.+) #(\d+) — giờ chọn bố\/mẹ thứ 2!$/,'💞 Selected $1 #$2 — now pick the second parent!'],
 [/^🎒 (.+) #(\d+) đã lắp (.+)!$/,'🎒 $1 #$2 equipped $3!'],
 [/^(.+) #(\d+) về nhà nghỉ ngơi\.$/,'$1 #$2 went home to rest.'],
 [/^(.+) về nhà nghỉ ngơi\.$/,'$1 went home to rest.'],
@@ -5937,6 +5984,9 @@ ui:{
 '❤️ Máu':'❤️ 生命','⚔️ Tấn công':'⚔️ 攻击','🛡️ Phòng thủ':'🛡️ 防御','⚡ Tốc độ':'⚡ 速度',
 '🔁 Nội tại':'🔁 被动','🎒 Trang bị (3 ô)':'🎒 装备（3槽）','✕ tháo':'✕ 卸下','— trống —':'— 空 —',
 'Chế thêm tại 🩹 Xưởng Băng Keo.':'去 🩹 胶带工坊制作更多。','⚔️ Vũ khí:':'⚔️ 武器：','🛡️ Giáp:':'🛡️ 护甲：','🎩 Mũ:':'🎩 帽子：',
+'⚔️ Vũ khí —':'⚔️ 武器 —','🛡️ Giáp —':'🛡️ 护甲 —','🎩 Mũ —':'🎩 帽子 —',
+'⚔️ Vũ khí — ô đang trống':'⚔️ 武器 — 空槽','🛡️ Giáp — ô đang trống':'🛡️ 护甲 — 空槽','🎩 Mũ — ô đang trống':'🎩 帽子 — 空槽',
+'✕ Tháo ra':'✕ 卸下','Kho trống — chế thêm tại 🩹 Xưởng Băng Keo.':'仓库是空的——去 🩹 胶带工坊制作。',
 '➖ Rời đội':'➖ 离队','➕ Vào đội':'➕ 入队','về nghỉ ngơi':'回去休息','xuất trận ngay':'立刻出战',
 '🌐 ĐẤU TRƯỜNG ONLINE':'🌐 在线竞技场','🤖 LUYỆN TẬP VỚI BOT':'🤖 人机练习',
 '😌 Dễ':'😌 简单','😤 Ngang cơ':'😤 势均力敌','😈 Khó':'😈 困难',
@@ -6075,6 +6125,9 @@ ui:{
 '❤️ Máu':'❤️ HP','⚔️ Tấn công':'⚔️ 攻撃','🛡️ Phòng thủ':'🛡️ 防御','⚡ Tốc độ':'⚡ スピード',
 '🔁 Nội tại':'🔁 パッシブ','🎒 Trang bị (3 ô)':'🎒 装備（3枠）','✕ tháo':'✕ 外す','— trống —':'— 空き —',
 'Chế thêm tại 🩹 Xưởng Băng Keo.':'🩹 工房でもっとクラフトできる。','⚔️ Vũ khí:':'⚔️ 武器：','🛡️ Giáp:':'🛡️ 防具：','🎩 Mũ:':'🎩 帽子：',
+'⚔️ Vũ khí —':'⚔️ 武器 —','🛡️ Giáp —':'🛡️ 防具 —','🎩 Mũ —':'🎩 帽子 —',
+'⚔️ Vũ khí — ô đang trống':'⚔️ 武器 — 空きスロット','🛡️ Giáp — ô đang trống':'🛡️ 防具 — 空きスロット','🎩 Mũ — ô đang trống':'🎩 帽子 — 空きスロット',
+'✕ Tháo ra':'✕ 外す','Kho trống — chế thêm tại 🩹 Xưởng Băng Keo.':'倉庫が空っぽ——🩹 工房でクラフトしよう。',
 '➖ Rời đội':'➖ 編成から外す','➕ Vào đội':'➕ 編成に入れる','về nghỉ ngơi':'休ませる','xuất trận ngay':'即出撃',
 '🌐 ĐẤU TRƯỜNG ONLINE':'🌐 オンラインアリーナ','🤖 LUYỆN TẬP VỚI BOT':'🤖 BOT練習',
 '😌 Dễ':'😌 かんたん','😤 Ngang cơ':'😤 互角','😈 Khó':'😈 むずかしい',
