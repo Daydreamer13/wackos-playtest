@@ -432,18 +432,28 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 }
 
 /* ---------- v2.27: BẢN ĐỒ CHIẾN DỊCH interactive ---------- */
-.mapscene{position:relative;height:560px;margin-top:14px;border:2px solid var(--line);border-radius:var(--radius);overflow:hidden;
+.mapscene{position:relative;height:clamp(540px,calc(100vh - 250px),840px);margin-top:14px;border:2px solid var(--line);border-radius:var(--radius);overflow:hidden;
   background:linear-gradient(180deg,#241b46 0%,#2d2356 26%,#1d3a4a 38%,#1f4a44 60%,#473322 72%,#332516 100%)}
+.mapscene::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1.5px);background-size:26px 26px}
+.mapscene::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:4;border-radius:inherit;
+  box-shadow:inset 0 0 90px rgba(0,0,0,.5)}
+.mp-cloud{position:absolute;top:16%;left:0;width:150px;opacity:.45;z-index:2;pointer-events:none;animation:cloudDrift 95s linear infinite}
+.mpath .march{animation:marchDash 1.1s linear infinite}
+@keyframes marchDash{to{stroke-dashoffset:-11}}
+.mn-go{position:absolute;top:-34px;left:50%;transform:translateX(-50%);font-size:22px;pointer-events:none;z-index:5;
+  filter:drop-shadow(0 3px 3px rgba(0,0,0,.5));animation:goBounce 1s ease-in-out infinite}
+@keyframes goBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-7px)}}
 .mapscene .mpath{position:absolute;inset:0;width:100%;height:100%;z-index:1}
 .chlabel{position:absolute;right:12px;font-size:10px;font-weight:900;letter-spacing:.16em;color:rgba(255,255,255,.45);z-index:2;
   background:rgba(8,6,20,.4);padding:2px 9px;border-radius:99px}
-.mapnode{position:absolute;width:56px;height:56px;border-radius:50%;transform:translate(-50%,-50%);cursor:pointer;z-index:3;
+.mapnode{position:absolute;width:68px;height:68px;border-radius:50%;transform:translate(-50%,-50%);cursor:pointer;z-index:3;
   background:radial-gradient(circle at 35% 30%,#2e3a66,var(--bg2));border:3px solid var(--line);
-  display:flex;align-items:center;justify-content:center;transition:transform .15s;box-shadow:0 4px 10px rgba(0,0,0,.4)}
-.mapnode:hover{transform:translate(-50%,-50%) scale(1.14);z-index:5}
-.mapnode .mn-art{width:38px;pointer-events:none;line-height:0}
-.mapnode.mboss{width:74px;height:74px;border-color:rgba(255,93,108,.75);background:radial-gradient(circle at 35% 30%,#4a2438,#2a1626)}
-.mapnode.mboss .mn-art{width:54px}
+  display:flex;align-items:center;justify-content:center;transition:transform .15s;box-shadow:0 5px 12px rgba(0,0,0,.45)}
+.mapnode:hover{transform:translate(-50%,-50%) scale(1.12);z-index:5}
+.mapnode .mn-art{width:48px;pointer-events:none;line-height:0}
+.mapnode.mboss{width:92px;height:92px;border-color:rgba(255,93,108,.75);background:radial-gradient(circle at 35% 30%,#4a2438,#2a1626)}
+.mapnode.mboss .mn-art{width:66px}
 .mapnode.mdone{border-color:var(--green)}
 .mapnode.mnext{border-color:var(--yellow)}
 .mapnode.mfrontier{animation:tutPulse 1.5s ease-in-out infinite}
@@ -856,8 +866,14 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 
   <section class="view" id="v-heroes">
     <h2 class="sec">🦸 Doanh Trại Đội Quân Kỳ Quặc</h2>
-    <p class="sub">Bấm hồ sơ hero để xem chi tiết, nâng cấp và lắp đồ.
+    <p class="sub">Xếp đội hình xuất trận, bấm hồ sơ hero để nâng cấp và lắp đồ.
       <button class="btn sm gh" style="margin-left:8px" onclick="go('gallery')">📖 Bộ sưu tập</button></p>
+    <div class="panel teampanel">
+      <div class="poslabel" style="margin-top:0">⚔️ Đội hình xuất trận — Tuyến trước (2): hứng đòn, Tank đứng đây</div>
+      <div class="teambar" id="team-front"></div>
+      <div class="poslabel">Tuyến sau (3) — DPS / Support / Controller núp đây</div>
+      <div class="teambar" id="team-back"></div>
+    </div>
     <div class="hqscene">
       <div class="hq-sign">📋 HỒ SƠ QUÂN ĐOÀN — <span id="hq-count">0</span></div>
       <div class="hgrid" id="hero-grid"></div>
@@ -885,16 +901,9 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
   </section>
 
   <section class="view" id="v-battle">
-    <h2 class="sec">🗺️ District Map</h2>
-    <p class="sub">Chọn đội hình rồi chọn khu vực. Trận đấu tự động — chiến thuật nằm ở việc xếp đội.</p>
-    <div class="panel">
-      <div class="poslabel">Tuyến trước (2) — Tank đứng đây cho khỏe</div>
-      <div class="teambar" id="team-front"></div>
-      <div class="poslabel">Tuyến sau (3) — DPS / Support núp đây</div>
-      <div class="teambar" id="team-back"></div>
-    </div>
+    <h2 class="sec">🗺️ Bản Đồ Chiến Dịch</h2>
+    <p class="sub">Bấm địa điểm để xem chi tiết & xuất trận — node vàng nhấp nháy là điểm tiến công kế tiếp. Đội hình chỉnh ở tab 🦸 Heroes.</p>
     <div class="mapscene" id="mapscene"></div>
-    <p class="demonote">Bấm địa điểm trên bản đồ để xem chi tiết & xuất trận. Node vàng nhấp nháy = điểm tiến công kế tiếp.</p>
   </section>
 
   <section class="view" id="v-craft">
@@ -2417,8 +2426,8 @@ function go(v){
   document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('on'));
   $('v-'+v).classList.add('on');
   const nb=$('nb-'+v);if(nb)nb.classList.add('on'); // gallery không có nút nav riêng
-  if(v==='heroes')renderHeroes();
-  if(v==='battle'){renderTeam();renderMap()}
+  if(v==='heroes'){renderHeroes();renderTeam()}
+  if(v==='battle')renderMap();
   if(v==='craft')renderCraft();
   if(v==='lab')renderLab();
   if(v==='missions')renderMissions();
@@ -2499,7 +2508,7 @@ function renderHub(){
       ${sprite(inst.heroId,sw)}
       <span class="hs-chip">${h.name.replace(/^The /,'').split(' ').slice(0,2).join(' ')} <b>Lv${inst.lvl}</b></span></div>`;
   });
-  if(!teamIds().length)box.innerHTML=`<div class="hs-empty" onclick="go('battle');openPicker('front',0)">＋ Thêm hero vào đội</div>`;
+  if(!teamIds().length)box.innerHTML=`<div class="hs-empty" onclick="go('heroes');openPicker('front',0)">＋ Thêm hero vào đội</div>`;
   const hs=$('hubscene'); // mobile: canh giữa sân khấu lần đầu (vuốt ngang xem cả khu phố)
   if(hs&&!hs._centered&&hs.scrollWidth>hs.clientWidth+4){hs.scrollLeft=(hs.scrollWidth-hs.clientWidth)/2;hs._centered=true}
   ['loot','missions'].forEach(k=>{ // tòa nhà bị khóa thì tối đèn
@@ -2765,9 +2774,9 @@ const LVL_CAP=()=>S.plv+4; // trần level hero theo cấp tài khoản — nh�
 function refreshActiveView(){ // render lại view đang mở phía sau modal — level/chỉ số cập nhật tức thì
   const v=document.querySelector('.view.on');if(!v)return;
   const id=v.id.slice(2);
-  if(id==='heroes')renderHeroes();
+  if(id==='heroes'){renderHeroes();renderTeam()}
   else if(id==='hub')renderHub();
-  else if(id==='battle')renderTeam();
+  else if(id==='battle')renderMap();
 }
 function upgradeHero(uid){
   const inst=instById(uid),c=upCost(uid);
@@ -2816,7 +2825,7 @@ function toggleTeam(uid){
     if(!placed)return toast('Đội hình đầy (5/5). Bỏ bớt một hero ra trước.');
     toast(`${h.name} #${uid} đã vào đội! ${h.quote}`);
   }
-  closeModal('hd-bg');renderHeroes();
+  closeModal('hd-bg');renderHeroes();renderTeam();
 }
 
 /* ================= TEAM + MAP ================= */
@@ -3059,13 +3068,26 @@ function nodeLocked(n){
 }
 function renderMap(){
   const g=$('mapscene');if(!g)return;
-  // đường hành quân nối các node
+  // điểm tiến công kế tiếp (node đầu tiên chưa khóa, chưa phá)
+  let frontierId=null;
+  for(const n of NODES){if(!nodeLocked(n)&&!S.beaten[n.id]){frontierId=n.id;break}}
+  // đường hành quân CONG 2 lớp: nền tối + lớp màu; đoạn dẫn vào frontier chạy hiệu ứng tiến quân
+  const seg=(a,b)=>{
+    const mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1];
+    const L=Math.hypot(dx,dy)||1,off=Math.min(5,L*0.22);
+    return `M ${a[0]} ${a[1]} Q ${(mx-dy/L*off).toFixed(1)} ${(my+dx/L*off).toFixed(1)} ${b[0]} ${b[1]}`;
+  };
   let segs='';
   for(let i=0;i<NODES.length-1;i++){
     const a=NODE_POS[NODES[i].id],b=NODE_POS[NODES[i+1].id];
-    const walked=S.beaten[NODES[i].id];
-    segs+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" vector-effect="non-scaling-stroke"
-      stroke="${walked?'var(--yellow)':'rgba(255,255,255,.22)'}" stroke-width="${walked?2.5:2}" ${walked?'':'stroke-dasharray="5 5"'}/>`;
+    const d=seg(a,b),next=NODES[i+1].id;
+    segs+=`<path d="${d}" fill="none" stroke="rgba(8,6,20,.45)" stroke-width="7" vector-effect="non-scaling-stroke" stroke-linecap="round"/>`;
+    if(S.beaten[next])
+      segs+=`<path d="${d}" fill="none" stroke="var(--yellow)" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linecap="round"/>`;
+    else if(next===frontierId&&S.beaten[NODES[i].id])
+      segs+=`<path d="${d}" class="march" fill="none" stroke="var(--yellow)" stroke-width="3" vector-effect="non-scaling-stroke" stroke-dasharray="4 7"/>`;
+    else
+      segs+=`<path d="${d}" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-dasharray="3 6"/>`;
   }
   let html=`<svg class="mdecor" viewBox="0 0 100 100" preserveAspectRatio="none">
       <!-- C3: skyline cao ốc -->
@@ -3087,19 +3109,36 @@ function renderMap(){
         <ellipse cx="28" cy="97.5" rx="4" ry="2.4"/><ellipse cx="28" cy="97.5" rx="1.6" ry="1"/>
         <ellipse cx="66" cy="98" rx="3.2" ry="2"/>
       </g>
+      <!-- quầng màu nhận diện vùng -->
+      <ellipse cx="50" cy="13" rx="50" ry="15" fill="rgba(179,107,255,.07)"/>
+      <ellipse cx="50" cy="52" rx="50" ry="13" fill="rgba(59,232,255,.05)"/>
+      <ellipse cx="50" cy="88" rx="50" ry="13" fill="rgba(255,159,46,.06)"/>
+      <!-- cửa sổ còn điện ở C3 -->
+      <rect x="4.2" y="24" width="1.6" height="2" fill="#ffd23f"><animate attributeName="opacity" values="1;.1;1" dur="3.4s" repeatCount="indefinite"/></rect>
+      <rect x="56.5" y="8" width="1.6" height="2" fill="#3be8ff"><animate attributeName="opacity" values=".2;.9;.2" dur="2.7s" repeatCount="indefinite"/></rect>
+      <rect x="72.5" y="9" width="1.6" height="2" fill="#ff9f2e"><animate attributeName="opacity" values=".9;.15;.9" dur="4.1s" repeatCount="indefinite"/></rect>
+      <!-- khói bốc từ đống rác C1 -->
+      <circle cx="9" cy="93" r="1.3" fill="rgba(200,190,210,.3)">
+        <animate attributeName="cy" values="93;84" dur="4.5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;.5;0" dur="4.5s" repeatCount="indefinite"/></circle>
+      <circle cx="48" cy="94" r="1.1" fill="rgba(200,190,210,.25)">
+        <animate attributeName="cy" values="94;86" dur="5.2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;.4;0" dur="5.2s" repeatCount="indefinite"/></circle>
     </svg>
+    <svg class="mp-cloud" viewBox="0 0 120 38"><g fill="rgba(10,8,30,.4)">
+      <ellipse cx="34" cy="26" rx="30" ry="11"/><ellipse cx="64" cy="18" rx="26" ry="13"/><ellipse cx="92" cy="27" rx="24" ry="9"/></g></svg>
     <svg class="mpath" viewBox="0 0 100 100" preserveAspectRatio="none">${segs}</svg>
     <span class="chlabel" style="top:8px;right:12px">CHƯƠNG 3 — LÕI THÀNH PHỐ OOPS</span>
     <span class="chlabel" style="top:42%;left:12px">CHƯƠNG 2 — ĐẠI LỘ HẾT HẠN</span>
     <span class="chlabel" style="top:71%;left:12px">CHƯƠNG 1 — KHỞI NGHIỆP GIỮA BÃI RÁC</span>`;
-  let frontierFound=false;
   NODES.forEach(n=>{
     const [x,y]=NODE_POS[n.id];
     const locked=nodeLocked(n),beaten=!!S.beaten[n.id];
-    const frontier=!locked&&!beaten&&!frontierFound;if(frontier)frontierFound=true;
+    const frontier=n.id===frontierId;
     html+=`<div class="mapnode ${n.boss?'mboss':''} ${locked?'mlock':beaten?'mdone':'mnext'} ${frontier?'mfrontier':''}"
       ${n.id==='junkyard'?'id="tut-junkyard"':''} style="left:${x}%;top:${y}%"
       onclick="${locked?`toast('🔒 Phá node trước đã!')`:`openNodeSheet('${n.id}')`}" title="${n.name}">
+      ${frontier?'<span class="mn-go">👇</span>':''}
       <span class="mn-art spr" ${n.tint?`style="filter:${n.tint}"`:''}>${ART[n.art]}</span>
       ${beaten?'<span class="mn-badge">✓</span>':locked?'<span class="mn-badge">🔒</span>':''}
       <span class="mn-label">${n.boss?'👑 ':''}${NODE_SHORT[n.id]}</span>
@@ -3168,7 +3207,7 @@ function winChanceTag(node){
 function lossTips(){
   const tips=[];
   const ids=teamIds();
-  if(ids.length<5)tips.push(`👥 Đội mới có <b>${ids.length}/5</b> — bấm ô trống ở thanh đội hình để thêm hero (đông = mạnh hơn NHIỀU).`);
+  if(ids.length<5)tips.push(`👥 Đội mới có <b>${ids.length}/5</b> — vào tab 🦸 Heroes, bấm ô trống đội hình để thêm (đông = mạnh hơn NHIỀU).`);
   if(S.boxes.some(b=>boxReady(b)))tips.push(`📦 Có HỘP đang chờ mở ở Kệ Hộp (tab 🥫 Loot) — mở ra hero mới ngay!`);
   else if(S.pieces>=PIECES_PER_BOX)tips.push(`🧩 Đủ ${PIECES_PER_BOX} mảnh hộp — vào tab 🥫 Loot GHÉP HỘP, mở ra chọn 1 trong 3 hero!`);
   else if(S.pieces>=PIECES_PER_BOX-4)tips.push(`🧩 Chỉ còn ${PIECES_PER_BOX-S.pieces} mảnh nữa là ghép được Hộp Hero — mở 🥫 hoặc mua mảnh ở 🦫 Tiệm.`);
