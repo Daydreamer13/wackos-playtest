@@ -2866,8 +2866,54 @@ const ITEMS={
   boombox:{id:'boombox',slot:'hat',rarity:'rare',name:'Vương Miện Đài Cát-xét',e:'📻',
     desc:'+12% Tấn công, +12% Sức mạnh kỹ năng. Phát nhạc chiến đấu 24/7. Băng cát-xét kẹt đúng bài hay nhất.',cost:{junk:2800,tape:95,juice:35},bonus:{atk:.12,skill:.12}},
 };
+/* ⛔ Epic/Legendary — ĐÃ ĐỊNH NGHĨA nhưng KHÓA (locked): chưa chế/mua/rơi được, chỉ hé lộ trần đồ ở Codex */
+Object.assign(ITEMS,{
+  plasma:{id:'plasma',slot:'weapon',rarity:'epic',name:'Súng Plasma Lò Vi Sóng',e:'🔫',locked:true,
+    desc:'+30% Tấn công, +12% Sức mạnh kỹ năng. Hâm nóng kẻ địch ở cấp độ nguyên tử.',cost:{junk:8000,tape:200,juice:120},bonus:{atk:.30,skill:.12}},
+  reactor:{id:'reactor',slot:'armor',rarity:'epic',name:'Giáp Lõi Phản Ứng',e:'☢️',locked:true,
+    desc:'+28% Thủ, +18% Máu. Phát sáng nhẹ. Bác sĩ khuyên đừng ôm lâu.',cost:{junk:8000,tape:220,juice:100},bonus:{def:.28,hp:.18}},
+  satdish:{id:'satdish',slot:'hat',rarity:'epic',name:'Mũ Chảo Vệ Tinh',e:'📡',locked:true,
+    desc:'+15% Tấn công, +15% Sức mạnh kỹ năng. Bắt được sóng vũ trụ và cả drama hàng xóm.',cost:{junk:8000,tape:210,juice:110},bonus:{atk:.15,skill:.15}},
+  excalibur:{id:'excalibur',slot:'weapon',rarity:'legendary',name:'Excalibur Cán Chổi',e:'🧹',locked:true,set:'myth',
+    desc:'+22% Tấn công, +18% Sức mạnh kỹ năng. Rút ra từ cục bê tông ngoài bãi đỗ xe.',cost:{junk:15000,tape:400,juice:250},bonus:{atk:.22,skill:.18}},
+  aegis:{id:'aegis',slot:'armor',rarity:'legendary',name:'Khiên Nắp Cống Thần',e:'🛡️',locked:true,set:'myth',
+    desc:'+24% Thủ, +20% Máu. Nắp cống cuối cùng còn nguyên vẹn của thành phố.',cost:{junk:15000,tape:420,juice:230},bonus:{def:.24,hp:.20}},
+  halo:{id:'halo',slot:'hat',rarity:'legendary',name:'Vầng Hào Quang Vệ Tinh',e:'😇',locked:true,set:'myth',
+    desc:'+16% Tấn công, +16% Sức mạnh kỹ năng, +12% Máu. Một mảnh vệ tinh rơi, giờ là thánh tích.',cost:{junk:18000,tape:500,juice:300},bonus:{atk:.16,skill:.16,hp:.12}},
+});
+function craftableItems(){return Object.values(ITEMS).filter(it=>!it.locked)}
+
 const SLOTS=['weapon','armor','hat'];
 const SLOT_VI={weapon:'⚔️ Vũ khí',armor:'🛡️ Giáp',hat:'🎩 Mũ'};
+
+/* ⚒️ RÈN: nâng cấp trang bị theo TỪNG LOẠI, ÁP CHO TOÀN TÀI KHOẢN (mọi bản cùng loại đang lắp đều mạnh lên) */
+const FORGE_MAX=5, FORGE_STEP=0.12; // mỗi cấp +12% HIỆU LỰC bonus của món, tối đa +5
+function forgeLevel(id){return (S.forge&&S.forge[id])||0}
+function forgeCost(id,lvl){const it=ITEMS[id];const rm=[1,1.5,2.3,3.6,5][rIdx(it.rarity)]||1;
+  return {junk:Math.round((180+240*lvl)*rm/10)*10, tape:Math.round((8+11*lvl)*rm)};}
+
+/* 🧩 SET BONUS: mỗi bộ 1 vũ khí + 1 giáp + 1 mũ; lắp 2/3 món cùng bộ trên 1 HERO → thưởng thêm */
+const ITEM_SETS={
+  kitchen:{name:'🍳 Bộ Bếp Núc', items:['spoon','sofaplate','cup'], b2:{hp:.06}, b3:{hp:.12,def:.06}},
+  tinker: {name:'🔩 Bộ Thợ Tự Chế', items:['nailbat','tirearmor','colander'], b2:{def:.06}, b3:{def:.12,hp:.08}},
+  premium:{name:'📡 Bộ Hàng Hiệu', items:['dish','fridgedoor','boombox'], b2:{atk:.08,skill:.04}, b3:{atk:.16,skill:.10}},
+  myth:   {name:'🌟 Bộ Huyền Thoại', items:['excalibur','aegis','halo'], b2:{atk:.10,def:.10}, b3:{atk:.22,def:.22,hp:.12,skill:.12}},
+};
+const ITEM_SET_OF={};
+Object.entries(ITEM_SETS).forEach(([k,s])=>s.items.forEach(id=>{ITEM_SET_OF[id]=k;if(ITEMS[id]&&!ITEMS[id].set)ITEMS[id].set=k}));
+function setBonusOf(gear){ // cộng dồn bonus set theo số mảnh cùng bộ đang lắp trên hero
+  const counts={};
+  SLOTS.forEach(s=>{const id=gear&&gear[s];const sk=id&&ITEM_SET_OF[id];if(sk)counts[sk]=(counts[sk]||0)+1});
+  const out={atk:0,def:0,hp:0,skill:0};
+  for(const sk in counts){const n=counts[sk],S2=ITEM_SETS[sk];const b=n>=3?S2.b3:n>=2?S2.b2:null;
+    if(b)for(const k in out)out[k]+=(b[k]||0);}
+  return out;
+}
+function activeSetsOf(gear){ // [{name,have,bonus}] để hiển thị
+  const counts={};SLOTS.forEach(s=>{const id=gear&&gear[s];const sk=id&&ITEM_SET_OF[id];if(sk)counts[sk]=(counts[sk]||0)+1});
+  return Object.entries(counts).map(([sk,n])=>({key:sk,name:ITEM_SETS[sk].name,have:n,
+    bonus:n>=3?ITEM_SETS[sk].b3:n>=2?ITEM_SETS[sk].b2:null}));
+}
 
 /* ================= ART TRANG BỊ (SVG cùng style hero — thay emoji) ================= */
 const IW=i=>`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><g stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${i}</g></svg>`;
@@ -3092,7 +3138,7 @@ const S={
   gas:60,maxGas:100,junk:1000,juice:50,tape:30,cans:2,plv:1,xp:0,
   roster:[],nextUid:1,pieces:0,boxes:[],nextBoxUid:1,unlocked:{},
   team:{front:[null,null],back:[null,null,null]},
-  inv:{},beaten:{},busy:false,speed:2,
+  inv:{},forge:{},beaten:{},busy:false,speed:2,
   tower:{floor:1,best:0},seasonStart:Date.now(),
   seasonNo:1,seasonStats:{wins:0,loss:0,bossDay:null,claimed:false},trophies:[],
   arena:{pts:1000,wins:0,loss:0},
@@ -3274,8 +3320,11 @@ function heroStats(uid){
   const inst=instById(uid),h=HEROES[inst.heroId];
   const m=(1+0.09*(inst.lvl-1))*RSTAT[inst.rarity]; // rarity nhân thẳng vào HP/ATK/DEF
   let hp=h.base.hp*m,atk=h.base.atk*m,def=h.base.def*m,sp=h.base.spd,skill=1+0.1*(inst.skill-1);
-  SLOTS.forEach(s=>{const it=inst.gear&&inst.gear[s]?ITEMS[inst.gear[s]]:null;
-    if(it){const b=it.bonus;hp*=1+(b.hp||0);atk*=1+(b.atk||0);def*=1+(b.def||0);skill*=1+(b.skill||0)}});
+  SLOTS.forEach(s=>{const id=inst.gear&&inst.gear[s];const it=id?ITEMS[id]:null;
+    if(it){const b=it.bonus,fm=1+forgeLevel(id)*FORGE_STEP; // ⚒️ rèn nhân hiệu lực bonus
+      hp*=1+(b.hp||0)*fm;atk*=1+(b.atk||0)*fm;def*=1+(b.def||0)*fm;skill*=1+(b.skill||0)*fm}});
+  const sb=setBonusOf(inst.gear); // 🧩 set bonus cộng thêm
+  hp*=1+sb.hp;atk*=1+sb.atk;def*=1+sb.def;skill*=1+sb.skill;
   return{hp:Math.round(hp),atk:Math.round(atk),def:Math.round(def),spd:sp,skillMult:skill};
 }
 function upCost(uid){const inst=instById(uid);return Math.round(80*Math.pow(inst.lvl,1.35)*RCOST[inst.rarity]/10)*10}
@@ -3535,10 +3584,11 @@ function renderGallery(){
   const ig=$('codex-items');ig.innerHTML='';
   Object.values(ITEMS).sort((a,b)=>SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot)||rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
     const own=(S.inv[it.id]||0)+S.roster.reduce((t,i)=>t+(SLOTS.some(s=>i.gear&&i.gear[s]===it.id)?1:0),0);
-    ig.innerHTML+=`<div class="citem" style="border-color:var(--r-${it.rarity})"><span class="ce">${itemIcon(it.id,44)}</span>
-      <h4>${it.name}${own?` <small style="color:var(--green)">×${own}</small>`:''}</h4>
-      <b class="rar-${it.rarity}" style="font-size:10px;letter-spacing:.08em">${SLOT_VI[it.slot]} · ${RNAME[it.rarity].toUpperCase()}</b>
-      <p>${it.desc}</p></div>`;
+    const fl=forgeLevel(it.id);
+    ig.innerHTML+=`<div class="citem" style="border-color:var(--r-${it.rarity})${it.locked?';opacity:.62':''}"><span class="ce"${it.locked?' style="filter:grayscale(.5) brightness(.85)"':''}>${it.locked?it.e:itemIcon(it.id,44)}</span>
+      <h4>${it.locked?'🔒 ':''}${it.name}${fl>0?` <span style="color:var(--orange)">+${fl}</span>`:''}${own?` <small style="color:var(--green)">×${own}</small>`:''}</h4>
+      <b class="rar-${it.rarity}" style="font-size:10px;letter-spacing:.08em">${SLOT_VI[it.slot]} · ${RNAME[it.rarity].toUpperCase()}${it.set?' · '+ITEM_SETS[it.set].name:''}</b>
+      <p>${it.desc}${it.locked?'<br><b style="color:var(--muted)">🔒 mở ở bản sau</b>':''}</p></div>`;
   });
   const eg=$('codex-enemies');eg.innerHTML='';
   Object.entries(ENEMIES).forEach(([eid,e])=>{
@@ -3636,6 +3686,9 @@ function openHero(uid){
       <div class="stat">🛡️ Phòng thủ <b>${fmt(s.def)}</b></div>
       <div class="stat">⚡ Tốc độ <b>${s.spd}</b></div>
     </div>
+    ${(()=>{const sets=activeSetsOf(inst.gear).filter(x=>x.bonus);
+      return sets.length?`<div class="skillbox" style="border-color:var(--purple)"><h5 style="color:var(--purple)">🧩 Set bonus đang kích hoạt</h5>
+        ${sets.map(x=>`<p style="font-size:12.5px">${x.name} (${x.have}/3): <b>${bonusTxt(x.bonus)}</b></p>`).join('')}</div>`:''})()}
     <div class="skillbox"><h5>💥 ${h.skill.name} — Lv ${inst.skill} (x${s.skillMult.toFixed(2)})</h5><p>${h.skill.desc}</p></div>
     <div class="skillbox"><h5 style="color:var(--green)">🔁 Nội tại</h5><p>${h.passive}</p></div>
     <div class="skillbox trait"><h5>🤪 Funny Trait</h5><p>${h.trait}</p></div>
@@ -5501,7 +5554,7 @@ function confettiBurst(){
 /* ---------- TIỆM CHÚ HẢI LY: sink junk + chuyển đổi tài nguyên + mảnh hero chọn lọc ---------- */
 function dayHash(){let s=new Date().toDateString(),h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h}
 function shopHeroOfDay(){const ids=Object.keys(HEROES);return ids[dayHash()%ids.length]}
-function shopItemOfDay(){const ids=Object.keys(ITEMS);return ids[(dayHash()>>>3)%ids.length]}
+function shopItemOfDay(){const ids=craftableItems().map(it=>it.id);return ids[(dayHash()>>>3)%ids.length]}
 const SHOP_TALK=[
   'Hàng mới về! Định nghĩa "mới": nhặt được sáng nay.',
   'Không đổi, không trả, không hỏi nguồn gốc. Quy tắc tiệm.',
@@ -5532,13 +5585,26 @@ function shopStock(){
 function pokeBeaver(){ // chọc chú hải ly — đổi câu thoại ngẫu nhiên
   $('shop-talk').innerHTML=`<b>🦫:</b> "${SHOP_TALK[rnd(0,SHOP_TALK.length-1)]}"`;
 }
-function bonusTxt(b){
-  const p=[];
-  if(b.atk)p.push('⚔️ +'+Math.round(b.atk*100)+'% Tấn công');
-  if(b.def)p.push('🛡️ +'+Math.round(b.def*100)+'% Thủ');
-  if(b.hp)p.push('❤️ +'+Math.round(b.hp*100)+'% Máu');
-  if(b.skill)p.push('💥 +'+Math.round(b.skill*100)+'% Sức mạnh kỹ năng');
+function bonusTxt(b,fm){
+  fm=fm||1;const p=[];const r=v=>Math.round(v*fm*100);
+  if(b.atk)p.push('⚔️ +'+r(b.atk)+'% Tấn công');
+  if(b.def)p.push('🛡️ +'+r(b.def)+'% Thủ');
+  if(b.hp)p.push('❤️ +'+r(b.hp)+'% Máu');
+  if(b.skill)p.push('💥 +'+r(b.skill)+'% Sức mạnh kỹ năng');
   return p.join(' · ');
+}
+function doForge(id){
+  const it=ITEMS[id];if(!it||it.locked)return;
+  const lvl=forgeLevel(id);
+  if(lvl>=FORGE_MAX)return toast(`⚒️ ${it.name} đã đạt cấp rèn tối đa (+${FORGE_MAX})!`);
+  const c=forgeCost(id,lvl);
+  if(S.junk<c.junk)return toast('🪙 Thiếu Junk Coins để rèn!');
+  if(S.tape<c.tape)return toast('🩹 Thiếu băng keo để rèn!');
+  S.junk-=c.junk;S.tape-=c.tape;S.forge[id]=lvl+1;
+  SFX.coin();flashScreen('#ff9f2e',.18);feat('craft');
+  toast(`⚒️ Rèn <b>${it.e} ${it.name}</b> lên <b>+${lvl+1}</b>! Mọi bản đang lắp đều mạnh lên.`);
+  if(S.net)netSync();
+  renderRes();openItemSheet(id);
 }
 function openShopSheet(key){
   const s=shopStock().find(x=>x.key===key);if(!s)return;
@@ -5558,6 +5624,22 @@ function openShopSheet(key){
 function openItemSheet(id){
   const it=ITEMS[id];if(!it)return;
   const own=S.inv[id]||0,c=it.cost;
+  const setName=it.set?ITEM_SETS[it.set].name:null;
+  // ----- LOCKED (Epic/Legendary chưa mở): chỉ teaser -----
+  if(it.locked){
+    $('hd-modal').innerHTML=`
+      <button class="close" onclick="closeModal('hd-bg')">✕</button>
+      <div class="hd-top"><span style="flex-shrink:0;font-size:58px;filter:grayscale(.5) brightness(.8)">${it.e}</span>
+        <div><h3>🔒 ${it.name}</h3>
+        <b class="rar-${it.rarity}" style="font-size:11px;letter-spacing:.08em">${SLOT_VI[it.slot]} · ${RNAME[it.rarity].toUpperCase()}</b>
+        <div class="quote">${it.desc}</div></div></div>
+      <div class="skillbox"><h5 style="color:var(--green)">📈 Hiệu lực (xem trước)</h5><p>${bonusTxt(it.bonus)}</p></div>
+      ${setName?`<div class="skillbox"><h5 style="color:var(--purple)">🧩 Thuộc bộ</h5><p>${setName}</p></div>`:''}
+      <p class="demonote" style="margin:6px 0 0">🔒 Trang bị ${RNAME[it.rarity]} — sẽ mở ở bản sau. Hé lộ trần đồ thôi!</p>`;
+    openModal('hd-bg');return;
+  }
+  const fl=forgeLevel(id),fm=1+fl*FORGE_STEP,maxed=fl>=FORGE_MAX;
+  const fc=maxed?null:forgeCost(id,fl);
   const equippedOn=S.roster.filter(i=>SLOTS.some(s=>i.gear&&i.gear[s]===id)).map(i=>HEROES[i.heroId].name+' #'+i.uid);
   const costs=[c.junk?'🪙 '+fmt(c.junk):'',c.tape?'🩹 '+c.tape:'',c.juice?'🔋 '+c.juice:''].filter(Boolean);
   if(c.items)Object.entries(c.items).forEach(([iid,n])=>costs.push(`${ITEMS[iid].e} ${ITEMS[iid].name} ×${n}`));
@@ -5565,10 +5647,16 @@ function openItemSheet(id){
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
     <div class="hd-top"><span style="flex-shrink:0">${itemIcon(id,88)}</span>
-      <div><h3>${it.name}</h3>
+      <div><h3>${it.name}${fl>0?` <span style="color:var(--orange)">+${fl}</span>`:''}</h3>
       <b class="rar-${it.rarity}" style="font-size:11px;letter-spacing:.08em">${SLOT_VI[it.slot]} · ${RNAME[it.rarity].toUpperCase()}</b>
       <div class="quote">${it.desc}</div></div></div>
-    <div class="skillbox"><h5 style="color:var(--green)">📈 Hiệu lực khi lắp</h5><p>${bonusTxt(it.bonus)}</p></div>
+    <div class="skillbox"><h5 style="color:var(--green)">📈 Hiệu lực khi lắp${fl>0?` (đã rèn +${fl})`:''}</h5><p>${bonusTxt(it.bonus,fm)}</p></div>
+    <div class="skillbox" style="border-color:var(--orange)"><h5 style="color:var(--orange)">⚒️ Rèn: +${fl}/${FORGE_MAX} <span style="font-size:11px;color:var(--muted)">— mọi bản cùng loại đang lắp đều hưởng</span></h5>
+      ${maxed?'<p style="color:var(--green)">Đã đạt cấp rèn tối đa! 🏆</p>':`
+      <p style="font-size:12px">Rèn lên <b>+${fl+1}</b> → hiệu lực <b>${bonusTxt(it.bonus,1+(fl+1)*FORGE_STEP)}</b></p>
+      <button class="btn sm or" style="margin-top:6px" onclick="doForge('${id}')">⚒️ Rèn — 🪙 ${fmt(fc.junk)} + 🩹 ${fc.tape}</button>`}</div>
+    ${setName?`<div class="skillbox"><h5 style="color:var(--purple)">🧩 Thuộc bộ <b>${setName}</b></h5>
+      <p style="font-size:12px">Lắp 2 món cùng bộ: <b>${bonusTxt(ITEM_SETS[it.set].b2)}</b> · đủ 3 món: <b>${bonusTxt(ITEM_SETS[it.set].b3)}</b> (trên cùng 1 hero)</p></div>`:''}
     <div class="skillbox"><h5 style="color:var(--yellow)">🔨 Nguyên liệu chế</h5><p>${costs.join(' · ')}</p></div>
     <p class="demonote" style="margin:6px 0 0">Trong kho: <b>${own}</b>${equippedOn.length?' · Đang lắp cho: '+equippedOn.join(', '):''} · Lắp/tháo trong hồ sơ hero.</p>
     <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:12px">
@@ -5627,15 +5715,25 @@ function renderCraft(){
   // kệ 2–4: xưởng chế theo slot
   SLOTS.forEach(sl=>{
     h+=`<div class="shelf"><div class="shelf-label">${SLOT_VI[sl]} — xưởng chế</div><div class="shelf-row">`;
-    Object.values(ITEMS).filter(it=>it.slot===sl).sort((a,b)=>rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
-      const own=S.inv[it.id]||0;
+    Object.values(ITEMS).filter(it=>it.slot===sl&&!it.locked).sort((a,b)=>rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
+      const own=S.inv[it.id]||0,fl=forgeLevel(it.id);
       h+=`<div class="shitem">
         ${own?`<span class="si-own">×${own}</span>`:''}
+        ${fl>0?`<span class="si-left" style="background:var(--orange);left:auto;right:4px">+${fl}</span>`:''}
         <span class="si-click" onclick="openItemSheet('${it.id}')" title="${it.name} — bấm xem chi tiết">
           <span class="si-e">${itemIcon(it.id,46)}</span>
           <span class="si-name">${it.name}</span>
         </span>
         <span class="si-price craftp" onclick="craft('${it.id}')" title="🔨 Bấm để CHẾ ngay">🔨 ${fmt(it.cost.junk||0)}${it.cost.items?'+🔗':''}</span>
+        <span class="si-rar" style="background:var(--r-${it.rarity==='legendary'?'leg':it.rarity})"></span></div>`;
+    });
+    // teaser Epic/Legendary (locked) — hé lộ trần đồ
+    Object.values(ITEMS).filter(it=>it.slot===sl&&it.locked).sort((a,b)=>rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
+      h+=`<div class="shitem sold" onclick="openItemSheet('${it.id}')" title="${it.name} — sắp mở" style="cursor:pointer">
+        <span class="si-left">🔒</span>
+        <span class="si-click"><span class="si-e" style="filter:grayscale(.5) brightness(.85)">${it.e}</span>
+          <span class="si-name">${it.name}</span></span>
+        <span class="si-price" style="opacity:.7">sắp mở</span>
         <span class="si-rar" style="background:var(--r-${it.rarity==='legendary'?'leg':it.rarity})"></span></div>`;
     });
     h+=`</div></div>`;
@@ -6242,6 +6340,14 @@ ui:{
 '⚔️ Vũ khí — ô đang trống':'⚔️ Weapon — slot is empty',
 '⚔️ Vũ khí':'⚔️ Weapon','🛡️ Giáp':'🛡️ Armor','🎩 Mũ':'🎩 Hat','Đã xuất hiện':'Discovered','— các wave sau sẽ mở thêm. Bấm vào hero để xem hồ sơ.':'— more unlock in future waves. Tap a hero for their profile.','🛡️ Giáp — ô đang trống':'🛡️ Armor — slot is empty','🎩 Mũ — ô đang trống':'🎩 Hat — slot is empty',
 '✕ Tháo ra':'✕ Remove','Kho trống — chế thêm tại 🩹 Xưởng Băng Keo.':'Storage empty — craft more at the 🩹 Workshop.',
+/* ---- rèn + set + epic teaser ---- */
+'mọi bản cùng loại đang lắp đều hưởng':'all equipped copies of this item benefit','Đã đạt cấp rèn tối đa! 🏆':'Max forge level reached! 🏆',
+'Rèn lên':'Forge to','→ hiệu lực':'→ bonus','🧩 Set bonus đang kích hoạt':'🧩 Active set bonuses','🧩 Thuộc bộ':'🧩 Part of set',
+'Lắp 2 món cùng bộ:':'Equip 2 set pieces:','· đủ 3 món:':'· full 3 pieces:','(trên cùng 1 hero)':'(on the same hero)',
+'📈 Hiệu lực khi lắp':'📈 Bonus when equipped','📈 Hiệu lực (xem trước)':'📈 Bonus (preview)','🔨 Nguyên liệu chế':'🔨 Craft materials','🔨 Chế tạo':'🔨 Craft',
+'Trong kho:':'In storage:','sắp mở':'coming soon','🔒 mở ở bản sau':'🔒 unlocks later',
+'Lắp/tháo trong hồ sơ hero.':'Equip/unequip in the hero profile.','Đang lắp cho:':'Equipped on:',
+'🪙 Thiếu Junk Coins để rèn!':'🪙 Not enough Junk Coins to forge!','🩹 Thiếu băng keo để rèn!':'🩹 Not enough duct tape to forge!',
 '🐾 Pet — ra mắt ở Mùa 2!':'🐾 Pets — coming in Season 2!','hết lượt':'out of uses',
 '➖ Rời đội':'➖ Leave team','➕ Vào đội':'➕ Join team','về nghỉ ngơi':'take a break','xuất trận ngay':'fight right away',
 '🎭 MEME ARENA':'🎭 MEME ARENA','🌐 ĐẤU TRƯỜNG ONLINE':'🌐 ONLINE ARENA','🤖 LUYỆN TẬP VỚI BOT':'🤖 BOT PRACTICE',
@@ -6427,6 +6533,12 @@ rx:[
 [/^🔒 Trần Lv (\d+) \(cấp tài khoản (\d+) \+ 4\)\. Đánh thêm để lên cấp tài khoản đã!$/,'🔒 Level cap $1 (account level $2 + 4). Battle more to raise your account level!'],
 [/^🔒 trần Lv (\d+)$/,'🔒 Lv $1 cap'],
 [/^CÓ ×(\d+)$/,'OWNED ×$1'],
+[/^⚒️ Rèn: \+(\d+)\/(\d+)$/,'⚒️ Forge: +$1/$2'],
+[/^⚒️ Rèn — 🪙 ([\d.,]+) \+ 🩹 (\d+)$/,'⚒️ Forge — 🪙 $1 + 🩹 $2'],
+[/^📈 Hiệu lực khi lắp \(đã rèn \+(\d+)\)$/,'📈 Bonus when equipped (forged +$1)'],
+[/^🔒 Trang bị (\w+) — sẽ mở ở bản sau\. Hé lộ trần đồ thôi!$/,'🔒 $1 gear — unlocks in a later build. Just a teaser of the ceiling!'],
+[/^⚒️ Rèn (.+) lên \+(\d+)! Mọi bản đang lắp đều mạnh lên\.$/,'⚒️ Forged $1 to +$2! All equipped copies got stronger.'],
+[/^⚒️ (.+) đã đạt cấp rèn tối đa \(\+(\d+)\)!$/,'⚒️ $1 is at max forge level (+$2)!'],
 [/^Phí: 🪙 ([\d.,]+) \+ 🩹 (\d+)$/,'Cost: 🪙 $1 + 🩹 $2'],
 [/^Phí: 🪙 ([\d.,—]+)$/,'Cost: 🪙 $1'],
 [/^🪙 ([\d.,]+)\+ · 🩹 (\d+)\+ \(theo rarity\)$/,'🪙 $1+ · 🩹 $2+ (by rarity)'],
@@ -6521,8 +6633,17 @@ data(){
   conehat:['Traffic Cone Hat','+8% DEF, +5% Attack. Wearing it makes you feel legally entitled to block roads.'],
   colander:['Colander Helmet','+10% HP, +10% DEF. Perfectly ventilated thanks to 200 tactical breathing holes.'],
   boombox:['Boombox Crown','+12% Attack, +12% Skill power. Plays battle music 24/7. The cassette is jammed on the best track.'],
+  plasma:['Microwave Plasma Gun','+30% Attack, +12% Skill power. Reheats enemies at the atomic level.'],
+  reactor:['Reactor Core Armor','+28% DEF, +18% HP. Glows faintly. Doctors advise against long hugs.'],
+  satdish:['Satellite Dish Hat','+15% Attack, +15% Skill power. Picks up cosmic rays and the neighbors\' drama.'],
+  excalibur:['Broomstick Excalibur','+22% Attack, +18% Skill power. Pulled from a concrete block in the parking lot.'],
+  aegis:['Divine Manhole Aegis','+24% DEF, +20% HP. The last intact manhole cover in the city.'],
+  halo:['Satellite Halo','+16% Attack, +16% Skill power, +12% HP. A fallen satellite fragment, now a holy relic.'],
   };
   Object.entries(IT).forEach(([k,t])=>{const it=ITEMS[k];if(it){if(t[0])it.name=t[0];it.desc=t[1]}});
+  // ---- SET names ----
+  const SETN={kitchen:'🍳 Kitchen Set',tinker:'🔩 DIY Tinker Set',premium:'📡 Premium Set',myth:'🌟 Legendary Set'};
+  Object.entries(SETN).forEach(([k,n])=>{if(ITEM_SETS[k])ITEM_SETS[k].name=n});
   // ---- ENEMIES: quote + lore + skill boss ----
   const EQ={
   rat:['"Squeak." (translation: hand over the scrap)','70% rust, 100% attitude. Collects bottle caps like family heirlooms and WILL bite for them.'],
@@ -6762,6 +6883,12 @@ ui:{
 '⚔️ Vũ khí —':'⚔️ 武器 —','🛡️ Giáp —':'🛡️ 护甲 —','🎩 Mũ —':'🎩 帽子 —',
 '⚔️ Vũ khí — ô đang trống':'⚔️ 武器 — 空槽',
 '⚔️ Vũ khí':'⚔️ 武器','🛡️ Giáp':'🛡️ 护甲','🎩 Mũ':'🎩 帽子','Đã xuất hiện':'已发现','— các wave sau sẽ mở thêm. Bấm vào hero để xem hồ sơ.':'——后续浪潮陆续解锁。点击英雄查看档案。','🛡️ Giáp — ô đang trống':'🛡️ 护甲 — 空槽','🎩 Mũ — ô đang trống':'🎩 帽子 — 空槽',
+'🍳 Kitchen Set':'🍳 厨房套装','🔩 DIY Tinker Set':'🔩 自制工匠套装','📡 Premium Set':'📡 高端套装','🌟 Legendary Set':'🌟 传说套装',
+'mọi bản cùng loại đang lắp đều hưởng':'所有已装备的同款都受益','Đã đạt cấp rèn tối đa! 🏆':'已达最高锻造等级！🏆','Rèn lên':'锻造至','→ hiệu lực':'→ 效果',
+'🧩 Set bonus đang kích hoạt':'🧩 已激活套装加成','🧩 Thuộc bộ':'🧩 所属套装','Lắp 2 món cùng bộ:':'装备2件同套：','· đủ 3 món:':'· 集齐3件：','(trên cùng 1 hero)':'(同一英雄上)',
+'📈 Hiệu lực khi lắp':'📈 装备加成','📈 Hiệu lực (xem trước)':'📈 加成（预览）','🔨 Nguyên liệu chế':'🔨 制作材料','🔨 Chế tạo':'🔨 制作','Trong kho:':'库存：','sắp mở':'即将开放','🔒 mở ở bản sau':'🔒 后续版本开放',
+'Lắp/tháo trong hồ sơ hero.':'在英雄档案中装备/卸下。','Đang lắp cho:':'已装备于：',
+'🪙 Thiếu Junk Coins để rèn!':'🪙 锻造所需废品币不足！','🩹 Thiếu băng keo để rèn!':'🩹 锻造所需胶带不足！',
 '✕ Tháo ra':'✕ 卸下','Kho trống — chế thêm tại 🩹 Xưởng Băng Keo.':'仓库是空的——去 🩹 胶带工坊制作。',
 '🐾 Pet — ra mắt ở Mùa 2!':'🐾 宠物——第2赛季推出！','hết lượt':'次数用完',
 '➖ Rời đội':'➖ 离队','➕ Vào đội':'➕ 入队','về nghỉ ngơi':'回去休息','xuất trận ngay':'立刻出战',
@@ -6944,6 +7071,12 @@ ui:{
 '⚔️ Vũ khí —':'⚔️ 武器 —','🛡️ Giáp —':'🛡️ 防具 —','🎩 Mũ —':'🎩 帽子 —',
 '⚔️ Vũ khí — ô đang trống':'⚔️ 武器 — 空きスロット',
 '⚔️ Vũ khí':'⚔️ 武器','🛡️ Giáp':'🛡️ 防具','🎩 Mũ':'🎩 帽子','Đã xuất hiện':'発見済み','— các wave sau sẽ mở thêm. Bấm vào hero để xem hồ sơ.':'——今後のウェーブで続々解放。ヒーローをタップでプロフィール表示。','🛡️ Giáp — ô đang trống':'🛡️ 防具 — 空きスロット','🎩 Mũ — ô đang trống':'🎩 帽子 — 空きスロット',
+'🍳 Kitchen Set':'🍳 キッチンセット','🔩 DIY Tinker Set':'🔩 日曜大工セット','📡 Premium Set':'📡 高級セット','🌟 Legendary Set':'🌟 伝説セット',
+'mọi bản cùng loại đang lắp đều hưởng':'装備中の同じ装備すべてに適用','Đã đạt cấp rèn tối đa! 🏆':'最大強化レベル到達！🏆','Rèn lên':'強化して','→ hiệu lực':'→ 効果',
+'🧩 Set bonus đang kích hoạt':'🧩 発動中のセットボーナス','🧩 Thuộc bộ':'🧩 所属セット','Lắp 2 món cùng bộ:':'同セット2個装備：','· đủ 3 món:':'· 3個揃える：','(trên cùng 1 hero)':'(同じヒーローに)',
+'📈 Hiệu lực khi lắp':'📈 装備ボーナス','📈 Hiệu lực (xem trước)':'📈 ボーナス（プレビュー）','🔨 Nguyên liệu chế':'🔨 クラフト材料','🔨 Chế tạo':'🔨 クラフト','Trong kho:':'在庫：','sắp mở':'近日公開','🔒 mở ở bản sau':'🔒 後のバージョンで開放',
+'Lắp/tháo trong hồ sơ hero.':'ヒーロープロフィールで装備/解除。','Đang lắp cho:':'装備中：',
+'🪙 Thiếu Junk Coins để rèn!':'🪙 強化に必要なジャンクコインが不足！','🩹 Thiếu băng keo để rèn!':'🩹 強化に必要なダクトテープが不足！',
 '✕ Tháo ra':'✕ 外す','Kho trống — chế thêm tại 🩹 Xưởng Băng Keo.':'倉庫が空っぽ——🩹 工房でクラフトしよう。',
 '🐾 Pet — ra mắt ở Mùa 2!':'🐾 ペット——シーズン2で登場！','hết lượt':'回数切れ',
 '➖ Rời đội':'➖ 編成から外す','➕ Vào đội':'➕ 編成に入れる','về nghỉ ngơi':'休ませる','xuất trận ngay':'即出撃',
@@ -7250,7 +7383,7 @@ function saveGame(){
       gas:S.gas,maxGas:S.maxGas,junk:S.junk,juice:S.juice,tape:S.tape,cans:S.cans,
       plv:S.plv,xp:S.xp,roster:S.roster,nextUid:S.nextUid,
       pieces:S.pieces,boxes:S.boxes,nextBoxUid:S.nextBoxUid,unlocked:S.unlocked,
-      team:S.team,inv:S.inv,beaten:S.beaten,daily:S.daily,
+      team:S.team,inv:S.inv,forge:S.forge,beaten:S.beaten,daily:S.daily,
       tower:S.tower,seasonStart:S.seasonStart,seasonNo:S.seasonNo,seasonStats:S.seasonStats,trophies:S.trophies,arena:S.arena,net:S.net,tut:S.tut,sfx:S.sfx,speed:S.speed,tele:S.tele}));
   }catch(e){/* private mode v.v. — bỏ qua, game vẫn chạy in-memory */}
 }
@@ -7263,7 +7396,7 @@ function loadGame(){
     if(d.ver!==1||!Array.isArray(d.roster)||!d.roster.length)return false;
     Object.assign(S,{gas:d.gas,maxGas:d.maxGas,junk:d.junk,juice:d.juice,tape:d.tape,cans:d.cans,
       plv:d.plv,xp:d.xp,roster:d.roster,nextUid:d.nextUid,
-      team:d.team,inv:d.inv||{},beaten:d.beaten||{},daily:d.daily});
+      team:d.team,inv:d.inv||{},forge:d.forge||{},beaten:d.beaten||{},daily:d.daily});
     // v2.34: hệ HỘP thay mảnh-từng-hero — save cũ quy đổi tổng mảnh 1:1, không ai mất gì
     S.pieces=d.pieces!=null?d.pieces:Object.values(d.shards||{}).reduce((a,b)=>a+(b||0),0);
     S.boxes=d.boxes||[];
