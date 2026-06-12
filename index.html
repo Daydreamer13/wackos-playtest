@@ -3673,6 +3673,7 @@ function upgradeHero(uid){
   S.junk-=c;inst.lvl++;S.daily.upg++;
   const af=heroStats(uid);
   toast(`⬆️ <b>Lv ${inst.lvl}</b>! ❤️ +${fmt(af.hp-b4.hp)} · ⚔️ +${fmt(af.atk-b4.atk)} · 🛡️ +${fmt(af.def-b4.def)}`);
+  if(S.net)netSync();
   SFX.coin();tutAdvance(3);
   renderRes();openHero(uid);refreshActiveView();
 }
@@ -3681,6 +3682,7 @@ function upgradeSkill(uid){
   if(S.juice<c)return toast('🔋 Không đủ Battery Juice. Đi đánh Battery Slum nhé!');
   S.juice-=c;inst.skill++;S.daily.upg++;SFX.coin();
   toast(`💥 Skill của ${HEROES[inst.heroId].name} #${uid} lên <b>Lv ${inst.skill}</b>!`);
+  if(S.net)netSync();
   renderRes();openHero(uid);
 }
 function equipItem(uid,itemId){
@@ -3689,12 +3691,14 @@ function equipItem(uid,itemId){
   if(inst.gear[s])S.inv[inst.gear[s]]=(S.inv[inst.gear[s]]||0)+1; // hoán đổi
   S.inv[itemId]--;inst.gear[s]=itemId;
   toast(`🎒 ${HEROES[inst.heroId].name} #${uid} đã lắp ${ITEMS[itemId].e} ${ITEMS[itemId].name}!`);
+  if(S.net)netSync(); // chỉ số đội đổi → cập nhật đội thủ
   openHero(uid);
 }
 function unequipItem(uid,s){
   const inst=instById(uid);
   if(!inst.gear||!inst.gear[s])return;
   S.inv[inst.gear[s]]=(S.inv[inst.gear[s]]||0)+1;inst.gear[s]=null;
+  if(S.net)netSync();
   openHero(uid);
 }
 function toggleTeam(uid){
@@ -3767,6 +3771,7 @@ function pickHero(uid){
   pickSlot=null;closeModal('hd-bg');
   const h=HEROES[instById(uid).heroId];
   toast(swapped?`🔄 ${h.name} đổi chỗ xong — đội hình mới sẵn sàng!`:`✅ ${h.name} vào ${row==='front'?'tuyến trước':'tuyến sau'}! ${h.quote}`);
+  if(S.net)netSync(); // đổi đội hình → cập nhật đội thủ trên BXH (debounce)
   renderTeam();renderRes();
 }
 function clearSlot(){
@@ -3776,6 +3781,7 @@ function clearSlot(){
   if(cur!=null)toast(`${HEROES[instById(cur).heroId].name} về nhà nghỉ ngơi.`);
   S.team[row][idx]=null;
   pickSlot=null;closeModal('hd-bg');
+  if(S.net)netSync(); // đổi đội hình → cập nhật đội thủ
   renderTeam();renderRes();
 }
 function towerMul(f){return 0.85*Math.pow(1.085,f)} // tháp scale theo TẦNG, khử scale theo cấp
@@ -3893,6 +3899,10 @@ function openArena(){
       <p style="margin:4px 0 0;font-size:12px;color:var(--yellow)">🎁 <b>GIẢI 100$:</b> 20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — chốt 23:59 ngày 26/06!</p>
       ${S.net?`
       <p class="sub" style="margin:4px 0 6px">Bạn là <b>${S.net.name}</b> · 🏆 <b style="color:var(--yellow)">${S.net.tro!=null?S.net.tro:1000}</b> cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!</p>
+      <div style="display:flex;gap:4px;align-items:center;margin:2px 0 6px;flex-wrap:wrap">
+        <span style="font-size:11.5px;color:var(--muted)">🛡️ Đội thủ của bạn (tự cập nhật theo đội hình):</span>
+        ${teamIds().slice(0,5).map(uid=>`<span class="spr" style="width:24px;height:30px">${ART[instById(uid).heroId]}</span>`).join('')||'<span style="font-size:11.5px;color:var(--red)">trống — xếp đội ở tab 🦸!</span>'}
+      </div>
       <div id="net-opps" style="margin:6px 0"><p class="sub">📡 Đang dò sóng tìm đối thủ…</p></div>
       <div style="display:flex;gap:6px">
         <button class="btn sm cy" style="flex:1" onclick="openNetBoard()">🌍 BXH Online</button>
@@ -3915,7 +3925,7 @@ function openArena(){
       </div></div>`}).join('')}
     <button class="btn cy" style="width:100%" onclick="openArenaBoard()">🏅 Bảng xếp hạng Arena</button>`;
   openModal('hd-bg');
-  if(S.net)netLoadOpps();
+  if(S.net){netSync();netLoadOpps()} // mở arena = đẩy đội thủ mới nhất + tải đối thủ
 }
 function openArenaBoard(){
   const offs=[{o:380,q:'Đồn là chưa thua bao giờ. Đồn thôi.'},{o:240,q:'Đội hình 5 Roomba. Đừng hỏi.'},{o:120,q:'Đang nghỉ phép nhưng vẫn leo hạng.'},{o:55,q:'Vừa vượt mặt bạn tối qua.'},
@@ -5250,6 +5260,8 @@ function grantRewards(node,win,pandaAlive,T){
     const xp=r.xp||30;addXp(xp);T.xp+=xp;
     checkUnlocks(); // tiến độ mới → có thể mở khóa tính năng
     if(S.net)netSync(); // hồ sơ online: đội vừa mạnh lên / tiến độ mới
+    else if(isU('arena')&&!window._nagNet){window._nagNet=1; // phễu đăng ký: nhắc 1 lần/phiên
+      setTimeout(()=>toast('🎁 Vào 🎭 Arena đăng ký tên để lên BXH toàn cầu — đang có giải 100$!'),1800)}
   }else{
     T.loss++;S.seasonStats.loss++;
     if(S.tele)S.tele.loss++;
@@ -6227,6 +6239,8 @@ ui:{
 'Server chỉ lưu tên + chỉ số đội hình — KHÔNG có thông tin cá nhân. Dữ liệu có thể reset sau đợt playtest.':'The server only stores your name + team stats — NO personal info. Data may reset after the playtest.',
 'Đặt tên là lên sóng: BXH toàn cầu trực tiếp + đánh đội hình THẬT của người chơi khác. Không tốn gas, không giới hạn lượt.':'Pick a name and go live: a real-time global leaderboard + fight REAL teams from other players. No gas cost, no limits.',
 'Bạn là':'You are','cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!':'trophies — fight REAL teams from real players, gas-free!',
+'🛡️ Đội thủ của bạn (tự cập nhật theo đội hình):':'🛡️ Your defense team (auto-updates with your lineup):','trống — xếp đội ở tab 🦸!':'empty — set a team in the 🦸 tab!',
+'🎁 Vào 🎭 Arena đăng ký tên để lên BXH toàn cầu — đang có giải 100$!':'🎁 Open 🎭 Arena and register a name for the global leaderboard — $100 in prizes live now!',
 'người chơi toàn cầu · bạn đứng hạng':'players worldwide · your rank','— số liệu trực tiếp từ server.':'— live data from the server.',
 'người chơi toàn cầu — số liệu trực tiếp từ server.':'players worldwide — live data from the server.',
 'SỰ KIỆN:':'EVENT:','SỰ KIỆN ĐANG CHẠY:':'EVENT LIVE NOW:','TOP BXH cuối đợt test nhận':'TOP of the leaderboard at the end of the test wins',
@@ -6743,6 +6757,8 @@ ui:{
 'Server chỉ lưu tên + chỉ số đội hình — KHÔNG có thông tin cá nhân. Dữ liệu có thể reset sau đợt playtest.':'服务器只存昵称+阵容数据——没有任何个人信息。测试结束后数据可能重置。',
 'Đặt tên là lên sóng: BXH toàn cầu trực tiếp + đánh đội hình THẬT của người chơi khác. Không tốn gas, không giới hạn lượt.':'取名即上榜：实时全球排行榜+对战其他玩家的真实阵容。不耗油、无次数限制。',
 'Bạn là':'你是','cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!':'奖杯——对战真实玩家的真实阵容，不耗油！',
+'🛡️ Đội thủ của bạn (tự cập nhật theo đội hình):':'🛡️ 你的防守阵容（随当前编队自动更新）：','trống — xếp đội ở tab 🦸!':'空——去 🦸 页排兵布阵！',
+'🎁 Vào 🎭 Arena đăng ký tên để lên BXH toàn cầu — đang có giải 100$!':'🎁 打开 🎭 竞技场注册昵称上全球排行榜——100$奖池进行中！',
 'người chơi toàn cầu · bạn đứng hạng':'名全球玩家 · 你的排名','— số liệu trực tiếp từ server.':'——服务器实时数据。',
 'người chơi toàn cầu — số liệu trực tiếp từ server.':'名全球玩家——服务器实时数据。',
 'SỰ KIỆN:':'活动：','SỰ KIỆN ĐANG CHẠY:':'活动进行中：','TOP BXH cuối đợt test nhận':'测试结束时排行榜TOP将获得',
@@ -6922,6 +6938,8 @@ ui:{
 'Server chỉ lưu tên + chỉ số đội hình — KHÔNG có thông tin cá nhân. Dữ liệu có thể reset sau đợt playtest.':'サーバーに保存されるのは名前＋チームステータスのみ——個人情報は一切なし。テスト終了後データはリセットされる場合あり。',
 'Đặt tên là lên sóng: BXH toàn cầu trực tiếp + đánh đội hình THẬT của người chơi khác. Không tốn gas, không giới hạn lượt.':'名前を決めるだけで参戦：リアルタイムのグローバルランキング＋他プレイヤーの本物のチームと対戦。ガス消費なし・回数無制限。',
 'Bạn là':'あなた：','cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!':'トロフィー——実在プレイヤーの本物のチームと戦おう、ガス消費なし！',
+'🛡️ Đội thủ của bạn (tự cập nhật theo đội hình):':'🛡️ あなたの防衛チーム（編成に合わせて自動更新）：','trống — xếp đội ở tab 🦸!':'空っぽ——🦸 タブで編成しよう！',
+'🎁 Vào 🎭 Arena đăng ký tên để lên BXH toàn cầu — đang có giải 100$!':'🎁 🎭 アリーナで名前を登録してグローバルランキングへ——賞金100$開催中！',
 'người chơi toàn cầu · bạn đứng hạng':'人のプレイヤー · あなたの順位','— số liệu trực tiếp từ server.':'——サーバーのライブデータ。',
 'người chơi toàn cầu — số liệu trực tiếp từ server.':'人のプレイヤー——サーバーのライブデータ。',
 'SỰ KIỆN:':'イベント：','SỰ KIỆN ĐANG CHẠY:':'イベント開催中：','TOP BXH cuối đợt test nhận':'テスト終了時のランキングTOPに',
