@@ -126,6 +126,12 @@ h2.sec{font-size:22px;font-weight:900;margin:18px 2px 4px;letter-spacing:.3px}
 .hcard:hover{transform:translateY(-4px) rotate(-.6deg)}
 .hcard.rare{border-color:var(--r-rare)}.hcard.epic{border-color:var(--r-epic)}
 .hcard.epic{box-shadow:0 0 16px rgba(179,107,255,.18)}
+/* NỀN theo rarity — đổi hẳn màu nền cho dễ nhận (common giữ trung tính) */
+.hcard.uncommon{background:linear-gradient(165deg,#18361f,#11211a)}
+.hcard.rare{background:linear-gradient(165deg,#0e3340,#10212f)}
+.hcard.epic{background:linear-gradient(165deg,#2b1747,#1a1330)}
+.hcard.legendary{background:linear-gradient(165deg,#43280c,#271a12)}
+.hcard.uncommon h4,.hcard.rare h4,.hcard.epic h4,.hcard.legendary h4{text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .hcard .spr{width:96px;margin-top:2px}
 .hcard h4{font-size:14.5px;margin-top:6px;line-height:1.15;position:relative}
 .hcard .lv{font-size:12px;color:var(--yellow);font-weight:900}
@@ -199,6 +205,10 @@ h2.sec{font-size:22px;font-weight:900;margin:18px 2px 4px;letter-spacing:.3px}
 .tslot .spr{width:52px}
 .tslot .nm{font-size:9.5px;color:var(--muted);font-weight:800;text-align:center;line-height:1.1;margin-top:2px}
 .tslot.filled{border-style:solid;border-color:var(--line)}
+.tslot.filled.uncommon{background:linear-gradient(165deg,#18361f,#11211a)}
+.tslot.filled.rare{background:linear-gradient(165deg,#0e3340,#10212f)}
+.tslot.filled.epic{background:linear-gradient(165deg,#2b1747,#1a1330)}
+.tslot.filled.legendary{background:linear-gradient(165deg,#43280c,#271a12)}
 .poslabel{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:10px 2px 4px}
 
 /* ================= ARENA ================= */
@@ -3729,7 +3739,7 @@ function toggleTeam(uid){
 function renderTeam(){
   const mk=(arr,row)=>arr.map((uid,i)=>{
     if(uid!=null){const inst=instById(uid),h=HEROES[inst.heroId];
-      return`<div class="tslot filled" onclick="openPicker('${row}',${i})" title="Bấm để thay / hoán đổi / bỏ trống" style="border-color:var(--r-${inst.rarity==='legendary'?'leg':inst.rarity})">
+      return`<div class="tslot filled ${inst.rarity}" onclick="openPicker('${row}',${i})" title="Bấm để thay / hoán đổi / bỏ trống" style="border-color:var(--r-${inst.rarity==='legendary'?'leg':inst.rarity})">
         ${sprite(inst.heroId,52,false)}<span class="nm">${h.name.split(' ')[0]}<br>${RNAME[inst.rarity]} Lv${inst.lvl}</span></div>`}
     return`<div class="tslot" onclick="openPicker('${row}',${i})" title="Bấm để chọn hero vào ô này">＋</div>`;
   }).join('');
