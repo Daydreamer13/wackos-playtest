@@ -519,9 +519,15 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .shitem .si-e{font-size:35px;line-height:1.2;display:block;filter:drop-shadow(0 5px 4px rgba(0,0,0,.5))}
 .shitem .si-name{display:block;font-size:10.5px;font-weight:800;line-height:1.2;margin-top:3px;color:#eadfc8;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.shitem .si-price{display:inline-block;font-size:10px;font-weight:900;background:var(--yellow);color:#3a2a00;
-  border-radius:5px 5px 5px 0;padding:1px 7px;margin-top:3px;box-shadow:0 2px 0 #a87408}
-.shitem .si-price.craftp{background:var(--bg3);color:var(--beige);box-shadow:none;border:1px solid var(--line)}
+.shitem .si-click{display:block;cursor:pointer;border-radius:8px}
+.shitem .si-e{display:flex;justify-content:center;align-items:flex-end;min-height:48px}
+.shitem .si-price{display:inline-block;font-size:10.5px;font-weight:900;background:var(--yellow);color:#3a2a00;
+  border-radius:7px;padding:3px 9px;margin-top:4px;box-shadow:0 2px 0 #a87408;cursor:pointer;transition:.12s}
+.shitem .si-price:hover{transform:scale(1.12);filter:brightness(1.1)}
+.shitem .si-price:active{transform:scale(.95);box-shadow:0 0 0 #a87408}
+.shitem .si-price.craftp{background:linear-gradient(180deg,var(--cyan),#13b8d6);color:#03222b;box-shadow:0 2px 0 #0a8aa3}
+.shitem .si-price.craftp:active{box-shadow:0 0 0 #0a8aa3}
+.shitem.sold .si-price{pointer-events:none;cursor:default}
 .shitem .si-own{position:absolute;top:2px;right:4px;font-size:9.5px;font-weight:900;color:var(--green);
   background:rgba(0,0,0,.55);border-radius:99px;padding:1px 6px;z-index:2}
 .shitem .si-left{position:absolute;top:2px;left:4px;font-size:9.5px;font-weight:900;color:var(--cyan);
@@ -2214,6 +2220,102 @@ const ITEMS={
 const SLOTS=['weapon','armor','hat'];
 const SLOT_VI={weapon:'⚔️ Vũ khí',armor:'🛡️ Giáp',hat:'🎩 Mũ'};
 
+/* ================= ART TRANG BỊ (SVG cùng style hero — thay emoji) ================= */
+const IW=i=>`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><g stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">${i}</g></svg>`;
+const ITEM_ART={
+/* ⚔️ vũ khí */
+spoon:IW(`<g transform="rotate(45 40 40)">
+  <rect x="36" y="38" width="8" height="32" rx="3" fill="#aab4c8"/>
+  <rect x="27" y="33" width="26" height="7" rx="3.5" fill="#8d97ad"/>
+  <ellipse cx="40" cy="18" rx="13" ry="17" fill="#e8edf6"/>
+  <ellipse cx="36" cy="13" rx="3.5" ry="5.5" fill="#fff" stroke="none"/></g>`),
+nailbat:IW(`<g transform="rotate(38 40 40)">
+  <path d="M36 72 L33 38 Q30 12 40 9 Q50 12 47 38 L44 72 Z" fill="#c89858"/>
+  <rect x="33" y="66" width="14" height="7" rx="3.5" fill="#8a5a28"/>
+  <path d="M31 24 l-9 -6 M49 26 l9 -7 M30 38 l-10 -3 M50 40 l10 -4" stroke-width="3.5"/></g>`),
+spork:IW(`<g transform="rotate(45 40 40)">
+  <rect x="36" y="38" width="8" height="30" rx="3" fill="#e8b73a"/>
+  <ellipse cx="40" cy="22" rx="12" ry="14" fill="#ffd23f"/>
+  <path d="M32 11 L34 19 M40 8 L40 17 M48 11 L46 19"/></g>
+  <path d="M14 16 l2.5 5 l5.5 1 l-4 3.5 l1.5 5.5 l-5.5 -3 l-5.5 3 l1.5 -5.5 l-4 -3.5 l5.5 -1 Z" fill="#ffd23f" stroke-width="2"/>`),
+stapler:IW(`<rect x="16" y="54" width="50" height="9" rx="4" fill="#2a2f3c"/>
+  <rect x="14" y="44" width="54" height="12" rx="5" fill="#3c4258"/>
+  <path d="M16 46 Q14 26 26 24 L60 30 Q67 32 65 40 L63 46 Z" fill="#e23d4e"/>
+  <rect x="48" y="38" width="13" height="6" rx="3" fill="#cfd6e6"/>
+  <circle cx="24" cy="32" r="2.5" fill="#8a1f2e" stroke="none"/>`),
+dryer:IW(`<rect x="12" y="24" width="36" height="21" rx="10.5" fill="#5b6a93"/>
+  <rect x="18" y="29" width="20" height="5" rx="2.5" fill="#8c9bc4" stroke="none"/>
+  <rect x="46" y="29" width="9" height="11" fill="#8c9bc4"/>
+  <circle cx="59" cy="34" r="7" fill="#3be8ff"/><circle cx="59" cy="34" r="3" fill="#d9fbff" stroke="none"/>
+  <path d="M68 34 h8" stroke="#3be8ff" stroke-width="4"/>
+  <rect x="20" y="44" width="12" height="22" rx="5" fill="#46527e" transform="rotate(12 26 55)"/>
+  <path d="M14 30 q-7 3 0 9" fill="none" stroke="#ff9f2e"/>`),
+dish:IW(`<rect x="30" y="52" width="20" height="14" rx="3" fill="#46527e"/>
+  <ellipse cx="38" cy="36" rx="24" ry="16" fill="#cfd6e6" transform="rotate(-28 38 36)"/>
+  <ellipse cx="38" cy="36" rx="13" ry="8" fill="#e8edf6" transform="rotate(-28 38 36)"/>
+  <path d="M38 36 L55 21" stroke-width="4"/>
+  <circle cx="57" cy="19" r="4.5" fill="#ff5d6c"/>
+  <path d="M63 12 q4 -4 2 -8 M68 19 q5 -2 6 -6" fill="none" stroke="#3be8ff" stroke-width="2.5"/>`),
+/* 🛡️ giáp */
+sign:IW(`<polygon points="29,10 51,10 66,25 66,47 51,62 29,62 14,47 14,25" fill="#e23d4e"/>
+  <polygon points="31,15 49,15 61,27 61,45 49,57 31,57 19,45 19,27" fill="none" stroke="#fff" stroke-width="2.5"/>
+  <text x="40" y="42" font-size="14" font-weight="900" fill="#fff" text-anchor="middle" stroke="none" font-family="Arial Black,Arial">STOP</text>
+  <rect x="34" y="62" width="12" height="8" rx="3" fill="#8d97ad"/>`),
+bubblevest:IW(`<path d="M24 18 Q40 10 56 18 L61 64 L19 64 Z" fill="#7fc4e8"/>
+  <path d="M40 16 L40 64" stroke-width="2.5"/>
+  <circle cx="29" cy="32" r="6" fill="#d9f2ff"/><circle cx="51" cy="30" r="5" fill="#d9f2ff"/>
+  <circle cx="28" cy="48" r="5" fill="#d9f2ff"/><circle cx="52" cy="46" r="6" fill="#d9f2ff"/>
+  <circle cx="40" cy="55" r="5" fill="#d9f2ff"/>
+  <circle cx="27" cy="30" r="1.6" fill="#fff" stroke="none"/><circle cx="50" cy="44" r="1.6" fill="#fff" stroke="none"/>
+  <path d="M62 18 l5 -5 M64 26 l7 -1" stroke-width="2.5"/>`),
+tirearmor:IW(`<circle cx="40" cy="40" r="27" fill="#3c424f"/>
+  <circle cx="40" cy="40" r="14" fill="#6f7890"/>
+  <circle cx="40" cy="40" r="6" fill="#2a2f3c"/>
+  <path d="M40 13 l0 7 M40 60 l0 7 M13 40 l7 0 M60 40 l7 0 M21 21 l5 5 M59 59 l-5 -5 M59 21 l-5 5 M21 59 l5 -5" stroke-width="3.5"/>`),
+sofaplate:IW(`<rect x="13" y="18" width="54" height="42" rx="13" fill="#b3573f"/>
+  <rect x="18" y="23" width="44" height="32" rx="9" fill="#c96a4e" stroke="none"/>
+  <circle cx="30" cy="33" r="2.2" fill="#5a2516" stroke="none"/><circle cx="50" cy="33" r="2.2" fill="#5a2516" stroke="none"/>
+  <circle cx="30" cy="47" r="2.2" fill="#5a2516" stroke="none"/><circle cx="50" cy="47" r="2.2" fill="#5a2516" stroke="none"/>
+  <path d="M30 33 L50 47 M50 33 L30 47" stroke-width="2" opacity=".45"/>
+  <rect x="33" y="60" width="14" height="9" rx="4" fill="#6f4a2a"/>`),
+fridgedoor:IW(`<rect x="22" y="8" width="36" height="62" rx="6" fill="#dfe9f2"/>
+  <rect x="22" y="8" width="36" height="10" rx="5" fill="#c3d2e0" stroke="none"/>
+  <rect x="51" y="16" width="5" height="22" rx="2.5" fill="#8d97ad"/>
+  <rect x="28" y="26" width="8" height="8" rx="2" fill="#ff5d6c"/>
+  <rect x="37" y="42" width="8" height="8" rx="2" fill="#5ee06a"/>
+  <rect x="29" y="55" width="8" height="8" rx="2" fill="#ffd23f"/>`),
+/* 🎩 mũ */
+cup:IW(`<path d="M26 14 L54 14 L62 50 L18 50 Z" fill="#f7f9fc"/>
+  <rect x="21" y="36" width="38" height="9" fill="#e23d4e"/>
+  <circle cx="40" cy="26" r="7" fill="#ffd23f"/>
+  <path d="M40 26 l0 -6 M35 30 l-5 3 M45 30 l5 3" stroke-width="3"/>
+  <ellipse cx="40" cy="52" rx="24" ry="6" fill="#e8edf6"/>
+  <path d="M24 56 q-4 8 1 12 M58 56 q3 8 -2 12" fill="none" stroke="#ffd23f" stroke-width="3.5"/>`),
+conehat:IW(`<polygon points="40,9 59,63 21,63" fill="#ff9f2e"/>
+  <polygon points="33,30 47,30 51,42 29,42" fill="#fff"/>
+  <ellipse cx="40" cy="63" rx="25" ry="6.5" fill="#e0851c"/>
+  <ellipse cx="40" cy="10" rx="4.5" ry="3.5" fill="#e0851c"/>`),
+colander:IW(`<path d="M14 30 Q40 23 66 30 L60 54 Q40 63 20 54 Z" fill="#cfd6e6"/>
+  <ellipse cx="40" cy="30" rx="26" ry="7.5" fill="#e8edf6"/>
+  <circle cx="30" cy="42" r="2.2" fill="#8d97ad" stroke="none"/><circle cx="40" cy="45" r="2.2" fill="#8d97ad" stroke="none"/>
+  <circle cx="50" cy="42" r="2.2" fill="#8d97ad" stroke="none"/><circle cx="35" cy="52" r="2.2" fill="#8d97ad" stroke="none"/>
+  <circle cx="45" cy="52" r="2.2" fill="#8d97ad" stroke="none"/>
+  <rect x="5" y="27" width="11" height="5.5" rx="2.7" fill="#8d97ad"/>
+  <rect x="64" y="27" width="11" height="5.5" rx="2.7" fill="#8d97ad"/>`),
+boombox:IW(`<path d="M17 22 l5 -10 l6 7 l7 -10 l7 10 l6 -7 l5 10" fill="#ffd23f"/>
+  <rect x="12" y="26" width="56" height="34" rx="6" fill="#3c4258"/>
+  <circle cx="26" cy="43" r="9" fill="#8c9bc4"/><circle cx="26" cy="43" r="3.5" fill="#2a2f3c"/>
+  <circle cx="54" cy="43" r="9" fill="#8c9bc4"/><circle cx="54" cy="43" r="3.5" fill="#2a2f3c"/>
+  <rect x="36" y="33" width="8" height="6" rx="2" fill="#3be8ff"/>
+  <rect x="36" y="44" width="8" height="10" rx="2" fill="#2a2f3c"/>
+  <text x="70" y="22" font-size="12" fill="#3be8ff" stroke="none">♪</text>`),
+};
+function itemIcon(id,w=46){
+  return ITEM_ART[id]
+    ?`<span class="spr" style="width:${w}px">${ITEM_ART[id]}</span>`
+    :`<span style="font-size:${Math.round(w*.76)}px;line-height:1.15">${ITEMS[id]?ITEMS[id].e:'❔'}</span>`;
+}
+
 const S={
   gas:60,maxGas:100,junk:1000,juice:50,tape:30,cans:2,plv:1,xp:0,
   roster:[],nextUid:1,pieces:0,boxes:[],nextBoxUid:1,unlocked:{},
@@ -2659,7 +2761,7 @@ function renderGallery(){
   const ig=$('codex-items');ig.innerHTML='';
   Object.values(ITEMS).sort((a,b)=>SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot)||rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
     const own=(S.inv[it.id]||0)+S.roster.reduce((t,i)=>t+(SLOTS.some(s=>i.gear&&i.gear[s]===it.id)?1:0),0);
-    ig.innerHTML+=`<div class="citem" style="border-color:var(--r-${it.rarity})"><span class="ce">${it.e}</span>
+    ig.innerHTML+=`<div class="citem" style="border-color:var(--r-${it.rarity})"><span class="ce">${itemIcon(it.id,44)}</span>
       <h4>${it.name}${own?` <small style="color:var(--green)">×${own}</small>`:''}</h4>
       <b class="rar-${it.rarity}" style="font-size:10px;letter-spacing:.08em">${SLOT_VI[it.slot]} · ${RNAME[it.rarity].toUpperCase()}</b>
       <p>${it.desc}</p></div>`;
@@ -4508,7 +4610,7 @@ function shopStock(){
       desc:'Chú hải ly nhặt được cạnh đường ray. Gom 10 mảnh ghép 1 📦 Hộp Hero.',
       buy:()=>{S.pieces+=1;
         if(S.pieces>=PIECES_PER_BOX)toast(`🧩 Đủ ${PIECES_PER_BOX} mảnh — vào tab 🥫 Loot ghép Hộp Hero!`)}},
-    {key:'item',e:iod.e,name:`${iod.name} (giảm 20%)`,price:Math.round((iod.cost.junk||0)*0.8),
+    {key:'item',e:iod.e,art:iod.id,name:`${iod.name} (giảm 20%)`,price:Math.round((iod.cost.junk||0)*0.8),
       tape:Math.round((iod.cost.tape||0)*0.8),juice:Math.round((iod.cost.juice||0)*0.8),limit:1,
       desc:iod.cost.items?'Hôm nay ra món chuỗi — chú hải ly không bán đồ hàn sẵn. Mai quay lại!':`Món của ngày, bậc ${RNAME[iod.rarity]}. Giảm 20% TOÀN BỘ nguyên liệu.`,
       buy:()=>{S.inv[iod.id]=(S.inv[iod.id]||0)+1},disabled:!!iod.cost.items},
@@ -4530,7 +4632,7 @@ function openShopSheet(key){
   const used=(S.daily.shop&&S.daily.shop[s.key])||0,left=s.limit-used;
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
-    <div class="hd-top"><span style="font-size:58px;flex-shrink:0">${s.e}</span>
+    <div class="hd-top"><span style="flex-shrink:0">${s.art?itemIcon(s.art,88):`<span style="font-size:58px">${s.e}</span>`}</span>
       <div><h3>${s.name}</h3><div class="quote">${s.desc}</div></div></div>
     <div class="skillbox"><h5 style="color:var(--yellow)">💰 Giá tiệm</h5>
       <p>🪙 ${fmt(s.price)}${s.tape?' · 🩹 '+s.tape:''}${s.juice?' · 🔋 '+s.juice:''} — còn <b>${left}/${s.limit}</b> suất hôm nay</p></div>
@@ -4549,7 +4651,7 @@ function openItemSheet(id){
   const rj=Math.floor((c.junk||0)*.5),rt=Math.floor((c.tape||0)*.5),ru=Math.floor((c.juice||0)*.5);
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
-    <div class="hd-top"><span style="font-size:58px;flex-shrink:0">${it.e}</span>
+    <div class="hd-top"><span style="flex-shrink:0">${itemIcon(id,88)}</span>
       <div><h3>${it.name}</h3>
       <b class="rar-${it.rarity}" style="font-size:11px;letter-spacing:.08em">${SLOT_VI[it.slot]} · ${RNAME[it.rarity].toUpperCase()}</b>
       <div class="quote">${it.desc}</div></div></div>
@@ -4599,11 +4701,13 @@ function renderCraft(){
   shopStock().forEach(s=>{
     const used=S.daily.shop[s.key]||0,left=s.limit-used;
     const out=left<=0||s.disabled;
-    h+=`<div class="shitem ${out?'sold':''}" onclick="openShopSheet('${s.key}')" title="${s.name} — ${s.desc}">
+    h+=`<div class="shitem ${out?'sold':''}">
       ${!out?`<span class="si-left">${left}/${s.limit}</span>`:''}
-      <span class="si-e">${s.e}</span>
-      <span class="si-name">${s.name}</span>
-      <span class="si-price">🪙 ${fmt(s.price)}</span></div>`;
+      <span class="si-click" onclick="openShopSheet('${s.key}')" title="${s.name} — bấm xem chi tiết">
+        <span class="si-e">${s.art?itemIcon(s.art,46):s.e}</span>
+        <span class="si-name">${s.name}</span>
+      </span>
+      <span class="si-price" ${out?'':`onclick="buyShop('${s.key}')"`} title="${out?'Hết suất hôm nay':'🛒 Bấm để MUA ngay'}">🛒 ${fmt(s.price)}</span></div>`;
   });
   h+=`</div></div>`;
   }
@@ -4612,11 +4716,13 @@ function renderCraft(){
     h+=`<div class="shelf"><div class="shelf-label">${SLOT_VI[sl]} — xưởng chế</div><div class="shelf-row">`;
     Object.values(ITEMS).filter(it=>it.slot===sl).sort((a,b)=>rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
       const own=S.inv[it.id]||0;
-      h+=`<div class="shitem" onclick="openItemSheet('${it.id}')" title="${it.name} — ${it.desc}">
+      h+=`<div class="shitem">
         ${own?`<span class="si-own">×${own}</span>`:''}
-        <span class="si-e">${it.e}</span>
-        <span class="si-name">${it.name}</span>
-        <span class="si-price craftp">🪙 ${fmt(it.cost.junk||0)}${it.cost.items?' +🔗':''}</span>
+        <span class="si-click" onclick="openItemSheet('${it.id}')" title="${it.name} — bấm xem chi tiết">
+          <span class="si-e">${itemIcon(it.id,46)}</span>
+          <span class="si-name">${it.name}</span>
+        </span>
+        <span class="si-price craftp" onclick="craft('${it.id}')" title="🔨 Bấm để CHẾ ngay">🔨 ${fmt(it.cost.junk||0)}${it.cost.items?'+🔗':''}</span>
         <span class="si-rar" style="background:var(--r-${it.rarity==='legendary'?'leg':it.rarity})"></span></div>`;
     });
     h+=`</div></div>`;
