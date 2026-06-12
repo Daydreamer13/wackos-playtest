@@ -624,6 +624,20 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .bld.bldlock{filter:grayscale(.9) brightness(.6)}
 .bld.bldlock .bsign-txt{opacity:.45}
 
+/* ---------- v2.38: hiệu ứng phần thưởng ---------- */
+.screenflash{position:fixed;inset:0;z-index:250;pointer-events:none;animation:sflash .55s ease-out forwards}
+@keyframes sflash{from{opacity:.7}to{opacity:0}}
+.reveal-wrap{position:relative;display:flex;justify-content:center;align-items:center;gap:12px;min-height:160px;overflow:visible}
+.reveal-wrap .sunburst{position:absolute;left:50%;top:50%;width:290px;height:290px;pointer-events:none;border-radius:50%;
+  transform:translate(-50%,-50%);-webkit-mask:radial-gradient(circle,#000 28%,transparent 66%);mask:radial-gradient(circle,#000 28%,transparent 66%);
+  animation:burstSpin 9s linear infinite}
+@keyframes burstSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.reveal-wrap .spr{position:relative;z-index:1}
+.reveal-pop{animation:revealPop .6s cubic-bezier(.34,1.56,.64,1) backwards}
+@keyframes revealPop{0%{transform:scale(.12) rotate(-14deg);opacity:0}62%{transform:scale(1.16) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
+.eggwob{animation:eggWobble .45s ease-in-out infinite}
+@keyframes eggWobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}50%{transform:rotate(0) translateY(-3px)}75%{transform:rotate(7deg)}}
+
 /* ---------- v2.17: tutorial coach ---------- */
 .coach{position:fixed;left:50%;transform:translateX(-50%);bottom:86px;z-index:90;display:flex;gap:10px;align-items:center;
   background:linear-gradient(135deg,#2d2547,#1b2440);border:2px solid var(--yellow);border-radius:16px;
@@ -887,7 +901,7 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
       <div class="hgrid" id="hero-grid"></div>
     </div>
     <div class="panel" style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-      <span style="font-size:32px">🧩</span>
+      <span id="hq-pieceico" style="font-size:32px;line-height:0">🧩</span>
       <div style="flex:1;min-width:200px">
         <b>Mảnh Hộp Hero: <span id="hq-pieces">0</span>/10</b>
         <div class="shardbar" style="margin-top:5px"><i id="hq-piecesbar" style="width:0%"></i></div>
@@ -2316,6 +2330,128 @@ function itemIcon(id,w=46){
     :`<span style="font-size:${Math.round(w*.76)}px;line-height:1.15">${ITEMS[id]?ITEMS[id].e:'❔'}</span>`;
 }
 
+/* ================= ART TÀI NGUYÊN + HỘP + NAV (SVG hóa emoji vật thể) ================= */
+const RW=i=>`<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g stroke="${INK}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">${i}</g></svg>`;
+const RES_ART_SVG={
+gas:RW(`<rect x="7" y="11" width="26" height="23" rx="4" fill="#e23d4e"/>
+  <rect x="10" y="5" width="9" height="7" rx="2" fill="#8d97ad"/>
+  <path d="M20 16 q6 7 0 12 q-6 -5 0 -12 Z" fill="#fff" stroke-width="2"/>`),
+junk:RW(`<circle cx="20" cy="20" r="14.5" fill="#ffd23f"/>
+  <circle cx="20" cy="20" r="9.5" fill="none" stroke="#c79a14" stroke-width="2.2"/>
+  <path d="M20 13.5 l5.6 3.2 v6.6 l-5.6 3.2 l-5.6 -3.2 v-6.6 Z" fill="#c79a14" stroke-width="2"/>
+  <circle cx="20" cy="20" r="3" fill="#ffd23f" stroke-width="1.8"/>`),
+juice:RW(`<rect x="12" y="9" width="16" height="26" rx="3.5" fill="#5ee06a"/>
+  <rect x="16" y="4" width="8" height="6" rx="1.8" fill="#8d97ad"/>
+  <path d="M22 14 l-6.5 9.5 h4.5 l-2.5 8 l7 -10.5 h-4.5 Z" fill="#fff" stroke-width="1.8"/>`),
+tape:RW(`<circle cx="19" cy="19" r="13.5" fill="#b9c2d8"/>
+  <circle cx="19" cy="19" r="5.5" fill="#1b2440"/>
+  <path d="M30 25 L38 28 L38 34 L28 31 Z" fill="#b9c2d8"/>`),
+cans:RW(`<rect x="11" y="9" width="18" height="25" rx="4" fill="#cfd6e6"/>
+  <rect x="11" y="16" width="18" height="9" fill="#b36bff" stroke-width="2"/>
+  <ellipse cx="20" cy="9" rx="9" ry="3" fill="#e8edf6"/>
+  <text x="20" y="23.8" font-size="8.5" font-weight="900" fill="#fff" text-anchor="middle" stroke="none">?</text>`),
+piece:RW(`<path d="M9 12 h7 a4 4 0 1 1 8 0 h7 v8 a4 4 0 1 1 0 8 v8 H9 v-7 a4 4 0 1 0 0 -8 Z" fill="#b36bff"/>
+  <circle cx="16" cy="22" r="1.7" fill="#d9c2ff" stroke="none"/>`),
+};
+function resIcon(k,w=18){return RES_ART_SVG[k]?`<span class="spr" style="width:${w}px">${RES_ART_SVG[k]}</span>`:''}
+function eggSVG(color){return IW(`<path d="M40 8 Q61 27 61 47 a21 21 0 0 1 -42 0 Q19 27 40 8 Z" fill="#f7f2e2"/>
+  <circle cx="32" cy="35" r="4" fill="${color}" stroke-width="2"/>
+  <circle cx="47" cy="46" r="5" fill="${color}" stroke-width="2"/>
+  <circle cx="36" cy="56" r="3.4" fill="${color}" stroke-width="2"/>
+  <ellipse cx="31" cy="23" rx="3.6" ry="6" fill="#fff" stroke="none" opacity=".75"/>`)}
+const BOX_ART={
+std:IW(`<path d="M14 30 L40 18 L66 30 L66 62 L14 62 Z" fill="#c89858"/>
+  <path d="M14 30 L40 42 L66 30" fill="none"/>
+  <path d="M40 42 L40 62"/>
+  <path d="M14 30 L4 24 L30 13 L40 18" fill="#b8865a"/>
+  <path d="M66 30 L76 24 L50 13 L40 18" fill="#b8865a"/>
+  <text x="26" y="58" font-size="13" font-weight="900" fill="#5a3f28" stroke="none">?</text>`),
+rec:IW(`<rect x="14" y="22" width="52" height="44" rx="9" fill="#3c4258"/>
+  <rect x="28" y="13" width="24" height="10" rx="4" fill="#2a2f3c"/>
+  <g fill="#5ee06a" stroke-width="2">
+    <path d="M40 30 l6.5 9.5 h-13 Z"/>
+    <path d="M28.5 54 l-2.5 -11 l10 6.5 Z"/>
+    <path d="M51.5 54 l2.5 -11 l-10 6.5 Z"/></g>`),
+};
+function boxIcon(b,w=46){
+  if(b.t==='egg')return `<span class="spr" style="width:${w}px">${eggSVG(`var(--r-${b.rar==='legendary'?'leg':b.rar})`)}</span>`;
+  return `<span class="spr" style="width:${w}px">${BOX_ART[b.t]||BOX_ART.std}</span>`;
+}
+const BIG_CAN=`<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg"><g stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+  <ellipse cx="60" cy="132" rx="38" ry="7" fill="rgba(0,0,0,.3)" stroke="none"/>
+  <rect x="24" y="22" width="72" height="104" rx="12" fill="#cfd6e6"/>
+  <rect x="24" y="50" width="72" height="44" fill="#b36bff"/>
+  <path d="M26 40 h68 M26 110 h68" stroke-width="2" opacity=".4"/>
+  <text x="60" y="83" font-size="34" font-weight="900" fill="#fff" text-anchor="middle" stroke="none" font-family="Arial Black,Arial">?</text>
+  <ellipse cx="60" cy="22" rx="36" ry="10" fill="#e8edf6"/>
+  <rect x="52" y="11" width="16" height="8" rx="4" fill="#9aa3b8"/>
+</g></svg>`;
+const BEAVER_ART=`<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg"><g stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+  <ellipse cx="67" cy="66" rx="16" ry="11" fill="#8a5a28"/>
+  <path d="M58 60 l16 3 M59 67 h16 M58 73 l15 -3" stroke-width="2" opacity=".55"/>
+  <ellipse cx="40" cy="58" rx="24" ry="23" fill="#a9744a"/>
+  <ellipse cx="40" cy="64" rx="13" ry="13" fill="#c89868"/>
+  <circle cx="25" cy="17" r="6" fill="#a9744a"/><circle cx="55" cy="17" r="6" fill="#a9744a"/>
+  <circle cx="25" cy="17" r="2.5" fill="#7a4e22" stroke="none"/><circle cx="55" cy="17" r="2.5" fill="#7a4e22" stroke="none"/>
+  <circle cx="40" cy="32" r="19" fill="#a9744a"/>
+  <circle cx="33" cy="29" r="2.6" fill="${INK}" stroke="none"/><circle cx="47" cy="29" r="2.6" fill="${INK}" stroke="none"/>
+  <ellipse cx="40" cy="37" rx="5" ry="3.6" fill="#5a3a1c"/>
+  <rect x="34.5" y="41" width="5.2" height="9" rx="1.8" fill="#fff"/>
+  <rect x="40.3" y="41" width="5.2" height="9" rx="1.8" fill="#fff"/>
+  <path d="M27 40 q-5 2 -7 6 M53 40 q5 2 7 6" fill="none" stroke-width="2" opacity=".5"/>
+</g></svg>`;
+const NAV_ART={
+hub:IW(`<path d="M12 42 L40 16 L68 42 L60 42 L60 66 L20 66 L20 42 Z" fill="#b3573f"/>
+  <rect x="33" y="48" width="14" height="18" rx="2.5" fill="#2a1c14"/>
+  <path d="M52 21 L52 12 L60 12 L60 29" fill="#8a3f30"/>`),
+heroes:IW(`<path d="M20 66 Q22 45 40 45 Q58 45 60 66 Z" fill="#3be8ff"/>
+  <circle cx="40" cy="28" r="15" fill="#f2c79a"/>
+  <path d="M26 25 Q40 12 54 25 L49 20 L44 24 L40 17 L36 24 L31 20 Z" fill="#2e2a3a"/>
+  <circle cx="35" cy="29" r="2" fill="${INK}" stroke="none"/><circle cx="45" cy="29" r="2" fill="${INK}" stroke="none"/>`),
+lab:IW(`<path d="M34 10 h12 M37 10 L37 30 L23 56 a8 8 0 0 0 7 13 h20 a8 8 0 0 0 7 -13 L43 30 L43 10" fill="#dff6ff"/>
+  <path d="M30 46 h20 l7 12 a6 6 0 0 1 -5 9 h-24 a6 6 0 0 1 -5 -9 Z" fill="#5ee06a" stroke-width="2"/>
+  <circle cx="36" cy="56" r="2.4" fill="#bff5c6" stroke="none"/><circle cx="45" cy="60" r="2" fill="#bff5c6" stroke="none"/>`),
+battle:IW(`<g transform="rotate(45 40 40)"><rect x="36" y="12" width="8" height="34" rx="3" fill="#cfd6e6"/><rect x="28" y="45" width="24" height="7" rx="3.5" fill="#8a5a28"/><rect x="36" y="52" width="8" height="15" rx="3.5" fill="#6f4a2a"/></g>
+  <g transform="rotate(-45 40 40)"><rect x="36" y="12" width="8" height="34" rx="3" fill="#cfd6e6"/><rect x="28" y="45" width="24" height="7" rx="3.5" fill="#8a5a28"/><rect x="36" y="52" width="8" height="15" rx="3.5" fill="#6f4a2a"/></g>`),
+craft:IW(`<circle cx="38" cy="36" r="23" fill="#b9c2d8"/>
+  <circle cx="38" cy="36" r="9.5" fill="#1b2440"/>
+  <path d="M57 48 L74 53 L74 63 L55 58 Z" fill="#b9c2d8"/>`),
+loot:IW(`<rect x="22" y="16" width="36" height="48" rx="7" fill="#cfd6e6"/>
+  <rect x="22" y="30" width="36" height="16" fill="#b36bff" stroke-width="2"/>
+  <ellipse cx="40" cy="16" rx="18" ry="5.5" fill="#e8edf6"/>
+  <text x="40" y="43" font-size="13" font-weight="900" fill="#fff" text-anchor="middle" stroke="none">?</text>`),
+missions:IW(`<rect x="18" y="14" width="44" height="54" rx="6" fill="#f7e9b5"/>
+  <rect x="30" y="8" width="20" height="11" rx="4" fill="#8d97ad"/>
+  <path d="M28 40 l8 9 l17 -19" fill="none" stroke="#1d7a33" stroke-width="6"/>`),
+};
+function applyStaticArt(){ // bơm SVG vào các chỗ HTML tĩnh đang dùng emoji
+  [['r-gas','gas'],['r-junk','junk'],['r-juice','juice'],['r-tape','tape'],['r-cans','cans']].forEach(([vid,k])=>{
+    const v=$(vid);const ico=v&&v.parentElement&&v.parentElement.querySelector?v.parentElement.querySelector('.ico'):null;
+    if(ico)ico.innerHTML=resIcon(k,20);
+  });
+  const can=$('thecan');if(can)can.innerHTML=`<span class="spr" style="width:112px">${BIG_CAN}</span>`;
+  const bv=document.querySelector('.beaver');if(bv)bv.innerHTML=`<span class="spr" style="width:54px">${BEAVER_ART}</span>`;
+  const hq=$('hq-pieceico');if(hq)hq.innerHTML=resIcon('piece',32);
+  [['nb-hub','hub'],['nb-heroes','heroes'],['nb-lab','lab'],['nb-battle','battle'],['nb-craft','craft'],['nb-loot','loot'],['nb-missions','missions']].forEach(([id,k])=>{
+    const b=$(id);const e=b&&b.querySelector?b.querySelector('.e'):null;
+    if(e)e.innerHTML=`<span class="spr" style="width:24px">${NAV_ART[k]}</span>`;
+  });
+  document.querySelectorAll('.cratestack').forEach(c=>{
+    c.innerHTML=`<span class="spr" style="width:34px">${BOX_ART.std}</span><span class="spr" style="width:26px">${RES_ART_SVG.cans}</span><br>
+      <span class="spr" style="width:30px">${RES_ART_SVG.cans}</span><span class="spr" style="width:36px">${BOX_ART.std}</span>`;
+  });
+}
+/* ---------- hiệu ứng phần thưởng (juice) ---------- */
+function flashScreen(color='#fff',op=.7){
+  const f=document.createElement('div');f.className='screenflash';
+  f.style.background=color;f.style.opacity=op;
+  document.body.appendChild(f);setTimeout(()=>f.remove(),560);
+}
+function sunburstHTML(color){
+  return `<span class="sunburst" style="background:repeating-conic-gradient(${color} 0 10deg,transparent 10deg 24deg)"></span>`;
+}
+function navPulse(id,ms=2600){const b=$(id);if(b){b.classList.add('tut-glow');setTimeout(()=>b.classList.remove('tut-glow'),ms)}}
+
 const S={
   gas:60,maxGas:100,junk:1000,juice:50,tape:30,cans:2,plv:1,xp:0,
   roster:[],nextUid:1,pieces:0,boxes:[],nextBoxUid:1,unlocked:{},
@@ -2710,7 +2846,7 @@ function openResInfo(k){
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
     <div style="display:flex;align-items:center;gap:14px">
-      <span style="font-size:46px">${r.e}</span>
+      ${resIcon(k,58)||`<span style="font-size:46px">${r.e}</span>`}
       <div><h3>${r.name}</h3><div style="font-size:20px;font-weight:900;color:var(--yellow)">${val}</div></div>
     </div>
     <p class="sub" style="margin-top:6px">${r.quip}</p>
@@ -4769,7 +4905,7 @@ function openCan(){
       if(S.pieces>=PIECES_PER_BOX)msg+=' — Đủ ghép 1 📦 Hộp Hero ngay bên dưới!';
       renderLoot();
     }
-    else{S.gas=S.maxGas;const v=rnd(2500,3500);S.junk+=v;msg=`🎰 JACKPOT! ⛽ đầy bình + 🪙 +${fmt(v)}!`;confettiBurst()}
+    else{S.gas=S.maxGas;const v=rnd(2500,3500);S.junk+=v;msg=`🎰 JACKPOT! ⛽ đầy bình + 🪙 +${fmt(v)}!`;confettiBurst();flashScreen('#ffd23f',.55)}
     roll<0.95?SFX.coin():SFX.jackpot();
     $('openresult').innerHTML=msg;renderRes();
   },500);
@@ -4897,7 +5033,7 @@ function doBreed(){
   if(t>RARITY_CAP)t=RARITY_CAP;
   const idx=Math.min(INCUBATE_MIN.length-1,Math.max(a.breeds,b.breeds)-1);
   const egg=addBox('egg',RARITIES[t],{parents:[a.heroId,b.heroId],ready:Date.now()+INCUBATE_MIN[idx]*60000});
-  SFX.breed();feat('breed');
+  SFX.breed();flashScreen('#b36bff',.25);navPulse('nb-loot');feat('breed');
   labSel=[];renderLab();renderRes();
   toast(`🥚 Trứng <b>${RNAME[egg.rar]}</b> đang ấp — nở sau ~${INCUBATE_MIN[idx]} phút. Xem ở 📦 Kệ Hộp (tab 🥫 Loot)!`);
 }
@@ -4913,10 +5049,12 @@ function doEnhance(){
   labSel.slice(1).forEach(removeInstance); // tiêu hủy 4 nguyên liệu, equip trả kho
   main.rarity=RARITIES[tier+1];
   SFX.breed();feat('enhance');
-  labSel=[];renderLab();renderRes();confettiBurst();
+  labSel=[];renderLab();renderRes();confettiBurst();flashScreen('#b36bff',.4);
   $('res-modal').innerHTML=`
     <div class="result">
-      ${sprite(main.heroId,110)}
+      <div class="reveal-wrap">${sunburstHTML('rgba(179,107,255,.25)')}
+        <span class="spr reveal-pop" style="width:110px;filter:drop-shadow(0 0 16px var(--r-${main.rarity==='legendary'?'leg':main.rarity}))">${ART[main.heroId]}</span>
+      </div>
       <div class="rt win" style="font-size:24px;margin-top:6px">⬆️ ENHANCE THÀNH CÔNG!</div>
       <div class="quip"><b>${HEROES[main.heroId].name}</b> #${main.uid} đã lên ${rBadge(main.rarity)}!<br>Chỉ số ×${RSTAT[main.rarity]} — 4 bản nguyên liệu đã hy sinh vì khoa học. 🫡</div>
       <button class="btn" onclick="closeModal('res-bg')">Mạnh hẳn lên! 💪</button>
@@ -4982,29 +5120,47 @@ function openBox(uid){
   }
   S.boxes=S.boxes.filter(x=>x.uid!==uid);
   const insts=outs.map(o=>addInstance(o.h,b.rar));
-  confettiBurst();SFX.breed();
   const twin=outs.length>1,mut=outs.some(o=>o.mut);
-  $('res-modal').innerHTML=`
+  const rarC=`var(--r-${b.rar==='legendary'?'leg':b.rar})`;
+  const finish=()=>{
+    confettiBurst();SFX.breed();
+    flashScreen(twin||mut?'#ffd23f':'#fff',twin||mut?.6:.35);
+    $('res-modal').innerHTML=`
     <div class="result">
-      <div style="display:flex;justify-content:center;gap:10px">${outs.map(o=>sprite(o.h,100)).join('')}</div>
+      <div class="reveal-wrap">${sunburstHTML(twin||mut?'rgba(255,210,63,.3)':'rgba(255,255,255,.16)')}
+        ${outs.map((o,i)=>`<span class="spr reveal-pop" style="width:104px;animation-delay:${i*0.14}s;filter:drop-shadow(0 0 14px ${rarC})">${ART[o.h]}</span>`).join('')}
+      </div>
       <div class="rt win" style="font-size:24px;margin-top:6px">${twin?'👯 SINH ĐÔI!!':mut?'🧬 ĐỘT BIẾN!!':b.t==='egg'?'🐣 TRỨNG NỞ!':'♻️ MÁY NHẢ HÀNG!'}</div>
       <div class="quip">${outs.map((o,i)=>`<b>${HEROES[o.h].name}</b> #${insts[i].uid} — ${rBadge(b.rar)}`).join('<br>')}
         ${mut?'<br>🧬 Không giống bố, chẳng giống mẹ — khoa học vùng đất hoang là thế!':''}
         ${twin?'<br>👯 Một trứng HAI hero — xác suất 2%, hôm nay là ngày của bạn!':''}</div>
       <button class="btn" onclick="closeModal('res-bg')">Tuyệt vời! 🎉</button>
     </div>`;
-  openModal('res-bg');
-  renderLoot();renderRes();
+    openModal('res-bg');
+    renderLoot();renderRes();
+  };
+  if(b.t==='egg'){ // màn dạo đầu: trứng lắc lư rồi mới nở
+    $('res-modal').innerHTML=`
+      <div class="result">
+        <div class="reveal-wrap"><span class="spr eggwob" style="width:118px">${eggSVG(rarC)}</span></div>
+        <div class="quip">🥚 Trứng đang nứt vỏ...</div>
+      </div>`;
+    openModal('res-bg');SFX.can();
+    setTimeout(finish,1050);
+    renderLoot();renderRes();
+  }else finish();
 }
 function pickFromBox(uid,heroId){
   const b=S.boxes.find(x=>x.uid===uid);if(!b||!HEROES[heroId])return;
   S.boxes=S.boxes.filter(x=>x.uid!==uid);
   const inst=addInstance(heroId,b.rar);
   closeModal('hd-bg');
-  confettiBurst();SFX.levelup();
+  confettiBurst();SFX.levelup();flashScreen('#fff',.35);
   $('res-modal').innerHTML=`
     <div class="result">
-      ${sprite(heroId,110)}
+      <div class="reveal-wrap">${sunburstHTML('rgba(59,232,255,.2)')}
+        <span class="spr reveal-pop" style="width:110px;filter:drop-shadow(0 0 14px var(--r-${b.rar==='legendary'?'leg':b.rar}))">${ART[heroId]}</span>
+      </div>
       <div class="rt win" style="font-size:24px;margin-top:6px">📦 CHÀO LÍNH MỚI!</div>
       <div class="quip"><b>${HEROES[heroId].name}</b> #${inst.uid} — ${rBadge(b.rar)}<br>"${HEROES[heroId].quote}"</div>
       <button class="btn" onclick="closeModal('res-bg')">Vào đội! 🎉</button>
@@ -5021,7 +5177,7 @@ function renderLoot(){
     const ready=boxReady(b);
     const mins=ready?0:Math.max(1,Math.ceil((b.ready-Date.now())/60000));
     return `<div class="boxcard ${ready?'bxready':''}" style="border-color:var(--r-${b.rar==='legendary'?'leg':b.rar})" onclick="openBox(${b.uid})" title="${BOX_VI[b.t]}">
-      <span class="bx-e">${BOX_E[b.t]}</span>
+      <span class="bx-e">${boxIcon(b,54)}</span>
       <b>${BOX_VI[b.t]}</b>
       <span class="rar-${b.rar}" style="font-size:10px;font-weight:900;letter-spacing:.06em">${RNAME[b.rar].toUpperCase()}</span>
       <span class="bx-st">${ready?'✨ MỞ NGAY':'⏳ nở sau ~'+mins+' phút'}</span>
@@ -5262,7 +5418,7 @@ setInterval(()=>{
 $('intro-heroes').innerHTML=['spam','noodle','intern'].map(id=>
   `<div style="text-align:center">${sprite(id,72)}<br><b style="font-size:12px">${HEROES[id].name}</b><br><span style="font-size:11px;color:var(--muted)">${CLS_VI[HEROES[id].cls]}</span></div>`).join('');
 renderRes();renderHub();renderTeam();renderMap();renderTut();renderSfxBtn();
-checkUnlocks(true);renderNavLocks();
+applyStaticArt();checkUnlocks(true);renderNavLocks();
 document.addEventListener('pointerdown',()=>{if(S.sfx)ac()},{once:true}); // autoplay policy: tạo AudioContext sau cử chỉ đầu tiên
 /* telemetry playtest: đếm phiên + ngày chơi */
 teleInit();S.tele.sessions++;S.tele.days[new Date().toDateString()]=1;scheduleSave();
