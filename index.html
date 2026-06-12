@@ -2374,6 +2374,8 @@ const BREED_MIN_LVL=6;   // cả bố lẫn mẹ phải đạt Lv này mới đ�
 const INCUBATE_MIN=[3,6,10]; // phút ấp trứng (demo) theo lần đẻ thứ 1/2/3 — bản thật sẽ là giờ
 const TWIN_CHANCE=0.02;  // 2% trứng nở SINH ĐÔI
 const ENH_NEED=5;        // 5 bản CÙNG rarity -> 1 bản rarity cao hơn
+/* ---- Nhịp trận: nhân sát thương CẢ HAI phe → trận dứt nhanh hơn mà KHÔNG đổi tỉ lệ thắng ---- */
+const PACE_DMG=1.45; // ~31% ít lượt hơn; áp cho cả player lẫn quái nên cân bằng giữ nguyên
 /* ---- Hộp Hero ---- */
 const PIECES_PER_BOX=10; // 10 mảnh hộp = 1 Hộp Hero (mở ra CHỌN 1 trong 3)
 const enhCost=r=>600*(rIdx(r)+1); // phí junk theo bậc
@@ -3080,7 +3082,7 @@ const S={
   gas:60,maxGas:100,junk:1000,juice:50,tape:30,cans:2,plv:1,xp:0,
   roster:[],nextUid:1,pieces:0,boxes:[],nextBoxUid:1,unlocked:{},
   team:{front:[null,null],back:[null,null,null]},
-  inv:{},beaten:{},busy:false,speed:1,
+  inv:{},beaten:{},busy:false,speed:2,
   tower:{floor:1,best:0},seasonStart:Date.now(),
   seasonNo:1,seasonStats:{wins:0,loss:0,bossDay:null,claimed:false},trophies:[],
   arena:{pts:1000,wins:0,loss:0},
@@ -3201,6 +3203,7 @@ function closeModal(id){$(id).classList.remove('open');
   }}
 function openModal(id){$(id).classList.add('open')}
 const spd=()=>S.speed; // animation time divider
+const TICK_BASE=780; // thời gian cơ bản mỗi lượt (ms) — hạ từ 1050 cho trận mượt hơn; x2 mặc định → 390ms/lượt
 
 /* ================= ÂM THANH (WebAudio synth — không cần file, offline OK) ================= */
 let AC=null;
@@ -4208,7 +4211,7 @@ function openTowerSheet(){
 ================================================================ */
 let B=null;
 function toggleSpeed(){S.speed=S.speed===1?2:S.speed===2?4:1;$('speedbtn').textContent='▶ x'+S.speed;if(B)restartTimer()}
-function restartTimer(){if(!B||B.over)return;clearInterval(B.timer);B.timer=setInterval(tick,1050/spd())}
+function restartTimer(){if(!B||B.over)return;clearInterval(B.timer);B.timer=setInterval(tick,TICK_BASE/spd())}
 
 /* Đội hình SO LE CHÉO kiểu 2.5D: trong cột, unit càng gần (y lớn) càng nhô ngang ra —
    kết hợp z-index theo độ sâu nên phần chồng nhau đọc thành phối cảnh, không phải lỗi */
@@ -4342,7 +4345,7 @@ function startBattle(nodeId){
   setupArena(); // setupArena tự quyết nút ⏭ theo trạng thái đã-phá của màn
   blog(`🔔 Trận chiến tại <span class="imp">${node.name}</span> bắt đầu!`,true);
   if(!S.team.front.some(x=>x!=null))blog('⚠️ <b>Tuyến trước trống</b> — địch sẽ nhắm thẳng vào tuyến sau (kể cả healer)!',true);
-  B.timer=setInterval(tick,1050/spd());
+  B.timer=setInterval(tick,TICK_BASE/spd());
 }
 
 const ARENA_BGS={ // nền trận theo bối cảnh — chương/chế độ nào ra không khí đó
@@ -4359,6 +4362,7 @@ function setupArena(){
   document.body.style.overflow='hidden';
   $('arena').style.background=n.arena?ARENA_BGS.arena:n.dungeon?ARENA_BGS.dgn:n.tower?ARENA_BGS.tower:(ARENA_BGS[n.ch]||ARENA_BGS[1]);
   const rb=$('roundbadge');rb.style.display='inline-block';rb.textContent='⚔️ Vòng 1';rb.classList.remove('warn');
+  $('speedbtn').textContent='▶ x'+S.speed; // đồng bộ nhãn tốc độ theo lựa chọn đã lưu
   $('arena').classList.add('show');$('blog').classList.add('show');$('blog').innerHTML='';
   // ⏭ skip chỉ mở khi màn đã phá lần đầu (arena/hầm/tháp luôn cho skip)
   $('skipbtn').style.display=(n.arena||n.dungeon||n.tower||S.beaten[n.id])?'inline-block':'none';
@@ -4552,7 +4556,7 @@ function dealDamage(src,tgt,mult,opts={}){
   if(src.hero&&src.hero.id==='micromage'&&tgt.shield>0)atk*=1.2; // hâm xuyên khiên
   if(src.hero&&hpassDmg[src.hero.id])atk*=hpassDmg[src.hero.id](src,tgt); // dmg-up passive theo id
   let def=(opts.pierce?tgt.def*0.7:tgt.def)*defMod(tgt);
-  let dmg=atk*mult*(100/(100+def))*(0.9+Math.random()*0.2);
+  let dmg=atk*mult*(100/(100+def))*(0.9+Math.random()*0.2)*PACE_DMG;
   if(crit){dmg*=1.5;if(tgt.hero&&tgt.hero.id==='mattress')dmg*=0.8} // đệm hút lực crit
   if(tgt.hero&&tgt.hero.id==='spam'&&tgt.front)dmg*=0.9;
   if(tgt.hero&&tgt.hero.id==='bubble'&&!tgt.usedCritGuard&&crit){tgt.usedCritGuard=1;dmg*=0.35;fxFloat(tgt,'🫧 ÊM!','var(--cyan)')} // miễn crit đầu
@@ -4563,7 +4567,7 @@ function dealDamage(src,tgt,mult,opts={}){
   dmg=Math.max(1,Math.round(dmg));
   if(tgt.shield>0){const ab=Math.min(tgt.shield,dmg);tgt.shield-=ab;dmg-=ab;
     if(ab>0)fxFloat(tgt,'🛡-'+ab,'var(--cyan)');src.statDmg=(src.statDmg||0)+ab}
-  tgt.hp-=dmg;tgt.energy=Math.min(100,tgt.energy+12);
+  tgt.hp-=dmg;tgt.energy=Math.min(100,tgt.energy+12*PACE_DMG);
   src.statDmg=(src.statDmg||0)+dmg;
   tgt.wasHit=true;
   if(tgt.hero&&tgt.hero.id==='tiretitan'&&!src.ranged&&src.alive&&dmg>0){ // Lốp phản đòn
@@ -4684,9 +4688,9 @@ function skillDef(u){return u.hero?u.hero.skill:(u.proto&&u.proto.skill)}
 /* trạng thái đầu lượt + passive theo lượt — DÙNG CHUNG live & sim */
 function startTurnStatus(u,units,live){
   const H=live?(t,a)=>heal(t,a,false,u):(t,a)=>simHeal(t,a,u);
-  if(u.regen>0){H(u,u.maxhp*0.08);u.regen--}
+  if(u.regen>0){H(u,u.maxhp*0.08*PACE_DMG);u.regen--}
   if(u.dots&&u.dots.length){ // 🔥 bỏng/độc tick đầu lượt
-    u.dots.forEach(d=>{const v=Math.max(1,Math.round(u.maxhp*d.pct));
+    u.dots.forEach(d=>{const v=Math.max(1,Math.round(u.maxhp*d.pct*PACE_DMG));
       u.hp-=v;d.dur--;
       if(live)fxFloat(u,'🔥-'+v,'var(--orange)')});
     u.dots=u.dots.filter(d=>d.dur>0);
@@ -4746,7 +4750,7 @@ function applySkill(u,units,mode){
       case 'lifesteal':{const ts=resolveT(u,units,eff.target||'lowest_hp');let tot=0;
         ts.forEach(t=>{tot+=D(u,t,eff.pow*m,eff)||0});
         if(tot>0)H(u,tot*(eff.pct||0.6),false);last=ts;break}
-      case 'self_dmg':{const c=Math.max(1,Math.round(u.maxhp*eff.pct));u.hp=Math.max(1,u.hp-c);
+      case 'self_dmg':{const c=Math.max(1,Math.round(u.maxhp*eff.pct*PACE_DMG));u.hp=Math.max(1,u.hp-c);
         if(live){fxFloat(u,'💔-'+c,'var(--red)');refreshUnit(u)}break}
       case 'invuln':{u.invuln=Math.max(u.invuln||0,eff.dur);
         if(live){fxFloat(u,'🧊 ĐÓNG BĂNG!','var(--cyan)');refreshUnit(u)}break}
@@ -4755,10 +4759,10 @@ function applySkill(u,units,mode){
           if(live)fxFloat(t,'🛡️ +'+Math.round(eff.pct*100)+'%','var(--cyan)')});last=ts;break}
       case 'loot':{if(live){S.junk+=eff.amt||0;fxFloat(u,'🪙 +'+(eff.amt||0),'var(--yellow)')}break}
       case 'shield':{const ts=resolveT(u,units,eff.target||'team');
-        ts.forEach(t=>{t.shield=Math.min(Math.round(t.maxhp*0.6),t.shield+Math.round(t.maxhp*eff.pct*m)); // trần khiên 60% maxHP
+        ts.forEach(t=>{t.shield=Math.min(Math.round(t.maxhp*0.6*PACE_DMG),t.shield+Math.round(t.maxhp*eff.pct*m*PACE_DMG)); // trần & lượng khiên ×nhịp
           if(live){fxFloat(t,'🛡 KHIÊN!','var(--cyan)');refreshUnit(t)}});last=ts;break}
       case 'heal':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'lowest_ally');
-        ts.forEach(t=>{let amt=t.maxhp*eff.pct*m;
+        ts.forEach(t=>{let amt=t.maxhp*eff.pct*m*PACE_DMG;
           if(u.hero&&u.hero.id==='ducttape'&&t.hp/t.maxhp<0.3)amt*=1.2; // băng bó khẩn cấp
           if(u.hero&&u.hero.id==='plant')amt*=1+0.02*(u.plantStacks||0); // 🪴 vườn càng lớn hồi càng mạnh
           H(t,amt,eff.silent)});
@@ -5147,7 +5151,7 @@ function simDamage(src,tgt,mult,units,opts={}){
   if(src.hero&&src.hero.id==='micromage'&&tgt.shield>0)atk*=1.2;
   if(src.hero&&hpassDmg[src.hero.id])atk*=hpassDmg[src.hero.id](src,tgt);
   const def=(opts.pierce?tgt.def*0.7:tgt.def)*defMod(tgt);
-  let dmg=atk*mult*(100/(100+def))*(0.9+Math.random()*0.2);
+  let dmg=atk*mult*(100/(100+def))*(0.9+Math.random()*0.2)*PACE_DMG;
   if(crit){dmg*=1.5;if(tgt.hero&&tgt.hero.id==='mattress')dmg*=0.8}
   if(tgt.hero&&tgt.hero.id==='spam'&&tgt.front)dmg*=0.9;
   if(tgt.hero&&tgt.hero.id==='bubble'&&!tgt.usedCritGuard&&crit){tgt.usedCritGuard=1;dmg*=0.35}
@@ -5155,7 +5159,7 @@ function simDamage(src,tgt,mult,units,opts={}){
   if(src.ranged&&units.some(a=>a.alive&&a.side===tgt.side&&a.hero&&a.hero.id==='magnet'))dmg*=0.9;
   dmg=Math.max(1,Math.round(dmg));
   if(tgt.shield>0){const ab=Math.min(tgt.shield,dmg);tgt.shield-=ab;dmg-=ab;src.statDmg=(src.statDmg||0)+ab}
-  tgt.hp-=dmg;tgt.energy=Math.min(100,tgt.energy+12);
+  tgt.hp-=dmg;tgt.energy=Math.min(100,tgt.energy+12*PACE_DMG);
   src.statDmg=(src.statDmg||0)+dmg;
   tgt.wasHit=true;
   if(tgt.hero&&tgt.hero.id==='tiretitan'&&!src.ranged&&src.alive&&dmg>0){
@@ -5193,7 +5197,7 @@ function simSkill(u,units){
 function simAttack(u,units){
   const t=simPick(u,units);if(!t)return;
   simDamage(u,t,1,units,{pierce:u.proto&&u.proto.pierce});
-  u.energy=Math.min(100,u.energy+35);
+  u.energy=Math.min(100,u.energy+35*PACE_DMG);
   if(u.hero&&u.hero.id==='noodle')simHeal(u,u.maxhp*0.03);
 }
 function simLoop(units,limit=400){ // chạy đến khi một phe hết người; trả về true nếu phe ta thắng
@@ -7236,7 +7240,7 @@ function saveGame(){
       plv:S.plv,xp:S.xp,roster:S.roster,nextUid:S.nextUid,
       pieces:S.pieces,boxes:S.boxes,nextBoxUid:S.nextBoxUid,unlocked:S.unlocked,
       team:S.team,inv:S.inv,beaten:S.beaten,daily:S.daily,
-      tower:S.tower,seasonStart:S.seasonStart,seasonNo:S.seasonNo,seasonStats:S.seasonStats,trophies:S.trophies,arena:S.arena,net:S.net,tut:S.tut,sfx:S.sfx,tele:S.tele}));
+      tower:S.tower,seasonStart:S.seasonStart,seasonNo:S.seasonNo,seasonStats:S.seasonStats,trophies:S.trophies,arena:S.arena,net:S.net,tut:S.tut,sfx:S.sfx,speed:S.speed,tele:S.tele}));
   }catch(e){/* private mode v.v. — bỏ qua, game vẫn chạy in-memory */}
 }
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveGame,800)}
@@ -7270,6 +7274,7 @@ function loadGame(){
     S.net=d.net||null;
     S.tut=d.tut!=null?d.tut:99; // save cũ (trước khi có tutorial): coi như đã học xong
     S.sfx=d.sfx!=null?d.sfx:true;
+    S.speed=[1,2,4].includes(d.speed)?d.speed:2;
     S.tele=d.tele||null; // teleInit ở init sẽ backfill nếu thiếu
     checkUnlocks(true); // backfill mở khóa từ tiến độ hiện có (im lặng)
     if(S.seasonNo>1||S.plv>=10)Object.keys(UNLOCK_DEFS).forEach(k=>S.unlocked[k]=true); // người chơi kỳ cựu: mở hết
