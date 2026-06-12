@@ -587,27 +587,58 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .cratestack{position:absolute;bottom:10px;font-size:30px;opacity:.45;pointer-events:none;line-height:1.15;letter-spacing:-5px}
 .cratestack.left{left:8px;text-align:left}
 .cratestack.right{right:8px;text-align:right}
-/* ---------- v2.31: BẢNG VIỆC (corkboard) ---------- */
-.corkboard{position:relative;margin-top:10px;border:3px solid #5a4226;border-radius:var(--radius);padding:18px 14px 14px;
+/* ---------- v2.39: BẢNG VIỆC (corkboard redesign) ---------- */
+.corkboard{position:relative;margin-top:10px;border:6px solid #4a3014;border-radius:var(--radius);padding:34px 14px 12px;
   background:#73552f radial-gradient(rgba(0,0,0,.13) 1.7px,transparent 2.1px);background-size:15px 15px;
-  box-shadow:inset 0 0 30px rgba(0,0,0,.3)}
-.corkboard #missionlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:16px}
-.corkboard .mission{flex-direction:column;align-items:flex-start;gap:6px;margin-top:0;border:none;border-radius:3px;
-  background:#f7e9b5;color:#41320f;box-shadow:0 7px 13px rgba(0,0,0,.35);position:relative;transform:rotate(-1.3deg);transition:.15s}
-.corkboard .mission:nth-child(even){transform:rotate(1.2deg);background:#f9efc9}
-.corkboard .mission:hover{transform:rotate(0) translateY(-3px);z-index:2}
-.corkboard .mission::before{content:'📌';position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:17px;
+  box-shadow:inset 0 0 34px rgba(0,0,0,.35),0 6px 16px rgba(0,0,0,.3)}
+.cb-sign{position:absolute;top:-6px;left:50%;transform:translateX(-50%);z-index:3;
+  background:linear-gradient(180deg,#8a5a28,#6f4a2a);border:2px solid #4a3014;border-top:none;
+  border-radius:0 0 12px 12px;padding:5px 20px;font-size:11px;font-weight:900;letter-spacing:.13em;color:#f7e9b5;
+  box-shadow:0 4px 8px rgba(0,0,0,.3)}
+.cb-sign span{color:#ffd23f}
+.corkboard #missionlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:18px;padding-top:6px}
+.corkboard .mission{flex-direction:column;align-items:flex-start;gap:4px;margin-top:0;border:none;border-radius:3px;
+  background:linear-gradient(180deg,#fbf3cf,#f3e6ab);color:#41320f;box-shadow:0 8px 14px rgba(0,0,0,.4);
+  position:relative;transform:rotate(-1.4deg);transition:.18s;padding:16px 13px 13px}
+.corkboard .mission:nth-child(even){transform:rotate(1.3deg);background:linear-gradient(180deg,#fdf7dc,#f6ecbd)}
+.corkboard .mission:hover{transform:rotate(0) translateY(-4px) scale(1.02);z-index:2}
+.wtape{position:absolute;top:-11px;left:50%;width:66px;height:20px;box-shadow:0 2px 4px rgba(0,0,0,.25);
+  border-left:2px dashed rgba(255,255,255,.55);border-right:2px dashed rgba(255,255,255,.55);opacity:.9}
+.wtape.t0{background:#7fd8c5;transform:translateX(-50%) rotate(-5deg)}
+.wtape.t1{background:#f2a3b3;transform:translateX(-50%) rotate(4deg)}
+.wtape.t2{background:#ffd97a;transform:translateX(-50%) rotate(-3deg)}
+.wtape.t3{background:#b3a3f2;transform:translateX(-50%) rotate(5deg)}
+.wtape.t4{background:#a3d8f2;transform:translateX(-50%) rotate(-4deg)}
+.corkboard .mhead{display:flex;gap:10px;align-items:flex-start;width:100%}
+.corkboard .mission .me{font-size:30px;line-height:1.1;filter:drop-shadow(0 2px 1px rgba(0,0,0,.18))}
+.corkboard .mission h5{color:#3a2c0c;font-size:14.5px;line-height:1.2}
+.corkboard .mission .mi{flex:1;min-width:0}
+.rwchip{display:inline-block;background:#fffdf2;border:1.5px dashed #b89b5e;border-radius:99px;
+  padding:1.5px 9px;font-size:11px;font-weight:800;color:#7a6430;margin-top:5px}
+.ckrow{display:flex;gap:6px;align-items:center;margin-top:9px}
+.ckb{width:21px;height:21px;border:2.5px solid #8a6f3d;border-radius:6px;background:#fffdf2;flex:none;
+  display:flex;align-items:center;justify-content:center;font-weight:900;color:#1d7a33;font-size:14px;transition:.2s}
+.ckb.on{background:#d9f2c2;border-color:#1d7a33;transform:rotate(-4deg)}
+.ckn{font-size:11px;font-weight:900;color:#a08550;margin-left:2px}
+.donestamp{position:absolute;right:10px;bottom:12px;transform:rotate(-12deg);font-size:12.5px;font-weight:900;
+  color:#1d7a33;border:3px solid #1d7a33;border-radius:8px;padding:2px 9px;letter-spacing:.12em;opacity:.85;
+  background:rgba(255,255,255,.4)}
+.corkboard .mission.got{filter:saturate(.55) brightness(.96)}
+.corkboard .mission .btn{align-self:flex-end;margin-top:9px}
+.cb-scrap{background:#fffdf2;border-radius:3px;box-shadow:0 6px 10px rgba(0,0,0,.35);padding:14px 13px;
+  transform:rotate(2.2deg);font-size:12px;line-height:1.75;color:#8a7445;position:relative;font-style:italic}
+.cb-scrap::before{content:'📌';position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:16px;
   filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
-.corkboard .mission .me{font-size:28px}
-.corkboard .mission h5{color:#3a2c0c}
-.corkboard .mission p{color:#7a6430}
-.corkboard .mission .mi{width:100%}
-.corkboard .mission .prog{background:rgba(0,0,0,.16)}
-.corkboard .mission .claimed{color:#1d7a33}
-.corkboard .mission .btn{align-self:flex-end}
-.corkboard .bonusnote{margin-top:16px;background:#d9f2c2;transform:rotate(.5deg);flex-direction:row;align-items:center}
+.cb-scrap b{color:#6f5a2e;font-style:normal;letter-spacing:.06em;font-size:10.5px;text-transform:uppercase}
+.cb-scrap s{opacity:.55}
+.corkboard .bonusnote{margin-top:18px;flex-direction:row;align-items:center;gap:12px;
+  background:linear-gradient(135deg,#ffe9a8,#ffd97a);transform:rotate(.4deg);
+  border:2px dashed #c79a14;box-shadow:0 8px 16px rgba(0,0,0,.4)}
+.corkboard .bonusnote::before{content:'📌';position:absolute;top:-11px;left:14%;font-size:16px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+.corkboard .bonusnote::after{content:'📌';position:absolute;top:-11px;right:14%;font-size:16px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
 .corkboard .bonusnote:hover{transform:rotate(0)}
-.corkboard .bonusnote .btn{align-self:center}
+.corkboard .bonusnote .btn{align-self:center;flex:none}
+.cb-foot{text-align:center;font-size:11.5px;color:#caa36a;margin-top:14px;font-weight:700}
 
 /* ---------- v2.34: kệ hộp hero + khóa tính năng ---------- */
 .boxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:12px}
@@ -983,12 +1014,15 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
     <h2 class="sec">✅ Bảng Việc Khu Phố</h2>
     <p class="sub">Sống sót thêm một ngày nữa. Tuyệt. Việc mới dán lên bảng mỗi sáng.</p>
     <div class="corkboard">
+      <div class="cb-sign">📋 VIỆC HÔM NAY — <span id="cb-count">0/5</span> XONG</div>
       <div id="missionlist"></div>
       <div class="mission bonusnote" id="bonusrow">
-        <span class="me">🎁</span>
-        <div class="mi"><h5>Hoàn thành tất cả nhiệm vụ</h5><p>+1000 🪙, +1 🥫, +20 ⛽</p></div>
+        <span class="me" style="font-size:34px">🎁</span>
+        <div class="mi"><h5>RƯƠNG THƯỞNG NGÀY — xong cả 5 việc là mở</h5>
+          <span class="rwchip">🪙 +1.000</span> <span class="rwchip">🥫 +1</span> <span class="rwchip">⛽ +20</span></div>
         <button class="btn sm pu" id="bonusbtn" onclick="claimBonus()" disabled>Nhận</button>
       </div>
+      <p class="cb-foot">🌅 Qua nửa đêm, chú hải ly dán loạt việc mới lên bảng. Đừng để rương nguội!</p>
     </div>
   </section>
 </div>
@@ -5188,19 +5222,31 @@ function renderLoot(){
 /* ================= MISSIONS ================= */
 function renderMissions(){
   const box=$('missionlist');box.innerHTML='';
-  MISSIONS.forEach(m=>{
+  let doneCount=0;
+  MISSIONS.forEach((m,idx)=>{
     const p=Math.min(S.daily[m.key],m.need),done=p>=m.need,claimed=S.daily.claimed[m.id];
-    box.innerHTML+=`<div class="mission ${done?'done':''}">
-      <span class="me">${m.e}</span>
-      <div class="mi"><h5>${m.t}</h5><p>${m.rwTxt} · ${p}/${m.need}</p>
-        <div class="prog"><i style="width:${p/m.need*100}%"></i></div></div>
-      ${claimed?'<span class="claimed">✔ Đã nhận</span>'
-        :`<button class="btn sm" onclick="claimMission('${m.id}')" ${done?'':'disabled'}>Nhận</button>`}
+    if(claimed)doneCount++;
+    box.innerHTML+=`<div class="mission ${done?'done':''} ${claimed?'got':''}">
+      <span class="wtape t${idx%5}"></span>
+      <div class="mhead">
+        <span class="me">${m.e}</span>
+        <div class="mi"><h5>${m.t}</h5><span class="rwchip">🎁 ${m.rwTxt}</span></div>
+      </div>
+      <div class="ckrow">
+        ${Array.from({length:m.need},(_,i)=>`<span class="ckb ${i<p?'on':''}">${i<p?'✓':''}</span>`).join('')}
+        <span class="ckn">${p}/${m.need}</span>
+      </div>
+      ${claimed?'<span class="donestamp">✓ XONG</span>'
+        :`<button class="btn sm" onclick="claimMission('${m.id}')" ${done?'':'disabled'}>${done?'🎁 Nhận thưởng':'Chưa xong...'}</button>`}
     </div>`;
   });
+  // mẩu giấy doodle lấp ô trống cho bảng đỡ trống
+  box.innerHTML+=`<div class="cb-scrap"><b>📎 ghi chú của quản tộc</b><br>
+    ☑ <s>dậy trước trưa</s><br>☑ <s>đập máy bán nước</s><br>☐ thống trị khu phố<br>☐ mua thêm băng keo (khẩn)</div>`;
+  const cnt=$('cb-count');if(cnt)cnt.textContent=doneCount+'/'+MISSIONS.length;
   const allClaimed=MISSIONS.every(m=>S.daily.claimed[m.id]);
   $('bonusbtn').disabled=!(allClaimed&&!S.daily.bonus);
-  $('bonusbtn').textContent=S.daily.bonus?'✔ Đã nhận':'Nhận';
+  $('bonusbtn').textContent=S.daily.bonus?'✔ Đã mở rương':allClaimed?'🎁 MỞ RƯƠNG!':'🔒 Xong cả 5 đã';
   renderRes();
 }
 function claimMission(id){
