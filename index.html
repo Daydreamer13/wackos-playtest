@@ -694,6 +694,7 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .ptbtn:hover{transform:scale(1.12)}
 #pt-fb{bottom:148px}
 #pt-ex{bottom:96px;border-color:var(--cyan)}
+#pt-lang{bottom:200px;border-color:var(--yellow)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -1068,12 +1069,19 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
       Bạn nhận được <b style="color:var(--yellow)">3 hero kỳ quặc</b> để bắt đầu sự nghiệp nhặt phế liệu:</p>
     <div style="display:flex;justify-content:center;gap:14px;margin:14px 0 20px" id="intro-heroes"></div>
     <button class="btn" onclick="closeModal('intro-bg');renderTut()">Bắt đầu sinh tồn 🚀</button>
+    <div style="display:flex;gap:6px;justify-content:center;margin-top:14px" id="intro-langs">
+      <button class="btn sm gh" onclick="setLang('vi')">🇻🇳 VI</button>
+      <button class="btn sm gh" onclick="setLang('en')">🇬🇧 EN</button>
+      <button class="btn sm gh" onclick="setLang('zh')">🇨🇳 中文</button>
+      <button class="btn sm gh" onclick="setLang('ja')">🇯🇵 日本語</button>
+    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 <button class="ptbtn" id="pt-fb" onclick="openFeedback()" title="Góp ý nhanh">📝</button>
 <button class="ptbtn" id="pt-ex" onclick="openExport()" title="Xuất dữ liệu gửi người tổ chức">📤</button>
+<button class="ptbtn" id="pt-lang" onclick="openLangPicker()" title="Language / Ngôn ngữ">🌐</button>
 
 <script>
 /* =====================================================
@@ -5399,6 +5407,440 @@ function copyExport(){
   try{navigator.clipboard.writeText(t.value).then(()=>toast('📋 Đã copy! Dán vào tin nhắn gửi đi nhé.'))}
   catch(e){document.execCommand('copy');toast('📋 Đã copy!')}
 }
+
+/* ================= L10N — VI nguồn · EN/ZH/JA phủ lên ================= */
+// Kiến trúc: (1) overlay dữ liệu (node/skill/tutorial/nhiệm vụ) đổi thẳng object,
+// (2) bộ dịch DOM khớp-chuỗi-chính-xác + regex cho text động — chuỗi chưa có trong từ điển tự rơi về tiếng Việt.
+let WLANG='vi';
+try{
+  const sv=localStorage.getItem('wackos_lang');
+  if(sv&&['vi','en','zh','ja'].includes(sv))WLANG=sv;
+  else{const nl=(navigator.language||'vi').toLowerCase();
+    WLANG=nl.startsWith('vi')?'vi':nl.startsWith('zh')?'zh':nl.startsWith('ja')?'ja':'en'}
+}catch(e){}
+function setLang(l){try{localStorage.setItem('wackos_lang',l)}catch(e){}location.reload()}
+function openLangPicker(){
+  $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <h3>🌐 Language / Ngôn ngữ</h3>
+    ${[['vi','🇻🇳 Tiếng Việt'],['en','🇬🇧 English'],['zh','🇨🇳 中文（简体）'],['ja','🇯🇵 日本語']].map(([c,l])=>
+      `<button class="btn ${WLANG===c?'cy':'gh'}" style="width:100%;margin-top:8px" onclick="setLang('${c}')">${l}${WLANG===c?' ✓':''}</button>`).join('')}
+    <p class="demonote" style="margin-top:10px">EN/中文/日本語: core UI translated — một phần flavor text vẫn là tiếng Việt (bản playtest).</p>`;
+  openModal('hd-bg');
+}
+const L10N={
+/* ============================== ENGLISH ============================== */
+en:{
+nodes:{
+junkyard:['Junkyard District','The classic scrap heap. Rust rats everywhere.'],
+slum:['Battery Slum','Wires tangled like spiderwebs. Drones buzzing around.'],
+snack:['Snack Town','The canned-food market. A trash golem guards the instant-noodle stash.'],
+boss1:['BOSS: Angry Vending Machine','It swallowed someone\'s coin in 2031 and is still bitter about it.'],
+parking:['Haunted Parking Lot','The rats here drank reactor coolant. Now they glow.'],
+mall:['Abandoned Megamall','Speakers still play sale jingles. Security drones still patrol. Nobody told them to stop.'],
+foodcourt:['Rebel Food Court','The golems here are 100% solidified frying oil. Horrifying in every sense.'],
+boss2:['BOSS: Mutant Shopping Cart','That squeaky wheel is the last sound you\'ll hear.'],
+office:['The Awakened Office Tower','Document drones still chasing KPIs after the apocalypse. Scarier than any mutant.'],
+lab:['Energy Lab','Where the "Oops" happened. The sign still reads: "0 days since last incident".'],
+rooftop:['Stormy Rooftop','Two vending machines guard the meeting room. They got promoted.'],
+seasonboss:['👑 SEASON BOSS: THE MANAGER','You demanded to see the manager all season. Now... the manager wants to see YOU.'],
+},
+chapters:[['Chapter 1 — Scrapyard Startup','Days 1–3 of a true junk-lord.'],
+['Chapter 2 — Expired Avenue','The old shopping district. Everything is past its date — including the monsters.'],
+['Chapter 3 — Oops City Core','Where The Great Energy Oops began. And where... THE MANAGER lives.']],
+missions:{pve:'Win 3 PvE battles',upg:'Upgrade 1 hero',can:'Open 1 Mystery Can',boss:'Defeat 1 boss',craft:'Craft 1 item'},
+unlocks:{loot:['🥫 Loot Stash','Win 1 PvE battle to unlock'],missions:['✅ Task Board','Win 1 PvE battle to unlock'],
+craft:['🩹 Duct Tape Workshop','Clear Battery Slum to unlock'],shop:['🦫 Beaver\'s Shop','Clear Snack Town to unlock'],
+arena:['🎭 Meme Arena','Clear Snack Town to unlock'],lab:['🧬 The Lab (Breed)','Defeat the Chapter 1 Boss to unlock'],
+dgn:['🕳️ Daily Dungeon','Defeat the Chapter 1 Boss to unlock'],tower:['🗼 Chaos Tower','Clear the first Chapter 2 node to unlock'],
+enhance:['⬆️ Enhance','Clear the first Chapter 2 node to unlock'],recycle:['♻️ Recycler','Defeat the Chapter 2 Boss to unlock']},
+tut:['Open the <b>⚔️ Battle</b> tab to start your first fight!',
+'Attack <b>Junkyard District</b> (5 ⛽). Battles are fully automatic — strategy lives in your team setup!',
+'Victory! Open the <b>🦸 Heroes</b> tab and upgrade your crew with the 🪙 you just looted.',
+'Tap a hero, then tap <b>⬆️ Level Up</b> — each level gives +9% stats.',
+'Open the <b>🥫 Loot</b> tab — mystery cans hold 🧩 hero-box pieces.',
+'Tap the can to open it! Collect <b>10 🧩</b> to build a Hero Box — open it and PICK 1 of 3 heroes.',
+'Finally: the <b>✅ Tasks</b> tab — finish daily tasks for reward chests!'],
+heroes:{
+spam:['Shields the whole team for 22% of each member\'s max HP.','Immortal Canned Meat: takes 10% less damage in the front row.'],
+noodle:['Heals the weakest ally for 32% HP + extra regen for 2 turns.','Holy Broth: basic attacks slightly heal himself.'],
+intern:['Fires a laser for 230% damage at the lowest-HP enemy. Gets knocked back.','Intern Hustle: +15% damage to targets below 50% HP.'],
+wifi:['Deals 90% damage + slows ALL enemies by 40% for 2 turns.','Full Signal: +10% speed for the whole team.'],
+panda:['Vanishes, then shanks the weakest enemy for 270% damage.','Keen Nose: 30% crit chance instead of 10%.'],
+chef:['Throws an exploding pressure cooker: 150% damage to all enemies.','Soup Puddle: explosions sometimes leave soup that slightly heals the team.'],
+sleepy:['Heals self 25% + taunts all enemies for 2 turns.','Tactical Snooze: +5% DEF each turn he isn\'t hit (stacks up to 3).'],
+granny:['Jump-starts the slowest ally: +50 energy and +15% HP.','Power Bank: at the start of her turn, the ally with least energy gets +8.'],
+overclock:['Buffs own ATK +40% for 2 turns, then instantly fires a 120% damage shot.','Overclock: +3% ATK per turn (max 5 stacks), resets when hit.'],
+coupon:['Throws an expired coupon: 100% damage to the fastest enemy + its ATK -25% for 2 turns.','Grand Opening Deal: at battle start, one random enemy gets -10% DEF.'],
+queen:['110% damage to the highest-ATK enemy + stuns it 1 turn (it has to go find its manager).','The Blacklist: whoever hits her gets -5% ATK (stacks... basically forever).'],
+roomba:['The roomba rams 3 random targets for 110% damage each.','Deep Clean: finishing off an enemy sends the roomba into a bonus basic attack.'],
+mattress:['Slams a mattress on the battlefield: 90% damage to all enemies + each loses 15 energy (too comfy).','Premium Springs: takes 20% less damage from critical hits.'],
+micromage:['180% microwave ray at the weakest enemy + burns 8% HP per turn for 2 turns.','Plastic-Safe: +20% damage to shielded targets.'],
+nina:['Fires 5 nails, each 45% damage at random targets.','Right In The Joint: +10% crit chance.'],
+ducttape:['Heals the weakest ally 25% + cleanses all debuffs (ATK down, slow, burn).','Emergency Patch: Doc\'s heals are 20% stronger on allies below 30% HP.'],
+steve:['Throws "perfume": 70% damage to all enemies + all get -20% ATK for 2 turns (busy holding their noses).','Personal Stink Zone: melee attackers deal -10% damage to your team (nobody wants to get close).'],
+sockninja:['Stabs the weakest enemy for 230% damage. On kill — vanishes into the laundry basket for 1 turn (untargetable).','Mystery Odd Sock: untargetable on the first turn (like every odd sock in the dryer).'],
+},
+enemies:{pigeon:'Delivery Pigeon 4.0',printer:'Out-of-Ink Printer',mannequin:'Laid-off Mannequin',toaster:'Rebel Toaster',karaoke:'Rogue Karaoke Speaker',microking:'Microwave King'},
+ui:{
+'Đánh':'Battle','Chế đồ':'Craft','Việc':'Tasks',
+'🏚️ Trung tâm Hậu Tận Thế':'🏚️ Post-Apocalypse Hub','🦸 Doanh Trại Đội Quân Kỳ Quặc':'🦸 Weirdo Army Barracks',
+'📖 Bộ Sưu Tập Vùng Đất Hoang':'📖 Wasteland Collection','🗡️ Vũ khí & Trang bị':'🗡️ Weapons & Gear',
+'👹 Quái & Boss đã chạm trán':'👹 Monsters & Bosses Encountered','🗺️ Bản Đồ Chiến Dịch':'🗺️ Campaign Map',
+'🦫 Tiệm & Xưởng Chú Hải Ly':'🦫 Beaver\'s Shop & Workshop','🥫 Kho Đồ Hộp Bí Ẩn':'🥫 Mystery Can Stash',
+'📦 Kệ Hộp Hero':'📦 Hero Box Shelf','🧬 Phòng Lab Hậu Tận Thế':'🧬 Post-Apocalypse Lab','✅ Bảng Việc Khu Phố':'✅ Neighborhood Task Board',
+'Ai đó đã cắm nhầm phích. Cả thế giới mất điện. Văn minh sụp đổ.':'Someone plugged in the wrong plug. The whole world lost power. Civilization collapsed.',
+'Nhưng đừng lo — mọi người vẫn sống, vẫn buôn bán, và vẫn cãi nhau ngoài chợ.':'But don\'t worry — everyone\'s still alive, still trading, still arguing at the market.',
+'Bạn nhận được':'You receive','3 hero kỳ quặc':'3 weirdo heroes','để bắt đầu sự nghiệp nhặt phế liệu:':'to start your scrap-picking career:',
+'Bắt đầu sinh tồn 🚀':'Start surviving 🚀',
+'CHIẾN THẮNG!':'VICTORY!','THUA RỒI':'DEFEAT','⏭ Hoàn thành ngay':'⏭ Skip battle','🎁 Phần thưởng':'🎁 Rewards',
+'✓ Đã phá — vẫn đánh lại farm được':'✓ Cleared — replay to farm','⚡ Nhanh ×N':'⚡ Quick ×N',
+'⚡ Đánh nhanh sẽ mở sau khi bạn phá màn này lần đầu — trận đầu phải xem đội quẩy chứ!':'⚡ Quick clear unlocks after your first win here — gotta watch your crew party at least once!',
+'❤️ Máu':'❤️ HP','⚔️ Tấn công':'⚔️ Attack','🛡️ Phòng thủ':'🛡️ Defense','⚡ Tốc độ':'⚡ Speed',
+'🔁 Nội tại':'🔁 Passive','🎒 Trang bị (3 ô)':'🎒 Gear (3 slots)','✕ tháo':'✕ remove','— trống —':'— empty —',
+'Chế thêm tại 🩹 Xưởng Băng Keo.':'Craft more at the 🩹 Workshop.','⚔️ Vũ khí:':'⚔️ Weapon:','🛡️ Giáp:':'🛡️ Armor:','🎩 Mũ:':'🎩 Hat:',
+'➖ Rời đội':'➖ Leave team','➕ Vào đội':'➕ Join team','về nghỉ ngơi':'take a break','xuất trận ngay':'fight right away',
+'🎭 MEME ARENA':'🎭 MEME ARENA','🌐 ĐẤU TRƯỜNG ONLINE':'🌐 ONLINE ARENA','🤖 LUYỆN TẬP VỚI BOT':'🤖 BOT PRACTICE',
+'😌 Dễ':'😌 Easy','😤 Ngang cơ':'😤 Even','😈 Khó':'😈 Hard',
+'PvP kiểu lịch sự: đánh BẢN SAO đội người khác — không ai phải thức canh điện thoại.':'Polite PvP: you fight a COPY of other people\'s teams — nobody has to babysit their phone.',
+'🚀 Tham gia BXH Online':'🚀 Join the Online Leaderboard','🌍 BXH Online':'🌍 Leaderboard','🔄 Đổi đối thủ':'🔄 New opponents',
+'📡 Đang dò sóng tìm đối thủ…':'📡 Scanning for opponents…',
+'🌵 Chưa có ai khác upload đội hình — rủ bạn bè vào chơi rồi quay lại nhé!':'🌵 Nobody else has uploaded a team yet — invite some friends and come back!',
+'📡 Mất sóng server — bấm 🔄 thử lại.':'📡 Lost connection — hit 🔄 to retry.',
+'🌍 BXH ONLINE — TOÀN CẦU':'🌍 GLOBAL LEADERBOARD','📡 Đang tải bảng xếp hạng…':'📡 Loading leaderboard…','← Về Arena':'← Back to Arena',
+'🏅 Bảng xếp hạng Arena':'🏅 Arena rankings (local)','⏭ Nhanh':'⏭ Quick','⚔️ Đánh':'⚔️ Fight','🌐 THAM GIA BXH ONLINE':'🌐 JOIN THE ONLINE LEADERBOARD','🚀 Lên sóng!':'🚀 Go live!',
+'Chọn tên hiển thị (2–14 ký tự). Tên sẽ nằm trên bảng xếp hạng TOÀN CẦU — chọn tên ngầu vào.':'Pick a display name (2–14 chars). It goes on the GLOBAL leaderboard — make it cool.',
+'Server chỉ lưu tên + chỉ số đội hình — KHÔNG có thông tin cá nhân. Dữ liệu có thể reset sau đợt playtest.':'The server only stores your name + team stats — NO personal info. Data may reset after the playtest.',
+'Đặt tên là lên sóng: BXH toàn cầu trực tiếp + đánh đội hình THẬT của người chơi khác. Không tốn gas, không giới hạn lượt.':'Pick a name and go live: a real-time global leaderboard + fight REAL teams from other players. No gas cost, no limits.',
+'Bạn là':'You are','cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!':'trophies — fight REAL teams from real players, gas-free!',
+'người chơi toàn cầu · bạn đứng hạng':'players worldwide · your rank','— số liệu trực tiếp từ server.':'— live data from the server.',
+'người chơi toàn cầu — số liệu trực tiếp từ server.':'players worldwide — live data from the server.',
+'SỰ KIỆN:':'EVENT:','SỰ KIỆN ĐANG CHẠY:':'EVENT LIVE NOW:','TOP BXH cuối đợt test nhận':'TOP of the leaderboard at the end of the test wins',
+'— ngày chốt xem ở bài đăng!':'— see the announcement post for the end date!','— leo đi chứ còn chờ gì!':'— start climbing!',
+'ĐỢT TEST CÓ THƯỞNG:':'PLAYTEST WITH PRIZES:','TOP Bảng Xếp Hạng Online cuối đợt nhận':'TOP of the Online Leaderboard at the end wins',
+'lượt hôm nay (miễn phí gas)':'tries today (gas-free)','— Điểm:':'— Score:',
+'📦 Thùng Các-tông':'📦 Cardboard Box','🥫 Đồng Nát':'🥫 Scrap Tin','🩹 Băng Keo Bạc':'🩹 Silver Tape','🪙 Vàng Phế Liệu':'🪙 Junk Gold','💎 Kim Cương Vỡ':'💎 Cracked Diamond',
+'🟢 CỬA THẮNG: NGON':'🟢 WIN CHANCE: LOOKING GOOD','🟠 NĂM ĂN NĂM THUA':'🟠 COIN FLIP','🔴 CỬA THẮNG: THẤP':'🔴 WIN CHANCE: LOW','⚫ GẦN NHƯ KHÔNG CỬA':'⚫ BASICALLY HOPELESS',
+'Vào đi, đội này cân được.':'Go for it — your crew can handle this.',
+'Kịch tính đấy — muốn chắc thì nâng cấp thêm chút.':'It\'ll be dramatic — upgrade a bit if you want it safe.',
+'Thua nhiều hơn thắng. Nâng cấp / thêm hero trước đã.':'You\'ll lose more than you win. Upgrade or add heroes first.',
+'Đội hiện tại chưa với tới — cần lên level, đủ 5 hero, lắp đồ.':'Out of reach for now — level up, field 5 heroes, equip gear.',
+'(mô phỏng nhanh với đội hiện tại)':'(quick simulation with your current team)',
+'⏱️ Đồng hồ xăng':'⏱️ Gas meter','Bình ĐẦY — đi đốt xăng thôi, để tràn là phí!':'Tank FULL — go burn some gas, don\'t waste the overflow!',
+'Đầy bình sau':'Full tank in','nữa (1 ⛽/7 phút — nhịp bản chính thức).':'(1 ⛽/7 min — official-release pacing).',
+'💾 Đã tải tiến trình — mừng trở lại vùng đất hoang!':'💾 Progress loaded — welcome back to the wasteland!',
+'⛽ Trong lúc bạn vắng mặt, đội đã đổ được':'⛽ While you were away, your crew refueled','MỞ KHÓA:':'UNLOCKED:',
+'🌟 BẠN':'🌟 YOU','Đội hình trống! Vào tab 🦸 Heroes thêm người đã.':'Your team is empty! Add heroes in the 🦸 Heroes tab.',
+'⚡ Đánh nhanh chỉ mở sau khi phá màn lần đầu!':'⚡ Quick clear unlocks after your first win on this stage!',
+'🪙 Không đủ Junk Coins. Đi nhặt phế liệu thêm đi!':'🪙 Not enough Junk Coins. Go pick up more scrap!',
+'🔋 Không đủ Battery Juice. Đi đánh Battery Slum nhé!':'🔋 Not enough Battery Juice. Go raid Battery Slum!',
+'⛽ Hero của bạn đói quá, không nhấc nổi mông. Chờ Gas hồi nhé.':'⛽ Your heroes are too hungry to move. Wait for Gas to refill.',
+'Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.':'No bot-arena tries left today! Your rivals breathe a sigh of relief.',
+'Tên cần ít nhất 2 ký tự!':'Name needs at least 2 characters!','😵 Server từ chối tên này — thử tên khác nhé.':'😵 The server rejected that name — try another.',
+'📡 Không nối được server — kiểm tra mạng rồi thử lại.':'📡 Can\'t reach the server — check your connection and retry.',
+},
+rx:[
+[/^⚔️ Vòng (\d+)$/,'⚔️ Round $1'],
+[/^⚔️ Đánh — (\d+) ⛽$/,'⚔️ Fight — $1 ⛽'],
+[/^⚡ Sức mạnh ([\d.,]+) \(bạn: ([\d.,]+)\)$/,'⚡ Power $1 (you: $2)'],
+[/^⚡([\d.,]+) · (\d+)T\/(\d+)B$/,'⚡$1 · $2W/$3L'],
+[/^Thắng: \+(\d+) điểm · 🪙 ([\d–]+) · Thua: (-?\d+) điểm$/,'Win: +$1 pts · 🪙 $2 · Lose: $3 pts'],
+[/^⛽ Cần (\d+) gas cho (\d+) lượt \(đang có (\d+)\)\.$/,'⛽ Need $1 gas for $2 runs (you have $3).'],
+[/^🔒 Trần Lv (\d+) \(cấp tài khoản (\d+) \+ 4\)\. Đánh thêm để lên cấp tài khoản đã!$/,'🔒 Level cap $1 (account level $2 + 4). Battle more to raise your account level!'],
+[/^⏳ Vừa đánh người này xong.*$/,'⏳ You just fought this player — wait 5 minutes for trophies to count again.'],
+[/^⏳ Đã đánh 30 trận online.*$/,'⏳ 30 online battles in an hour — take a breather!'],
+[/^🧬 Breed còn (\d+)\/(\d+) lần$/,'🧬 Breeds left: $1/$2'],
+[/^— vào 🎭 Arena đăng ký tên để lên sóng![\s\S]*màn hình\.$/,'— open 🎭 Arena and register a name to go live! · ⛽ 1 Gas/7 min (official pacing) · 💾 Auto-saves in this browser — don\'t clear your history! · 📝 Feedback: round button on the left.'],
+[/^· còn$/,'· left:'],
+],
+},
+/* ============================== 中文（简体） ============================== */
+zh:{
+nodes:{
+junkyard:['废品场街区','经典废铁堆，锈鼠到处乱窜。'],
+slum:['电池贫民窟','电线缠得像蜘蛛网，无人机嗡嗡乱飞。'],
+snack:['罐头小镇','罐头集市。垃圾魔像守着泡面仓库。'],
+boss1:['BOSS：暴怒贩卖机','2031年它吞了某人一枚硬币，至今耿耿于怀。'],
+parking:['闹鬼停车场','这里的老鼠喝了反应堆冷却液，现在会发光。'],
+mall:['废弃大商场','喇叭还在放促销歌，保安无人机还在巡逻，没人通知它们下班。'],
+foodcourt:['叛乱美食广场','这里的魔像由100%凝固煎炸油组成。各种意义上的恐怖。'],
+boss2:['BOSS：变异购物车','吱呀作响的轮子，是你听到的最后声音。'],
+office:['苏醒的办公大楼','末日之后文件无人机还在追KPI，比变异体更可怕。'],
+lab:['能源实验室','「Oops」发生的地方。牌子上还写着：「距上次事故0天」。'],
+rooftop:['暴风屋顶','两台贩卖机守着会议室门口——它们升职了。'],
+seasonboss:['👑 赛季BOSS：THE MANAGER','你吵着要见经理吵了一整个赛季。现在……经理想见你了。'],
+},
+chapters:[['第一章 — 垃圾场创业记','正经捡破烂大亨的第1–3天。'],
+['第二章 — 过期大道','旧商业区，所有东西都过期了——包括怪物。'],
+['第三章 — Oops城市核心','大停电事故的起点。还有……经理的所在地。']],
+missions:{pve:'赢3场PvE战斗',upg:'升级1名英雄',can:'开1个神秘罐头',boss:'击败1个BOSS',craft:'制作1件装备'},
+unlocks:{loot:['🥫 战利品仓库','赢1场PvE解锁'],missions:['✅ 任务板','赢1场PvE解锁'],
+craft:['🩹 胶带工坊','通关电池贫民窟解锁'],shop:['🦫 海狸商店','通关罐头小镇解锁'],
+arena:['🎭 梗竞技场','通关罐头小镇解锁'],lab:['🧬 实验室（繁殖）','击败第一章BOSS解锁'],
+dgn:['🕳️ 每日地牢','击败第一章BOSS解锁'],tower:['🗼 混沌之塔','通关第二章第一关解锁'],
+enhance:['⬆️ 强化','通关第二章第一关解锁'],recycle:['♻️ 回收机','击败第二章BOSS解锁']},
+tut:['打开<b>⚔️ 战斗</b>页开始第一战！',
+'进攻<b>废品场街区</b>（5 ⛽）。战斗全自动——策略全在排兵布阵！',
+'赢了！打开<b>🦸 Heroes</b>页，用刚捡的 🪙 升级队伍。',
+'点一名英雄，再点<b>⬆️ 升级</b>——每级+9%属性。',
+'打开<b>🥫 Loot</b>页——神秘罐头里有 🧩 英雄箱碎片。',
+'点罐头开罐！攒<b>10 🧩</b>拼一个英雄箱——开箱三选一英雄。',
+'最后：<b>✅ 任务</b>页——做每日任务领奖励宝箱！'],
+heroes:{
+spam:['给全队套上等于各自最大生命22%的护盾。','不朽罐头肉：站前排受到的伤害-10%。'],
+noodle:['治疗最弱队友32%生命+持续恢复2回合。','神圣高汤：普攻为自己回少量血。'],
+intern:['对血量最低的敌人发射230%伤害的激光，自己被后坐力击退。','实习生热血：对50%血以下目标伤害+15%。'],
+wifi:['造成90%伤害+全体敌人减速40%，持续2回合。','满格信号：全队速度+10%。'],
+panda:['消失后突袭最弱敌人，造成270%伤害。','灵敏鼻子：暴击率30%（而非10%）。'],
+chef:['扔出爆炸高压锅：对全体敌人150%伤害。','汤水坑：爆炸偶尔留下汤坑，为全队回少量血。'],
+sleepy:['自疗25%+嘲讽全体敌人2回合。','战术打盹：每回合没被打+5%防御（最多叠3层）。'],
+granny:['给最慢的队友搭电：+50能量并回复其15%生命。','移动充电宝：她回合开始时，能量最少的队友+8能量。'],
+overclock:['自身攻击+40%持续2回合，并立刻射出一发120%伤害。','超频：每回合攻击+3%（最多5层），被打则重置。'],
+coupon:['扔出过期优惠券：对最快的敌人100%伤害+其攻击-25%持续2回合。','开业大酬宾：开战时随机一名敌人防御-10%。'],
+queen:['对攻击最高的敌人110%伤害+眩晕1回合（它得去找经理）。','黑名单：打她的人攻击-5%（无限叠加……基本上）。'],
+roomba:['扫地机疯狂冲撞3个随机目标，每次110%伤害。','深度清洁：终结敌人后扫地机兴奋追加一次普攻。'],
+mattress:['床垫砸向全场：90%全体伤害+每人扣15能量（太舒服了）。','优质弹簧：受到的暴击伤害-20%。'],
+micromage:['180%微波射线打最弱敌人+灼烧每回合8%生命，持续2回合。','穿透塑料盒：对有护盾的目标伤害+20%。'],
+nina:['连射5发钉子，每发45%伤害随机目标。','正中关节：暴击率+10%。'],
+ducttape:['治疗最弱队友25%+清除全部负面效果（降攻、减速、灼烧）。','紧急包扎：对30%血以下队友的治疗强20%。'],
+steve:['扔出「香水」：全体敌人70%伤害+全体攻击-20%持续2回合（忙着捂鼻子）。','个人臭味结界：近战敌人对你队伤害-10%（没人想靠近）。'],
+sockninja:['对最弱敌人刺出230%伤害。若击杀——躲进洗衣篮1回合（无法被瞄准）。','神秘单只袜：开场第一回合无法被瞄准（就像烘干机里的每只单袜）。'],
+},
+enemies:{pigeon:'快递鸽4.0',printer:'没墨打印机',mannequin:'失业人体模特',toaster:'叛逆烤面包机',karaoke:'自走卡拉OK音箱',microking:'微波炉之王'},
+ui:{
+'Đánh':'战斗','Chế đồ':'制作','Việc':'任务',
+'🏚️ Trung tâm Hậu Tận Thế':'🏚️ 末日中心','🦸 Doanh Trại Đội Quân Kỳ Quặc':'🦸 怪咖军团兵营',
+'📖 Bộ Sưu Tập Vùng Đất Hoang':'📖 废土图鉴','🗡️ Vũ khí & Trang bị':'🗡️ 武器与装备',
+'👹 Quái & Boss đã chạm trán':'👹 遭遇过的怪物与BOSS','🗺️ Bản Đồ Chiến Dịch':'🗺️ 战役地图',
+'🦫 Tiệm & Xưởng Chú Hải ly':'🦫 海狸商店与工坊','🦫 Tiệm & Xưởng Chú Hải Ly':'🦫 海狸商店与工坊','🥫 Kho Đồ Hộp Bí Ẩn':'🥫 神秘罐头仓库',
+'📦 Kệ Hộp Hero':'📦 英雄箱货架','🧬 Phòng Lab Hậu Tận Thế':'🧬 末日实验室','✅ Bảng Việc Khu Phố':'✅ 街区任务板',
+'Ai đó đã cắm nhầm phích. Cả thế giới mất điện. Văn minh sụp đổ.':'有人插错了插头。全世界停电，文明崩塌。',
+'Nhưng đừng lo — mọi người vẫn sống, vẫn buôn bán, và vẫn cãi nhau ngoài chợ.':'别担心——大家还活着，照样做买卖，照样在集市吵架。',
+'Bạn nhận được':'你获得了','3 hero kỳ quặc':'3名怪咖英雄','để bắt đầu sự nghiệp nhặt phế liệu:':'开启你的捡破烂事业：',
+'Bắt đầu sinh tồn 🚀':'开始求生 🚀',
+'CHIẾN THẮNG!':'胜利！','THUA RỒI':'战败','⏭ Hoàn thành ngay':'⏭ 跳过战斗','🎁 Phần thưởng':'🎁 奖励',
+'✓ Đã phá — vẫn đánh lại farm được':'✓ 已通关——可反复刷','⚡ Nhanh ×N':'⚡ 扫荡 ×N',
+'⚡ Đánh nhanh sẽ mở sau khi bạn phá màn này lần đầu — trận đầu phải xem đội quẩy chứ!':'⚡ 首次通关后解锁扫荡——第一场得亲眼看队伍嗨一次！',
+'❤️ Máu':'❤️ 生命','⚔️ Tấn công':'⚔️ 攻击','🛡️ Phòng thủ':'🛡️ 防御','⚡ Tốc độ':'⚡ 速度',
+'🔁 Nội tại':'🔁 被动','🎒 Trang bị (3 ô)':'🎒 装备（3槽）','✕ tháo':'✕ 卸下','— trống —':'— 空 —',
+'Chế thêm tại 🩹 Xưởng Băng Keo.':'去 🩹 胶带工坊制作更多。','⚔️ Vũ khí:':'⚔️ 武器：','🛡️ Giáp:':'🛡️ 护甲：','🎩 Mũ:':'🎩 帽子：',
+'➖ Rời đội':'➖ 离队','➕ Vào đội':'➕ 入队','về nghỉ ngơi':'回去休息','xuất trận ngay':'立刻出战',
+'🌐 ĐẤU TRƯỜNG ONLINE':'🌐 在线竞技场','🤖 LUYỆN TẬP VỚI BOT':'🤖 人机练习',
+'😌 Dễ':'😌 简单','😤 Ngang cơ':'😤 势均力敌','😈 Khó':'😈 困难',
+'PvP kiểu lịch sự: đánh BẢN SAO đội人 khác — không ai phải thức canh điện thoại.':'文明PvP：打的是别人队伍的副本——没人需要守着手机。',
+'PvP kiểu lịch sự: đánh BẢN SAO đội người khác — không ai phải thức canh điện thoại.':'文明PvP：打的是别人队伍的副本——没人需要守着手机。',
+'🚀 Tham gia BXH Online':'🚀 加入在线排行榜','🌍 BXH Online':'🌍 排行榜','🔄 Đổi đối thủ':'🔄 换对手',
+'📡 Đang dò sóng tìm đối thủ…':'📡 正在搜索对手…',
+'🌵 Chưa có ai khác upload đội hình — rủ bạn bè vào chơi rồi quay lại nhé!':'🌵 还没有其他人上传阵容——拉朋友来玩再回来吧！',
+'📡 Mất sóng server — bấm 🔄 thử lại.':'📡 服务器失联——点 🔄 重试。',
+'🌍 BXH ONLINE — TOÀN CẦU':'🌍 全球排行榜','📡 Đang tải bảng xếp hạng…':'📡 加载排行榜中…','← Về Arena':'← 返回竞技场',
+'🏅 Bảng xếp hạng Arena':'🏅 竞技场排名（本地）','⏭ Nhanh':'⏭ 速战','⚔️ Đánh':'⚔️ 出战','🌐 THAM GIA BXH ONLINE':'🌐 加入在线排行榜','🚀 Lên sóng!':'🚀 上榜！',
+'Chọn tên hiển thị (2–14 ký tự). Tên sẽ nằm trên bảng xếp hạng TOÀN CẦU — chọn tên ngầu vào.':'取一个昵称（2–14字符），它会出现在全球排行榜上——取个酷的。',
+'Server chỉ lưu tên + chỉ số đội hình — KHÔNG có thông tin cá nhân. Dữ liệu có thể reset sau đợt playtest.':'服务器只存昵称+阵容数据——没有任何个人信息。测试结束后数据可能重置。',
+'Đặt tên là lên sóng: BXH toàn cầu trực tiếp + đánh đội hình THẬT của người chơi khác. Không tốn gas, không giới hạn lượt.':'取名即上榜：实时全球排行榜+对战其他玩家的真实阵容。不耗油、无次数限制。',
+'Bạn là':'你是','cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!':'奖杯——对战真实玩家的真实阵容，不耗油！',
+'người chơi toàn cầu · bạn đứng hạng':'名全球玩家 · 你的排名','— số liệu trực tiếp từ server.':'——服务器实时数据。',
+'người chơi toàn cầu — số liệu trực tiếp từ server.':'名全球玩家——服务器实时数据。',
+'SỰ KIỆN:':'活动：','SỰ KIỆN ĐANG CHẠY:':'活动进行中：','TOP BXH cuối đợt test nhận':'测试结束时排行榜TOP将获得',
+'— ngày chốt xem ở bài đăng!':'——截止日期见公告帖！','— leo đi chứ còn chờ gì!':'——还等什么，开爬！',
+'ĐỢT TEST CÓ THƯỞNG:':'有奖测试：','TOP Bảng Xếp Hạng Online cuối đợt nhận':'测试结束时在线排行榜TOP将获得',
+'lượt hôm nay (miễn phí gas)':'次（今日 · 不耗油）','— Điểm:':'— 积分：',
+'📦 Thùng Các-tông':'📦 纸箱段位','🥫 Đồng Nát':'🥫 废铁段位','🩹 Băng Keo Bạc':'🩹 银胶带段位','🪙 Vàng Phế Liệu':'🪙 废品黄金段位','💎 Kim Cương Vỡ':'💎 碎钻段位',
+'🟢 CỬA THẮNG: NGON':'🟢 胜率：稳','🟠 NĂM ĂN NĂM THUA':'🟠 五五开','🔴 CỬA THẮNG: THẤP':'🔴 胜率：低','⚫ GẦN NHƯ KHÔNG CỬA':'⚫ 几乎没戏',
+'Vào đi, đội này cân được.':'上吧，这队扛得住。',
+'Kịch tính đấy — muốn chắc thì nâng cấp thêm chút.':'会很刺激——想稳就再升级一点。',
+'Thua nhiều hơn thắng. Nâng cấp / thêm hero trước đã.':'输多赢少。先升级或补英雄。',
+'Đội hiện tại chưa với tới — cần lên level, đủ 5 hero, lắp đồ.':'目前的队伍够不着——升级、凑满5人、穿装备。',
+'(mô phỏng nhanh với đội hiện tại)':'（用当前阵容快速模拟）',
+'⏱️ Đồng hồ xăng':'⏱️ 油表','Bình ĐẦY — đi đốt xăng thôi, để tràn là phí!':'油箱满了——快去烧油，溢出就浪费了！',
+'Đầy bình sau':'加满还需','nữa (1 ⛽/7 phút — nhịp bản chính thức).':'（1 ⛽/7分钟——正式版节奏）。',
+'💾 Đã tải tiến trình — mừng trở lại vùng đất hoang!':'💾 进度已读取——欢迎回到废土！',
+'⛽ Trong lúc bạn vắng mặt, đội đã đổ được':'⛽ 你不在的时候，队伍加了','MỞ KHÓA:':'解锁：',
+'🌟 BẠN':'🌟 你','Đội hình trống! Vào tab 🦸 Heroes thêm người đã.':'阵容是空的！去 🦸 Heroes 页加人。',
+'⚡ Đánh nhanh chỉ mở sau khi phá màn lần đầu!':'⚡ 首次通关后才能扫荡！',
+'🪙 Không đủ Junk Coins. Đi nhặt phế liệu thêm đi!':'🪙 废品币不够，去多捡点破烂！',
+'🔋 Không đủ Battery Juice. Đi đánh Battery Slum nhé!':'🔋 电池汁不够，去打电池贫民窟！',
+'⛽ Hero của bạn đói quá, không nhấc nổi mông. Chờ Gas hồi nhé.':'⛽ 英雄们饿得抬不起屁股，等油恢复吧。',
+'Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.':'今天5次人机机会用完了！对手们松了口气。',
+'Tên cần ít nhất 2 ký tự!':'昵称至少2个字符！','😵 Server từ chối tên này — thử tên khác nhé.':'😵 服务器拒绝了这个名字——换一个试试。',
+'📡 Không nối được server — kiểm tra mạng rồi thử lại.':'📡 连不上服务器——检查网络后重试。',
+},
+rx:[
+[/^⚔️ Vòng (\d+)$/,'⚔️ 第$1回合'],
+[/^⚔️ Đánh — (\d+) ⛽$/,'⚔️ 出战 — $1 ⛽'],
+[/^⚡ Sức mạnh ([\d.,]+) \(bạn: ([\d.,]+)\)$/,'⚡ 战力 $1（你：$2）'],
+[/^⚡([\d.,]+) · (\d+)T\/(\d+)B$/,'⚡$1 · $2胜/$3负'],
+[/^Thắng: \+(\d+) điểm · 🪙 ([\d–]+) · Thua: (-?\d+) điểm$/,'胜：+$1分 · 🪙 $2 · 负：$3分'],
+[/^⛽ Cần (\d+) gas cho (\d+) lượt \(đang có (\d+)\)\.$/,'⛽ $2次需要$1油（现有$3）。'],
+[/^🔒 Trần Lv (\d+) \(cấp tài khoản (\d+) \+ 4\)\. Đánh thêm để lên cấp tài khoản đã!$/,'🔒 等级上限$1（账号等级$2+4）。多打几场提升账号等级！'],
+[/^⏳ Vừa đánh người này xong.*$/,'⏳ 刚打过这位玩家——5分钟后奖杯才会重新计算。'],
+[/^⏳ Đã đánh 30 trận online.*$/,'⏳ 一小时内已打30场在线对战——歇会儿吧！'],
+[/^🧬 Breed còn (\d+)\/(\d+) lần$/,'🧬 剩余繁殖次数：$1/$2'],
+[/^— vào 🎭 Arena đăng ký tên để lên sóng![\s\S]*màn hình\.$/,'——打开 🎭 竞技场注册昵称上榜！· ⛽ 1油/7分钟（正式版节奏）· 💾 自动存档在本浏览器——别清浏览记录！· 📝 反馈：左侧圆形按钮。'],
+[/^· còn$/,'· 剩余'],
+],
+},
+/* ============================== 日本語 ============================== */
+ja:{
+nodes:{
+junkyard:['ジャンクヤード地区','王道のスクラップ置き場。サビネズミがうようよ。'],
+slum:['バッテリースラム','クモの巣みたいに絡まった配線。ドローンがブンブン飛び回る。'],
+snack:['スナックタウン','缶詰市場。ゴミゴーレムがカップ麺倉庫を守っている。'],
+boss1:['BOSS：怒れる自販機','2031年に誰かのコインを飲み込んで、いまだに根に持っている。'],
+parking:['呪われた駐車場','ここのネズミは原子炉の冷却水を飲んだ。今では光る。'],
+mall:['廃墟モール','スピーカーは今もセールソングを流し、警備ドローンは今も巡回中。誰も止めてくれない。'],
+foodcourt:['反逆のフードコート','ここのゴーレムは100%固まった揚げ油でできている。あらゆる意味で恐ろしい。'],
+boss2:['BOSS：ミュータント・ショッピングカート','キィキィ鳴る車輪の音が、君が聞く最後の音だ。'],
+office:['目覚めしオフィスビル','終末後もKPIを追い続ける書類ドローン。ミュータントより怖い。'],
+lab:['エネルギー研究所','「Oops」が起きた場所。看板には今も「無事故継続0日」。'],
+rooftop:['嵐の屋上','2台の自販機が会議室を守っている。昇進したのだ。'],
+seasonboss:['👑 シーズンボス：THE MANAGER','シーズン中ずっと「店長を呼べ」と言ってきた君。今度は…店長が君に会いたがっている。'],
+},
+chapters:[['第1章 — ゴミ山スタートアップ','真のガラクタ王の1〜3日目。'],
+['第2章 — 賞味期限切れ大通り','旧商業地区。何もかも期限切れ——モンスターも含めて。'],
+['第3章 — Oopsシティ・コア','大停電事故が始まった場所。そして…マネージャーの住処。']],
+missions:{pve:'PvEで3勝する',upg:'ヒーローを1回強化',can:'ミステリー缶を1個開ける',boss:'ボスを1体倒す',craft:'装備を1個クラフト'},
+unlocks:{loot:['🥫 ルート倉庫','PvE1勝で解放'],missions:['✅ クエストボード','PvE1勝で解放'],
+craft:['🩹 ダクトテープ工房','バッテリースラム攻略で解放'],shop:['🦫 ビーバー商店','スナックタウン攻略で解放'],
+arena:['🎭 ミームアリーナ','スナックタウン攻略で解放'],lab:['🧬 ラボ（ブリード）','第1章ボス撃破で解放'],
+dgn:['🕳️ デイリーダンジョン','第1章ボス撃破で解放'],tower:['🗼 カオスタワー','第2章最初のステージ攻略で解放'],
+enhance:['⬆️ 強化','第2章最初のステージ攻略で解放'],recycle:['♻️ リサイクル機','第2章ボス撃破で解放']},
+tut:['<b>⚔️ バトル</b>タブを開いて初戦闘を始めよう！',
+'<b>ジャンクヤード地区</b>を攻撃（5 ⛽）。戦闘は全自動——戦略は編成で決まる！',
+'勝利！<b>🦸 Heroes</b>タブで、拾った 🪙 を使って仲間を強化しよう。',
+'ヒーローをタップして<b>⬆️ レベルUP</b>——1レベルごとにステータス+9%。',
+'<b>🥫 Loot</b>タブを開こう——ミステリー缶には 🧩 ヒーローボックスの欠片が入っている。',
+'缶をタップして開封！<b>10 🧩</b>集めてヒーローボックスを作ろう——開けると3体から1体選べる。',
+'最後に<b>✅ クエスト</b>タブ——デイリークエストで報酬チェストをゲット！'],
+heroes:{
+spam:['味方全員に各自の最大HP22%のシールドを張る。','不滅の缶詰肉：前列にいる時、被ダメージ-10%。'],
+noodle:['最も弱った味方をHP32%回復+2ターンの継続回復。','聖なるスープ：通常攻撃で自分を少し回復。'],
+intern:['HP最低の敵に230%ダメージのレーザー。反動で吹っ飛ぶ。','インターン魂：HP50%以下の敵へのダメージ+15%。'],
+wifi:['90%ダメージ+敵全体を40%スロウ（2ターン）。','フルシグナル：味方全員のスピード+10%。'],
+panda:['姿を消し、最弱の敵に270%ダメージの奇襲。','利きすぎる鼻：クリティカル率30%（通常10%）。'],
+chef:['爆発する圧力鍋を投げる：敵全体に150%ダメージ。','スープだまり：爆発がたまにスープを残し、味方全体を少し回復。'],
+sleepy:['自分を25%回復+敵全体を2ターン挑発。','戦術的居眠り：攻撃されなかったターンごとにDEF+5%（最大3スタック）。'],
+granny:['一番遅い味方にジャンプスタート：エネルギー+50、HP15%回復。','モバイルバッテリー：自分のターン開始時、エネルギー最少の味方に+8。'],
+overclock:['自分のATK+40%（2ターン）、即座に120%ダメージを発射。','オーバークロック：毎ターンATK+3%（最大5スタック）、被弾でリセット。'],
+coupon:['期限切れクーポンを投げる：最速の敵に100%ダメージ+そのATK-25%（2ターン）。','開店セール：戦闘開始時、ランダムな敵1体のDEF-10%。'],
+queen:['ATK最高の敵に110%ダメージ+1ターンスタン（マネージャーを呼びに行く）。','ブラックリスト：彼女を殴った者はATK-5%（ほぼ無限にスタック）。'],
+roomba:['ルンバがランダムな3体に突撃、各110%ダメージ。','徹底清掃：敵にトドメを刺すとルンバが興奮して追加攻撃。'],
+mattress:['マットレスを戦場に叩きつける：敵全体90%ダメージ+各15エネルギー減（気持ちよすぎて）。','高級スプリング：クリティカル被ダメージ-20%。'],
+micromage:['最弱の敵に180%の電子レンジ光線+毎ターンHP8%の火傷（2ターン）。','プラ容器貫通：シールド持ちへのダメージ+20%。'],
+nina:['釘を5連射、各45%ダメージでランダムな標的へ。','関節にジャスト：クリティカル率+10%。'],
+ducttape:['最弱の味方を25%回復+全デバフ解除（ATK低下・スロウ・火傷）。','緊急テーピング：HP30%以下の味方への回復が20%強化。'],
+steve:['「香水」を投げる：敵全体に70%ダメージ+全員ATK-20%（2ターン、鼻をつまむのに忙しい）。','パーソナル異臭ゾーン：近接攻撃の敵からのダメージ-10%（誰も近寄りたくない）。'],
+sockninja:['最弱の敵に230%ダメージ。トドメを刺すと洗濯カゴに消える（1ターン、標的にされない）。','謎の片方靴下：初ターンは標的にされない（乾燥機の中の片方靴下のように）。'],
+},
+enemies:{pigeon:'配達ハト4.0',printer:'インク切れプリンター',mannequin:'失業マネキン',toaster:'反抗期トースター',karaoke:'自走カラオケスピーカー',microking:'電子レンジキング'},
+ui:{
+'Đánh':'バトル','Chế đồ':'クラフト','Việc':'クエスト',
+'🏚️ Trung tâm Hậu Tận Thế':'🏚️ 終末ハブ','🦸 Doanh Trại Đội Quân Kỳ Quặc':'🦸 ヘンテコ軍団の兵舎',
+'📖 Bộ Sưu Tập Vùng Đất Hoang':'📖 ウェイストランド図鑑','🗡️ Vũ khí & Trang bị':'🗡️ 武器＆装備',
+'👹 Quái & Boss đã chạm trán':'👹 遭遇したモンスター＆ボス','🗺️ Bản Đồ Chiến Dịch':'🗺️ キャンペーンマップ',
+'🦫 Tiệm & Xưởng Chú Hải Ly':'🦫 ビーバーの店＆工房','🥫 Kho Đồ Hộp Bí Ẩn':'🥫 ミステリー缶倉庫',
+'📦 Kệ Hộp Hero':'📦 ヒーローボックス棚','🧬 Phòng Lab Hậu Tận Thế':'🧬 終末ラボ','✅ Bảng Việc Khu Phố':'✅ ご近所クエストボード',
+'Ai đó đã cắm nhầm phích. Cả thế giới mất điện. Văn minh sụp đổ.':'誰かがコンセントを差し間違えた。世界中が停電し、文明は崩壊した。',
+'Nhưng đừng lo — mọi người vẫn sống, vẫn buôn bán, và vẫn cãi nhau ngoài chợ.':'でも心配無用——みんな生きてるし、商売もしてるし、市場で口喧嘩もしている。',
+'Bạn nhận được':'君が受け取ったのは','3 hero kỳ quặc':'3体のヘンテコヒーロー','để bắt đầu sự nghiệp nhặt phế liệu:':'——スクラップ拾いキャリアの始まりだ：',
+'Bắt đầu sinh tồn 🚀':'サバイバル開始 🚀',
+'CHIẾN THẮNG!':'勝利！','THUA RỒI':'敗北…','⏭ Hoàn thành ngay':'⏭ スキップ','🎁 Phần thưởng':'🎁 報酬',
+'✓ Đã phá — vẫn đánh lại farm được':'✓ クリア済み——周回OK','⚡ Nhanh ×N':'⚡ 掃討 ×N',
+'⚡ Đánh nhanh sẽ mở sau khi bạn phá màn này lần đầu — trận đầu phải xem đội quẩy chứ!':'⚡ 掃討は初クリア後に解放——初戦はチームの暴れっぷりを見届けよう！',
+'❤️ Máu':'❤️ HP','⚔️ Tấn công':'⚔️ 攻撃','🛡️ Phòng thủ':'🛡️ 防御','⚡ Tốc độ':'⚡ スピード',
+'🔁 Nội tại':'🔁 パッシブ','🎒 Trang bị (3 ô)':'🎒 装備（3枠）','✕ tháo':'✕ 外す','— trống —':'— 空き —',
+'Chế thêm tại 🩹 Xưởng Băng Keo.':'🩹 工房でもっとクラフトできる。','⚔️ Vũ khí:':'⚔️ 武器：','🛡️ Giáp:':'🛡️ 防具：','🎩 Mũ:':'🎩 帽子：',
+'➖ Rời đội':'➖ 編成から外す','➕ Vào đội':'➕ 編成に入れる','về nghỉ ngơi':'休ませる','xuất trận ngay':'即出撃',
+'🌐 ĐẤU TRƯỜNG ONLINE':'🌐 オンラインアリーナ','🤖 LUYỆN TẬP VỚI BOT':'🤖 BOT練習',
+'😌 Dễ':'😌 かんたん','😤 Ngang cơ':'😤 互角','😈 Khó':'😈 むずかしい',
+'PvP kiểu lịch sự: đánh BẢN SAO đội người khác — không ai phải thức canh điện thoại.':'お行儀のいいPvP：相手チームのコピーと戦うから、誰もスマホに張り付かなくていい。',
+'🚀 Tham gia BXH Online':'🚀 ランキングに参加','🌍 BXH Online':'🌍 ランキング','🔄 Đổi đối thủ':'🔄 対戦相手を更新',
+'📡 Đang dò sóng tìm đối thủ…':'📡 対戦相手を探索中…',
+'🌵 Chưa có ai khác upload đội hình — rủ bạn bè vào chơi rồi quay lại nhé!':'🌵 まだ誰もチームをアップしていない——友達を誘ってまた来てね！',
+'📡 Mất sóng server — bấm 🔄 thử lại.':'📡 サーバーと接続切れ——🔄 で再試行。',
+'🌍 BXH ONLINE — TOÀN CẦU':'🌍 グローバルランキング','📡 Đang tải bảng xếp hạng…':'📡 ランキング読み込み中…','← Về Arena':'← アリーナに戻る',
+'🏅 Bảng xếp hạng Arena':'🏅 アリーナ順位（ローカル）','⏭ Nhanh':'⏭ 高速','⚔️ Đánh':'⚔️ 出撃','🌐 THAM GIA BXH ONLINE':'🌐 オンラインランキングに参加','🚀 Lên sóng!':'🚀 デビュー！',
+'Chọn tên hiển thị (2–14 ký tự). Tên sẽ nằm trên bảng xếp hạng TOÀN CẦU — chọn tên ngầu vào.':'表示名を決めよう（2〜14文字）。グローバルランキングに載るから、カッコいいのを。',
+'Server chỉ lưu tên + chỉ số đội hình — KHÔNG có thông tin cá nhân. Dữ liệu có thể reset sau đợt playtest.':'サーバーに保存されるのは名前＋チームステータスのみ——個人情報は一切なし。テスト終了後データはリセットされる場合あり。',
+'Đặt tên là lên sóng: BXH toàn cầu trực tiếp + đánh đội hình THẬT của người chơi khác. Không tốn gas, không giới hạn lượt.':'名前を決めるだけで参戦：リアルタイムのグローバルランキング＋他プレイヤーの本物のチームと対戦。ガス消費なし・回数無制限。',
+'Bạn là':'あなた：','cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!':'トロフィー——実在プレイヤーの本物のチームと戦おう、ガス消費なし！',
+'người chơi toàn cầu · bạn đứng hạng':'人のプレイヤー · あなたの順位','— số liệu trực tiếp từ server.':'——サーバーのライブデータ。',
+'người chơi toàn cầu — số liệu trực tiếp từ server.':'人のプレイヤー——サーバーのライブデータ。',
+'SỰ KIỆN:':'イベント：','SỰ KIỆN ĐANG CHẠY:':'イベント開催中：','TOP BXH cuối đợt test nhận':'テスト終了時のランキングTOPに',
+'— ngày chốt xem ở bài đăng!':'——締切日は告知ポストで！','— leo đi chứ còn chờ gì!':'——さあ、登れ！',
+'ĐỢT TEST CÓ THƯỞNG:':'賞金付きテスト：','TOP Bảng Xếp Hạng Online cuối đợt nhận':'テスト終了時のオンラインランキングTOPに',
+'lượt hôm nay (miễn phí gas)':'回（本日・ガス無料）','— Điểm:':'— スコア：',
+'📦 Thùng Các-tông':'📦 ダンボール級','🥫 Đồng Nát':'🥫 スクラップ級','🩹 Băng Keo Bạc':'🩹 銀テープ級','🪙 Vàng Phế Liệu':'🪙 ガラクタゴールド級','💎 Kim Cương Vỡ':'💎 ヒビ割れダイヤ級',
+'🟢 CỬA THẮNG: NGON':'🟢 勝率：イケる','🟠 NĂM ĂN NĂM THUA':'🟠 五分五分','🔴 CỬA THẮNG: THẤP':'🔴 勝率：低い','⚫ GẦN NHƯ KHÔNG CỬA':'⚫ ほぼ無理',
+'Vào đi, đội này cân được.':'行こう、このチームなら勝てる。',
+'Kịch tính đấy — muốn chắc thì nâng cấp thêm chút.':'接戦になるぞ——確実に勝ちたいなら少し強化を。',
+'Thua nhiều hơn thắng. Nâng cấp / thêm hero trước đã.':'負け越し濃厚。先に強化かヒーロー追加を。',
+'Đội hiện tại chưa với tới — cần lên level, đủ 5 hero, lắp đồ.':'今のチームでは届かない——レベル上げ、5人編成、装備を。',
+'(mô phỏng nhanh với đội hiện tại)':'（現在の編成での高速シミュレーション）',
+'⏱️ Đồng hồ xăng':'⏱️ ガスメーター','Bình ĐẦY — đi đốt xăng thôi, để tràn là phí!':'タンク満タン——ガスを使いに行こう、溢れたらもったいない！',
+'Đầy bình sau':'満タンまであと','nữa (1 ⛽/7 phút — nhịp bản chính thức).':'（1 ⛽/7分——製品版ペース）。',
+'💾 Đã tải tiến trình — mừng trở lại vùng đất hoang!':'💾 セーブ読み込み完了——ウェイストランドへおかえり！',
+'⛽ Trong lúc bạn vắng mặt, đội đã đổ được':'⛽ 留守の間にチームが給油した：','MỞ KHÓA:':'解放：',
+'🌟 BẠN':'🌟 あなた','Đội hình trống! Vào tab 🦸 Heroes thêm người đã.':'編成が空っぽ！🦸 Heroesタブで仲間を追加しよう。',
+'⚡ Đánh nhanh chỉ mở sau khi phá màn lần đầu!':'⚡ 掃討は初クリア後に解放！',
+'🪙 Không đủ Junk Coins. Đi nhặt phế liệu thêm đi!':'🪙 ジャンクコインが足りない。もっとスクラップを拾おう！',
+'🔋 Không đủ Battery Juice. Đi đánh Battery Slum nhé!':'🔋 バッテリージュースが足りない。バッテリースラムへ！',
+'⛽ Hero của bạn đói quá, không nhấc nổi mông. Chờ Gas hồi nhé.':'⛽ ヒーローたちは腹ペコで動けない。ガスの回復を待とう。',
+'Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.':'今日のBOT戦5回は使い切った！ライバルたちはホッと一息。',
+'Tên cần ít nhất 2 ký tự!':'名前は2文字以上で！','😵 Server từ chối tên này — thử tên khác nhé.':'😵 サーバーに名前を拒否された——別の名前で試そう。',
+'📡 Không nối được server — kiểm tra mạng rồi thử lại.':'📡 サーバーに繋がらない——回線を確認して再試行。',
+},
+rx:[
+[/^⚔️ Vòng (\d+)$/,'⚔️ ラウンド$1'],
+[/^⚔️ Đánh — (\d+) ⛽$/,'⚔️ 出撃 — $1 ⛽'],
+[/^⚡ Sức mạnh ([\d.,]+) \(bạn: ([\d.,]+)\)$/,'⚡ 戦力 $1（あなた：$2）'],
+[/^⚡([\d.,]+) · (\d+)T\/(\d+)B$/,'⚡$1 · $2勝/$3敗'],
+[/^Thắng: \+(\d+) điểm · 🪙 ([\d–]+) · Thua: (-?\d+) điểm$/,'勝利：+$1pt · 🪙 $2 · 敗北：$3pt'],
+[/^⛽ Cần (\d+) gas cho (\d+) lượt \(đang có (\d+)\)\.$/,'⛽ $2回には$1ガス必要（所持：$3）。'],
+[/^🔒 Trần Lv (\d+) \(cấp tài khoản (\d+) \+ 4\)\. Đánh thêm để lên cấp tài khoản đã!$/,'🔒 レベル上限$1（アカウントLv$2+4）。バトルしてアカウントLvを上げよう！'],
+[/^⏳ Vừa đánh người này xong.*$/,'⏳ このプレイヤーとは戦ったばかり——トロフィー反映は5分後。'],
+[/^⏳ Đã đánh 30 trận online.*$/,'⏳ 1時間で30戦——ひと休みしよう！'],
+[/^🧬 Breed còn (\d+)\/(\d+) lần$/,'🧬 ブリード残り：$1/$2'],
+[/^— vào 🎭 Arena đăng ký tên để lên sóng![\s\S]*màn hình\.$/,'——🎭 アリーナで名前を登録して参戦！· ⛽ 1ガス/7分（製品版ペース）· 💾 このブラウザに自動セーブ——履歴を消さないで！· 📝 フィードバック：左の丸ボタン。'],
+[/^· còn$/,'· 残り'],
+],
+},
+};
+(function applyL10N(){
+  const P=L10N[WLANG];if(!P)return;
+  // ---- overlay dữ liệu ----
+  NODES.forEach(n=>{const t=P.nodes[n.id];if(t){n.name=t[0];n.desc=t[1]}});
+  CHAPTERS.forEach((c,i)=>{const t=P.chapters[i];if(t){c.name=t[0];c.desc=t[1]}});
+  MISSIONS.forEach(m=>{if(P.missions[m.id])m.t=P.missions[m.id]});
+  Object.entries(P.unlocks).forEach(([k,t])=>{if(UNLOCK_DEFS[k]){UNLOCK_DEFS[k].label=t[0];UNLOCK_DEFS[k].hint=t[1]}});
+  P.tut.forEach((m,i)=>{if(TUT[i])TUT[i].msg=m});
+  Object.entries(P.heroes).forEach(([id,t])=>{const h=HEROES[id];if(h){h.skill.desc=t[0];h.passive=t[1]}});
+  Object.entries(P.enemies).forEach(([id,nm])=>{if(ENEMIES[id])ENEMIES[id].name=nm});
+  // ---- bộ dịch DOM: khớp chính xác theo text-node (đã trim) + regex chuỗi động + fallback dịch cụm con ----
+  const D=P.ui,RX=P.rx;
+  const DKEYS=Object.keys(D).filter(k=>k.length>6).sort((a,b)=>b.length-a.length); // cụm dài thay trước
+  const tx=t=>{
+    const k=t.trim();if(!k)return t;
+    if(D[k]!=null)return t.replace(k,D[k]);
+    for(const r of RX){if(r[0].test(k))return t.replace(k,k.replace(r[0],r[1]))}
+    let out=t,hit=false;
+    for(const k2 of DKEYS){if(out.includes(k2)){out=out.split(k2).join(D[k2]);hit=true}}
+    return hit?out:t;
+  };
+  const walk=root=>{
+    const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    let n;while(n=w.nextNode()){const v=tx(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v}
+  };
+  new MutationObserver(ms=>{
+    for(const m of ms){
+      if(m.type==='characterData'){const v=tx(m.target.nodeValue);if(v!==m.target.nodeValue)m.target.nodeValue=v}
+      if(m.addedNodes)m.addedNodes.forEach(nd=>{
+        if(nd.nodeType===3){const v=tx(nd.nodeValue);if(v!==nd.nodeValue)nd.nodeValue=v}
+        else if(nd.nodeType===1)walk(nd);
+      });
+    }
+  }).observe(document.body,{childList:true,subtree:true,characterData:true});
+  walk(document.body);
+})();
 
 /* ================= ONLINE — BXH live + PvP thật ================= */
 // Server playtest: Vultr Singapore, API tự viết (Node, không deps). Cúp do SERVER tính (Elo) — client chỉ báo thắng/thua.
