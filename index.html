@@ -2497,6 +2497,7 @@ const S={
   tower:{floor:1,best:0},seasonStart:Date.now(),
   seasonNo:1,seasonStats:{wins:0,loss:0,bossDay:null,claimed:false},trophies:[],
   arena:{pts:1000,wins:0,loss:0},
+  net:null, // tài khoản online: {id,secret,name,tro} — đăng ký qua Đấu Trường Online
   pendingSeasonWin:false,tut:0,sfx:true,
   daily:{pve:0,upg:0,can:0,boss:0,craft:0,dgn:false,shop:{},arena:0,trash:0,claimed:{},bonus:false},
 };
@@ -3276,7 +3277,20 @@ function openArena(){
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>🎭 MEME ARENA</h3>
-    <p class="sub">PvP kiểu lịch sự: đánh BẢN SAO đội người khác — không ai phải thức canh điện thoại. Điểm: <b style="color:var(--yellow)">${S.arena.pts}</b> · Hạng: <b>${arenaRank(S.arena.pts)}</b> · Hôm nay còn <b>${left}/5</b> lượt (miễn phí gas!)</p>
+    <p class="sub">PvP kiểu lịch sự: đánh BẢN SAO đội người khác — không ai phải thức canh điện thoại.</p>
+    <div class="panel" style="margin:10px 0;border-color:var(--cyan)">
+      <b style="color:var(--cyan)">🌐 ĐẤU TRƯỜNG ONLINE</b>
+      ${S.net?`
+      <p class="sub" style="margin:4px 0 6px">Bạn là <b>${S.net.name}</b> · 🏆 <b style="color:var(--yellow)">${S.net.tro!=null?S.net.tro:1000}</b> cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!</p>
+      <div id="net-opps" style="margin:6px 0"><p class="sub">📡 Đang dò sóng tìm đối thủ…</p></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn sm cy" style="flex:1" onclick="openNetBoard()">🌍 BXH Online</button>
+        <button class="btn sm gh" onclick="netLoadOpps()">🔄 Đổi đối thủ</button>
+      </div>`:`
+      <p class="sub" style="margin:4px 0 6px">Đặt tên là lên sóng: BXH toàn cầu trực tiếp + đánh đội hình THẬT của người chơi khác. Không tốn gas, không giới hạn lượt.</p>
+      <button class="btn cy" style="width:100%" onclick="openNetJoin()">🚀 Tham gia BXH Online</button>`}
+    </div>
+    <p style="margin:8px 0 0;font-size:12px;color:var(--muted)"><b>🤖 LUYỆN TẬP VỚI BOT</b> — Điểm: <b style="color:var(--yellow)">${S.arena.pts}</b> · ${arenaRank(S.arena.pts)} · còn <b>${left}/5</b> lượt hôm nay (miễn phí gas)</p>
     ${rvs.map((rv,i)=>{const t=ARENA_TIERS[i];return`
     <div class="panel" style="margin:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <div style="flex:1;min-width:170px"><b>${rv.name}</b> <span class="tag" style="background:${i===0?'var(--green)':i===1?'var(--orange)':'var(--red)'}">${t.lab}</span>
@@ -3288,6 +3302,7 @@ function openArena(){
       </div></div>`}).join('')}
     <button class="btn cy" style="width:100%" onclick="openArenaBoard()">🏅 Bảng xếp hạng Arena</button>`;
   openModal('hd-bg');
+  if(S.net)netLoadOpps();
 }
 function openArenaBoard(){
   const offs=[{o:380,q:'Đồn là chưa thua bao giờ. Đồn thôi.'},{o:240,q:'Đội hình 5 Roomba. Đừng hỏi.'},{o:120,q:'Đang nghỉ phép nhưng vẫn leo hạng.'},{o:55,q:'Vừa vượt mặt bạn tối qua.'},
@@ -3627,13 +3642,15 @@ function buildUnits(node){
   if(node.rival){ // ⚔️ MEME ARENA: phe địch là ĐỘI HERO snapshot
     const rs=enemySlots(node.rival);
     node.rival.forEach((rv,i)=>{
-      const h=HEROES[rv.heroId],mu=rv.mult;
+      const h=HEROES[rv.heroId],mu=rv.mult,ab=rv.abs; // ab: chỉ số THẬT từ snapshot đội người chơi online
+      const hp=ab?ab.hp:Math.round(h.base.hp*mu),atk=ab?ab.atk:Math.round(h.base.atk*mu),
+            df=ab?ab.def:Math.round(h.base.def*mu),sp=ab?(ab.spd||h.base.spd):h.base.spd,
+            sm=ab?Math.max(1,ab.sm||1):Math.max(1,1+(mu-1)*0.4);
       units.push({key:'rv'+i,name:h.name,art:rv.heroId,side:'en',hero:h,
-        hp:Math.round(h.base.hp*mu),maxhp:Math.round(h.base.hp*mu),
-        atk:Math.round(h.base.atk*mu),def:Math.round(h.base.def*mu),
-        spd:h.base.spd,skillMult:Math.max(1,1+(mu-1)*0.4),
+        hp,maxhp:hp,atk,def:df,
+        spd:sp,skillMult:sm,
         energy:h.cls==='support'?40:0,
-        shield:0,regen:0,slow:0,taunt:0,stun:0,stealth:0,dots:[],buffs:[],statDmg:0,statHeal:0,alive:true,front:i<2,
+        shield:0,regen:0,slow:0,taunt:0,stun:0,stealth:0,dots:[],buffs:[],statDmg:0,statHeal:0,alive:true,front:ab?!!ab.fr:i<2,
         x:rs[i].x,y:rs[i].y,boss:false,
         ranged:RANGED_IDS.includes(rv.heroId)});
     });
@@ -3678,7 +3695,7 @@ function startBattle(nodeId){
   const team=teamIds();
   if(!team.length)return toast('Đội hình trống! Vào tab 🦸 Heroes thêm người đã.');
   if(node.dungeon&&S.daily.dgn)return toast('Hầm hôm nay đã xong! Quay lại sau nửa đêm — ca mới, hầm mới.');
-  if(node.arena){if((S.daily.arena||0)>=5)return toast('Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.');S.daily.arena=(S.daily.arena||0)+1}
+  if(node.arena&&!node.pvpOid){if((S.daily.arena||0)>=5)return toast('Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.');S.daily.arena=(S.daily.arena||0)+1}
   const L=teamLegal(node);if(!L.ok)return toast(L.msg);
   if(S.gas<node.gas)return toast('⛽ Hero của bạn đói quá, không nhấc nổi mông. Chờ Gas hồi nhé.');
   feat(node.arena?'arena':node.dungeon?'dgn':node.tower?'tower':'battle');
@@ -4525,8 +4542,9 @@ function grantRewards(node,win,pandaAlive,T){
     tutAdvance(1); // tutorial: thắng trận đầu tiên
     if(node.id==='seasonboss'&&!S.seasonStats.bossDay){ // lần đầu hạ trùm mùa này!
       S.seasonStats.bossDay=seasonDay();S.pendingSeasonWin=true}
-    if(node.arena){S.arena.pts+=node.ptsW;S.arena.wins++;
-      T.arenaTxt=`🏅 +${node.ptsW} điểm Arena (${S.arena.pts})`}
+    if(node.arena){if(node.pvpOid){netPvpReport(node.pvpOid,true);T.arenaTxt='🌐 Trận xếp hạng online — chờ cúp về…'}
+      else{S.arena.pts+=node.ptsW;S.arena.wins++;
+      T.arenaTxt=`🏅 +${node.ptsW} điểm Arena (${S.arena.pts})`}}
     else if(node.dungeon)S.daily.dgn=true;
     else S.beaten[node.id]=true; // mở khóa chain theo node
     if(node.boss)S.daily.boss++;
@@ -4541,11 +4559,13 @@ function grantRewards(node,win,pandaAlive,T){
     if(pandaAlive&&Math.random()<0.5){const v=rnd(5,15);S.tape+=v;T.pandaTape+=v}
     const xp=r.xp||30;addXp(xp);T.xp+=xp;
     checkUnlocks(); // tiến độ mới → có thể mở khóa tính năng
+    if(S.net)netSync(); // hồ sơ online: đội vừa mạnh lên / tiến độ mới
   }else{
     T.loss++;S.seasonStats.loss++;
     if(S.tele)S.tele.loss++;
-    if(node.arena){S.arena.pts=Math.max(0,S.arena.pts+node.ptsL);S.arena.loss++;
-      T.arenaTxt=`🏅 ${node.ptsL} điểm Arena (${S.arena.pts})`};
+    if(node.arena){if(node.pvpOid){netPvpReport(node.pvpOid,false);T.arenaTxt='🌐 Trận xếp hạng online — chờ cúp về…'}
+      else{S.arena.pts=Math.max(0,S.arena.pts+node.ptsL);S.arena.loss++;
+      T.arenaTxt=`🏅 ${node.ptsL} điểm Arena (${S.arena.pts})`}};
     const v=rnd(50,120);S.junk+=v;T.junk+=v;
     addXp(10);T.xp+=10;
   }
@@ -4644,7 +4664,7 @@ function quickBattle(nodeId,n){
   if(!teamIds().length)return toast('Đội hình trống! Vào tab 🦸 Heroes thêm người đã.');
   const node=typeof nodeId==='object'?nodeId:NODES.find(x=>x.id===nodeId);
   if(node.dungeon&&S.daily.dgn)return toast('Hầm hôm nay đã xong! Quay lại sau nửa đêm — ca mới, hầm mới.');
-  if(node.arena){if((S.daily.arena||0)>=5)return toast('Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.');S.daily.arena=(S.daily.arena||0)+1}
+  if(node.arena&&!node.pvpOid){if((S.daily.arena||0)>=5)return toast('Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.');S.daily.arena=(S.daily.arena||0)+1}
   const L=teamLegal(node);if(!L.ok)return toast(L.msg);
   const cost=node.gas*n;
   if(S.gas<cost)return toast(`⛽ Cần ${cost} gas cho ${n} lượt (đang có ${Math.floor(S.gas)}).`);
@@ -5375,6 +5395,128 @@ function copyExport(){
   catch(e){document.execCommand('copy');toast('📋 Đã copy!')}
 }
 
+/* ================= ONLINE — BXH live + PvP thật ================= */
+// Server playtest: Vultr Singapore, API tự viết (Node, không deps). Cúp do SERVER tính (Elo) — client chỉ báo thắng/thua.
+const NET_URL='https://139-180-139-201.sslip.io';
+let netBusy=false,netSyncTimer=null,NET_OPPS=[];
+async function netApi(path,body){
+  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),8000);
+  try{
+    const r=await fetch(NET_URL+path,body?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:ctl.signal}:{signal:ctl.signal});
+    return await r.json();
+  }finally{clearTimeout(to)}
+}
+function defSnapshot(){ // đội hình hiện tại → snapshot chỉ số thật (đội thủ của mình trên server)
+  const ids=teamIds();if(!ids.length)return null;
+  return ids.slice(0,5).map(uid=>{const inst=instById(uid),st=heroStats(uid);
+    return{h:inst.heroId,hp:st.hp,atk:st.atk,def:st.def,spd:st.spd,sm:Math.round(st.skillMult*100)/100,fr:S.team.front.includes(uid)?1:0}});
+}
+function teamPowerScore(){
+  return Math.round(teamIds().reduce((a,uid)=>{const st=heroStats(uid);return a+st.atk+st.def+st.hp/8+st.spd},0));
+}
+function netSync(now){ // đẩy hồ sơ (sức mạnh + đội thủ) lên server — debounce, lỗi mạng thì im lặng
+  if(!S.net)return;
+  clearTimeout(netSyncTimer);
+  netSyncTimer=setTimeout(async()=>{
+    try{const r=await netApi('/api/sync',{id:S.net.id,secret:S.net.secret,
+      power:teamPowerScore(),chapter:Object.keys(S.beaten).length,def:defSnapshot()});
+      if(r&&r.ok&&r.trophies!=null){S.net.tro=r.trophies;scheduleSave()}
+    }catch(e){}
+  },now?50:3000);
+}
+function openNetJoin(){
+  $('hd-modal').innerHTML=`
+    <button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <h3>🌐 THAM GIA BXH ONLINE</h3>
+    <p class="sub">Chọn tên hiển thị (2–14 ký tự). Tên sẽ nằm trên bảng xếp hạng TOÀN CẦU — chọn tên ngầu vào.</p>
+    <input id="net-name" maxlength="14" placeholder="VD: TrùmBãiRác" style="width:100%;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--bg3);color:var(--text);font-family:inherit;font-size:15px;margin:8px 0">
+    <button class="btn cy" style="width:100%" onclick="netRegister()">🚀 Lên sóng!</button>
+    <p class="demonote" style="margin-top:8px">Server chỉ lưu tên + chỉ số đội hình — KHÔNG có thông tin cá nhân. Dữ liệu có thể reset sau đợt playtest.</p>`;
+  openModal('hd-bg');
+  setTimeout(()=>{const i=$('net-name');if(i)i.focus()},60);
+}
+async function netRegister(){
+  const name=($('net-name')&&$('net-name').value||'').trim();
+  if(name.length<2)return toast('Tên cần ít nhất 2 ký tự!');
+  if(netBusy)return;netBusy=true;
+  try{
+    const r=await netApi('/api/register',{name});
+    if(r&&r.id){S.net={id:r.id,secret:r.secret,name:r.name,tro:r.trophies};
+      scheduleSave();netSync(true);
+      toast(`🌐 Chào mừng <b>${r.name}</b> lên sóng toàn cầu!`);
+      openArena();}
+    else toast('😵 Server từ chối tên này — thử tên khác nhé.');
+  }catch(e){toast('📡 Không nối được server — kiểm tra mạng rồi thử lại.')}
+  netBusy=false;
+}
+async function netLoadOpps(){
+  const el=$('net-opps');if(!el||!S.net)return;
+  el.innerHTML='<p class="sub">📡 Đang dò sóng tìm đối thủ…</p>';
+  try{
+    const r=await netApi('/api/opponents?id='+S.net.id);
+    NET_OPPS=(r&&r.opps)||[];
+    if(!NET_OPPS.length){el.innerHTML='<p class="sub">🌵 Chưa có ai khác upload đội hình — rủ bạn bè vào chơi rồi quay lại nhé!</p>';return}
+    el.innerHTML=NET_OPPS.map((o,i)=>`
+      <div class="panel" style="margin:6px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px"><b>${o.name}</b> <span style="color:var(--yellow)">🏆 ${o.trophies}</span>
+          <div style="display:flex;gap:2px;margin-top:4px">${(o.def||[]).map(d=>ART[d.h]?`<span class="spr" style="width:28px;height:34px;transform:scaleX(-1)">${ART[d.h]}</span>`:'').join('')}</div>
+          <div style="font-size:11.5px;color:var(--muted)">⚡ Sức mạnh ${fmt(o.power)} (bạn: ${fmt(teamPowerScore())})</div></div>
+        <div style="display:flex;gap:6px;flex-direction:column">
+          <button class="btn sm or" onclick="startNetFight(${i},0)" ${S.busy?'disabled':''}>⚔️ Đánh</button>
+          <button class="btn sm gh" onclick="startNetFight(${i},1)" ${S.busy?'disabled':''}>⏭ Nhanh</button>
+        </div></div>`).join('');
+  }catch(e){el.innerHTML='<p class="sub">📡 Mất sóng server — bấm 🔄 thử lại.</p>'}
+}
+function pvpNode(o){
+  return{id:'pvplive',arena:true,pvpOid:o.oid,name:'🌐 '+o.name,gas:0,boss:false,
+    rival:(o.def||[]).filter(d=>d&&HEROES[d.h]).slice(0,5).map(d=>({heroId:d.h,abs:d})),
+    ptsW:0,ptsL:0,rw:{junk:[300,500],xp:60},rwTxt:''};
+}
+function startNetFight(i,quick){
+  const o=NET_OPPS[i];if(!o)return;
+  const node=pvpNode(o);
+  if(!node.rival.length)return toast('Dữ liệu đội thủ của đối thủ bị lỗi — chọn người khác nhé.');
+  closeModal('hd-bg');
+  if(quick)quickBattle(node,1);else startBattle(node);
+}
+async function netPvpReport(oid,win){
+  if(!S.net)return;
+  try{
+    const r=await netApi('/api/pvp',{id:S.net.id,secret:S.net.secret,oid,win:!!win});
+    if(r&&r.ok){S.net.tro=r.trophies;scheduleSave();
+      setTimeout(()=>toast(`🏆 ${r.delta>=0?'+':''}${r.delta} cúp online → <b>${r.trophies}</b>`),700)}
+    else if(r&&r.err==='cooldown_opp')setTimeout(()=>toast('⏳ Vừa đánh người này xong — chờ 5 phút mới được tính cúp trận mới.'),700);
+    else if(r&&r.err==='cooldown_hour')setTimeout(()=>toast('⏳ Đã đánh 30 trận online trong 1 giờ — nghỉ tay chút nhé!'),700);
+  }catch(e){}
+  netSync();
+}
+async function openNetBoard(){
+  $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <h3>🌍 BXH ONLINE — TOÀN CẦU</h3>
+    <p class="sub" id="net-bd">📡 Đang tải bảng xếp hạng…</p><div id="net-rows"></div>
+    <button class="btn" style="width:100%;margin-top:10px" onclick="openArena()">← Về Arena</button>`;
+  openModal('hd-bg');
+  try{
+    const r=await netApi('/api/leaderboard'+(S.net?'?id='+S.net.id:''));
+    if(!r||!r.top)throw 0;
+    if(S.net&&r.me){S.net.tro=r.me.trophies;scheduleSave()}
+    $('net-bd').innerHTML=`<b>${r.total}</b> người chơi toàn cầu${S.net&&r.me?` · bạn đứng hạng <b style="color:var(--yellow)">#${r.me.rank}</b>`:''} — số liệu trực tiếp từ server.`;
+    $('net-rows').innerHTML=r.top.map(x=>{
+      const me=S.net&&r.me&&x.rank===r.me.rank&&x.name===r.me.name;
+      const md=x.rank===1?'🥇':x.rank===2?'🥈':x.rank===3?'🥉':'#'+x.rank;
+      return`<div class="statline" style="${me?'background:#1b2440;border-radius:10px;padding:6px 8px':''}">
+      <span class="v" style="min-width:38px;text-align:left">${md}</span>
+      <span class="nm2">${me?'🌟 ':''}${x.name}</span>
+      <span style="font-size:11px;color:var(--muted);flex:1">⚡${fmt(x.power)} · ${x.wins}T/${x.losses}B</span>
+      <span class="v" style="color:var(--yellow)">🏆 ${x.trophies}</span></div>`}).join('')
+      +(S.net&&r.me&&r.me.rank>50?`<div class="statline" style="background:#1b2440;border-radius:10px;padding:6px 8px;margin-top:6px">
+      <span class="v" style="min-width:38px;text-align:left">#${r.me.rank}</span><span class="nm2">🌟 ${r.me.name}</span>
+      <span style="flex:1"></span><span class="v" style="color:var(--yellow)">🏆 ${r.me.trophies}</span></div>`:'');
+  }catch(e){$('net-bd').textContent='📡 Mất sóng server — thử lại sau nhé.'}
+}
+// sau mỗi đợt chơi đội mạnh lên → tự đẩy hồ sơ mới lên server (nhẹ, debounce, im lặng khi offline)
+window.addEventListener('load',()=>setTimeout(()=>{if(S.net)netSync(true)},2500));
+
 /* ================= SAVE / LOAD (localStorage) ================= */
 const SAVE_KEY='wackos_save_v1';
 let saveTimer=null,WIPING=false;
@@ -5386,7 +5528,7 @@ function saveGame(){
       plv:S.plv,xp:S.xp,roster:S.roster,nextUid:S.nextUid,
       pieces:S.pieces,boxes:S.boxes,nextBoxUid:S.nextBoxUid,unlocked:S.unlocked,
       team:S.team,inv:S.inv,beaten:S.beaten,daily:S.daily,
-      tower:S.tower,seasonStart:S.seasonStart,seasonNo:S.seasonNo,seasonStats:S.seasonStats,trophies:S.trophies,arena:S.arena,tut:S.tut,sfx:S.sfx,tele:S.tele}));
+      tower:S.tower,seasonStart:S.seasonStart,seasonNo:S.seasonNo,seasonStats:S.seasonStats,trophies:S.trophies,arena:S.arena,net:S.net,tut:S.tut,sfx:S.sfx,tele:S.tele}));
   }catch(e){/* private mode v.v. — bỏ qua, game vẫn chạy in-memory */}
 }
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveGame,800)}
@@ -5417,6 +5559,7 @@ function loadGame(){
     S.seasonStats=d.seasonStats||{wins:0,loss:0,bossDay:S.beaten&&S.beaten.seasonboss?14:null,claimed:false};
     S.trophies=d.trophies||[];
     S.arena=d.arena||{pts:1000,wins:0,loss:0};
+    S.net=d.net||null;
     S.tut=d.tut!=null?d.tut:99; // save cũ (trước khi có tutorial): coi như đã học xong
     S.sfx=d.sfx!=null?d.sfx:true;
     S.tele=d.tele||null; // teleInit ở init sẽ backfill nếu thiếu
