@@ -3375,7 +3375,7 @@ function closeModal(id){$(id).classList.remove('open');
   }}
 function openModal(id){$(id).classList.add('open')}
 const spd=()=>S.speed; // animation time divider
-const TICK_BASE=780; // thời gian cơ bản mỗi lượt (ms) — hạ từ 1050 cho trận mượt hơn; x2 mặc định → 390ms/lượt
+const TICK_BASE=600; // thời gian cơ bản mỗi lượt (ms) — hạ 780→600 cho trận đỡ lê thê (~23% nhanh hơn); x2 mặc định → 300ms/lượt, x4 → 150ms (vẫn ≥ lunge 130ms). Chỉ ảnh hưởng tốc độ phát, KHÔNG đụng winrate (sim không dùng TICK_BASE)
 
 /* ================= ÂM THANH (WebAudio synth — không cần file, offline OK) ================= */
 let AC=null;
@@ -4522,7 +4522,7 @@ function openTowerSheet(){
 ================================================================ */
 let B=null;
 function toggleSpeed(){S.speed=S.speed===1?2:S.speed===2?4:1;$('speedbtn').textContent='▶ x'+S.speed;if(B)restartTimer()}
-function restartTimer(){if(!B||B.over)return;clearInterval(B.timer);B.timer=setInterval(tick,TICK_BASE/spd())}
+function restartTimer(){if(!B||B.over)return;clearInterval(B.timer);B.timer=setInterval(tick,Math.max(110,TICK_BASE/spd()/(B._drag||1)))} // _drag: tự tăng tốc khi trận kéo dài (clamp 110ms để x4 còn xem được)
 
 /* Đội hình SO LE CHÉO kiểu 2.5D: trong cột, unit càng gần (y lớn) càng nhô ngang ra —
    kết hợp z-index theo độ sâu nên phần chồng nhau đọc thành phối cảnh, không phải lỗi */
@@ -5427,6 +5427,9 @@ function tick(){
     B.queue=B.units.filter(u=>u.alive).sort((a,b)=>effSpd(b)-effSpd(a));
     B.round=(B.round||0)+1;
     const rb=$('roundbadge');rb.textContent='⚔️ Vòng '+B.round;
+    // trận càng kéo dài càng tự tăng tốc (đỡ lê thê) — CHỈ tốc độ phát, KHÔNG đụng sim/winrate
+    const drag=B.round>=10?Math.min(2.5,1+(B.round-10)*0.12):1;
+    if(drag!==(B._drag||1)){B._drag=drag;restartTimer()}
     const bossAlive=B.units.some(u=>u.alive&&u.boss);
     rb.classList.toggle('warn',bossAlive&&B.round>=9);
     if(bossAlive&&B.round===9&&!B.enrageWarned){B.enrageWarned=true;SFX.enrage();
