@@ -702,9 +702,10 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .coach{z-index:92}
 .coach.ctop{bottom:auto;top:74px}
 .coach .ce-next{flex:none;font-size:11px;color:var(--bg);background:var(--yellow);border-radius:99px;padding:3px 8px;font-weight:900;align-self:center;white-space:nowrap}
-.pickcell{display:flex;flex-direction:column;gap:6px}
-.pickcell .hcard{margin:0}
-.pickjoin{width:100%}
+.pickcell{display:flex;flex-direction:column;gap:6px;height:100%}
+.pickcell .hcard{margin:0;flex:1} /* thẻ giãn bằng nhau theo hàng → nút thẳng đáy */
+.pickjoin{width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:4px;
+  line-height:1.12;white-space:normal;text-align:center;flex-wrap:wrap} /* cùng chiều cao dù 1 hay 2 dòng */
 /* 💞 GIƯỜNG breed — khung gỗ + nệm + chăn tím + gối trắng */
 .bed{position:relative;display:flex;align-items:flex-start;justify-content:center;gap:20px;
   padding:18px 22px 32px;margin:10px 0;border-radius:16px;
