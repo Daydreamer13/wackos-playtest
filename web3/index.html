@@ -718,6 +718,9 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .coach{z-index:92}
 .coach.ctop{bottom:auto;top:74px}
 .coach .ce-next{flex:none;font-size:11px;color:var(--bg);background:var(--yellow);border-radius:99px;padding:3px 8px;font-weight:900;align-self:center;white-space:nowrap}
+.pickcell{display:flex;flex-direction:column;gap:6px}
+.pickcell .hcard{margin:0}
+.pickjoin{width:100%}
 
 @media (max-width:560px){
   .arena{height:375px}
@@ -3924,13 +3927,14 @@ function openPicker(row,idx){
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>${row==='front'?'🛡️ Tuyến trước':'🎯 Tuyến sau'} — ô ${idx+1}</h3>
     <p class="sub" style="margin-top:4px">${curInst
-      ?`Đang đứng: <b>${HEROES[curInst.heroId].name}</b> (${RNAME[curInst.rarity]} Lv${curInst.lvl}). Bấm hero khác để THAY — hero đang trong đội thì HOÁN ĐỔI chỗ.`
-      :`Bấm hero để xếp vào ô này. ${row==='front'?'Tuyến trước hứng đòn — Tank đứng đây cho khỏe.':'Tuyến sau an toàn — DPS/Support/Controller núp đây.'}`}</p>
+      ?`Đang đứng: <b>${HEROES[curInst.heroId].name}</b> (${RNAME[curInst.rarity]} Lv${curInst.lvl}). Bấm thẻ để XEM & nâng cấp · bấm <b>➕ Vào đội</b> để xếp vào ô.`
+      :`Bấm thẻ để XEM & nâng cấp hero · bấm <b>➕ Vào đội</b> để xếp vào ô. ${row==='front'?'Tuyến trước hứng đòn — Tank đứng đây cho khỏe.':'Tuyến sau an toàn — DPS/Support/Controller núp đây.'}`}</p>
     ${curInst?`<div style="display:flex;gap:8px;margin:4px 0 10px;flex-wrap:wrap">
-      <button class="btn sm cy" onclick="closeModal('hd-bg');openHero(${cur})">📋 Hồ sơ</button>
       <button class="btn sm gh" onclick="clearSlot()">➖ Bỏ trống ô này</button></div>`:''}
     ${list.length?`<div class="hgrid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">${
-      list.map(inst=>instCard(inst,`pickHero(${inst.uid})`)).join('')}</div>`
+      list.map(inst=>{const it=teamIds().includes(inst.uid);
+        return `<div class="pickcell">${instCard(inst,`openHero(${inst.uid})`)}
+          <button class="btn sm ${it?'pu':'cy'} pickjoin" onclick="event.stopPropagation();pickHero(${inst.uid})">${it?'🔄 Đổi vào ô này':'➕ Vào đội'}</button></div>`}).join('')}</div>`
       :'<div class="citem"><h4>Chưa có hero nào khác</h4><p>Săn 🧩 mảnh từ Mystery Cans hoặc 💞 Breed thêm!</p></div>'}`;
   openModal('hd-bg');
 }
@@ -6212,16 +6216,22 @@ function openBox(uid){
       b.picks=picks;scheduleSave();
     }
     const picks=b.picks;
+    const rm=RSTAT[b.rar]||1; // xem trước chỉ số ở bậc của hộp (Lv1)
     $('hd-modal').innerHTML=`
       <button class="close" onclick="closeModal('hd-bg')">✕</button>
       <h3>📦 Hộp bật nắp... 3 ứng viên nhảy ra!</h3>
-      <p class="sub" style="margin-top:4px">Chọn MỘT người gia nhập (bậc ${RNAME[b.rar]}). Hai người còn lại chui về hộp.</p>
-      <div class="hgrid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">${picks.map(h=>`
-        <div class="hcard" onclick="pickFromBox(${b.uid},'${h}')">
-          ${sprite(h,90)}<h4>${HEROES[h].name}</h4>
-          <span class="tag ${HEROES[h].cls}">${CLS_VI[HEROES[h].cls]}</span>
-          <div class="q">${S.roster.some(i=>i.heroId===h)?'Đã có '+S.roster.filter(i=>i.heroId===h).length+' bản':'🆕 CHƯA SỞ HỮU'}</div>
-        </div>`).join('')}</div>`;
+      <p class="sub" style="margin-top:4px">Xem CHỈ SỐ rồi chọn MỘT người (bậc ${RNAME[b.rar]}). Hai người còn lại chui về hộp.</p>
+      <div class="hgrid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${picks.map(h=>{
+        const H=HEROES[h],bs=H.base,own=S.roster.filter(i=>i.heroId===h).length;
+        return `<div class="hcard ${b.rar}">
+          ${sprite(h,84)}<h4>${H.name}</h4>
+          <span class="tag ${H.cls}">${CLS_VI[H.cls]}</span>
+          <div class="pickstats" style="font-size:11px;line-height:1.55;margin:6px 0;text-align:left;width:100%">
+            ❤️ ${fmt(Math.round(bs.hp*rm))} · ⚔️ ${fmt(Math.round(bs.atk*rm))}<br>🛡️ ${fmt(Math.round(bs.def*rm))} · ⚡ ${bs.spd}
+            <div style="color:var(--cyan);margin-top:3px">💥 ${H.skill.name}</div></div>
+          <div class="q" style="margin:2px 0 8px">${own?'Đã có '+own+' bản':'🆕 CHƯA SỞ HỮU'}</div>
+          <button class="btn sm cy" style="width:100%" onclick="pickFromBox(${b.uid},'${h}')">✓ Chọn người này</button>
+        </div>`}).join('')}</div>`;
     openModal('hd-bg');
     return;
   }
@@ -6783,6 +6793,10 @@ ui:{
 '📖 Bộ sưu tập':'📖 Collection','⚔️ Đội hình xuất trận — Tuyến trước (2): hứng đòn, Tank đứng đây':'⚔️ Battle formation — Front row (2): takes the hits, Tanks go here',
 'Tuyến sau (3) — DPS / Support / Controller núp đây':'Back row (3) — DPS / Support / Controllers hide here',
 '📋 HỒ SƠ QUÂN ĐOÀN —':'📋 LEGION PROFILE —','ĐỘI HÌNH':'IN TEAM','Mảnh Hộp Hero:':'Hero Box pieces:',
+'➕ Vào đội':'➕ Join team','🔄 Đổi vào ô này':'🔄 Swap into slot','✓ Chọn người này':'✓ Pick this one',
+'Bấm thẻ để XEM & nâng cấp · bấm':'Tap a card to VIEW & upgrade · tap','Bấm thẻ để XEM & nâng cấp hero · bấm':'Tap a card to VIEW & upgrade · tap','để xếp vào ô.':'to place into the slot.',
+'Xem CHỈ SỐ rồi chọn MỘT người (bậc':'See the STATS, then pick ONE (rarity','. Hai người còn lại chui về hộp.':'. The other two go back in the box.',
+'Đã có':'Owned','🆕 CHƯA SỞ HỮU':'🆕 NOT OWNED YET',
 'Rơi từ 🥫 lon, nhiệm vụ ngày, hầm T5, 🦫 Tiệm. Đủ 10 mảnh → ghép hộp, mở ra':'Drops from 🥫 cans, daily tasks, Thursday dungeon, the 🦫 Shop. 10 pieces → build a box, open it and',
 'chọn 1 trong 3 hero':'pick 1 of 3 heroes','📦 Tới Kệ Hộp':'📦 To the Box Shelf','bản hero':'hero copies',
 '🛡️ Tuyến trước':'🛡️ Front row','🎯 Tuyến sau':'🎯 Back row','Đang đứng:':'Currently here:','➖ Bỏ trống ô này':'➖ Empty this slot','📋 Hồ sơ':'📋 Profile',
@@ -6880,6 +6894,7 @@ ui:{
 },
 rx:[
 [/^⚔️ Vòng (\d+)$/,'⚔️ Round $1'],
+[/(— )ô (\d+)$/,'$1slot $2'],
 [/^⚔️ Đánh — (\d+) ⛽$/,'⚔️ Fight — $1 ⛽'],
 [/^⚡ Sức mạnh ([\d.,]+) \(bạn: ([\d.,]+)\)$/,'⚡ Power $1 (you: $2)'],
 [/^⚡([\d.,]+) · (\d+)T\/(\d+)B$/,'⚡$1 · $2W/$3L'],
