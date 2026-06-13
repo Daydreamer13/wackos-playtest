@@ -3570,10 +3570,24 @@ function pokeManhole(){
   setTimeout(()=>m.classList.remove('peek'),950);
 }
 /* dải LED: hết một vòng chạy chữ thì thay tin mới (không nhảy giữa chừng) */
-let newsIdx=0;
-$('ticker').addEventListener('animationiteration',()=>{
-  newsIdx=(newsIdx+1)%NEWS.length;$('ticker').innerHTML=NEWS[newsIdx];
-});
+/* xen kẽ "loa phường" do người chơi đốt $WACKO phát — mọi người đều thấy */
+let newsIdx=0,W3_SHOUTS=[],shoutTurn=0;
+function tickerNext(){
+  shoutTurn++;
+  if(W3_SHOUTS.length&&shoutTurn%3===0){ // cứ 3 tin thì chèn 1 loa phường
+    const s=W3_SHOUTS[(shoutTurn/3|0)%W3_SHOUTS.length];
+    const nm=esc(s.name||'Ai đó'),msg=esc(s.msg||'');
+    return `📢 <b style="color:var(--purple)">${nm} phát loa:</b> "${msg}" <span style="opacity:.6;font-size:11px">🔥${fmt(s.amt||0)}</span>`;
+  }
+  newsIdx=(newsIdx+1)%NEWS.length;return NEWS[newsIdx];
+}
+function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]))}
+$('ticker').addEventListener('animationiteration',()=>{$('ticker').innerHTML=tickerNext()});
+async function loadShouts(force){ // kéo loa phường toàn cầu cho bảng tin
+  try{const r=await netApi('/nft/shouts');if(r&&Array.isArray(r.shouts))W3_SHOUTS=r.shouts}catch(e){}
+}
+// bấm vào bảng tin OOPS NEWS → phát loa (đốt $WACKO)
+setTimeout(()=>{const lb=document.querySelector('.hs-ticker');if(lb){lb.style.cursor='pointer';lb.title='📢 Phát loa toàn thành phố (đốt $WACKO)';lb.addEventListener('click',()=>w3Shout())}},0);
 
 /* ---------- modal thông tin tài nguyên (bấm chip topbar) ---------- */
 const RES_INFO={
@@ -3773,7 +3787,7 @@ function openHero(uid){
       <button class="btn pu" onclick="heroBreed(${uid})">💞 Breed<small>${inst.breeds>=BREED_MAX?'hết lượt':inst.lvl<BREED_MIN_LVL?'🔒 cần Lv '+BREED_MIN_LVL:`còn ${BREED_MAX-inst.breeds}/${BREED_MAX} lần`}</small></button>
       ${inst.minted
         ?`<button class="btn gh" disabled>⛓️ NFT ✓<small>đã lên chain</small></button>`
-        :`<button class="btn gh" style="border-color:var(--purple)" onclick="w3MintHero(${uid})">⛓️ Mint NFT<small>${S.w3&&S.w3.addr?'MegaETH testnet':'nối ví trước'}</small></button>`}
+        :(W3_MINT_ENABLED?`<button class="btn gh" style="border-color:var(--purple)" onclick="w3MintHero(${uid})">⛓️ Mint NFT<small>${S.w3&&S.w3.addr?'MegaETH testnet':'nối ví trước'}</small></button>`:'')}
     </div>`;
   openModal('hd-bg');
   if(pdSlot)pdPick(uid,pdSlot); // đang mở bảng chọn đồ → giữ mở sau khi lắp/tháo
@@ -5680,6 +5694,49 @@ function shopStock(){
 function pokeBeaver(){ // chọc chú hải ly — đổi câu thoại ngẫu nhiên
   $('shop-talk').innerHTML=`<b>🦫:</b> "${SHOP_TALK[rnd(0,SHOP_TALK.length-1)]}"`;
 }
+/* ===== CHỢ ĐEN $WACKO — sink token: tiêu hao + tiện ích (mua = đốt token) ===== */
+function BLACK_MARKET(){
+  return [
+    {key:'can',e:'🥫',name:'Mystery Can ×2',wacko:300,desc:'Hai lon từ "kho riêng" của hải ly. Đốt token, đừng hỏi nguồn gốc.',give:()=>{S.cans+=2}},
+    {key:'piece',e:'🧩',name:'Mảnh Hộp ×6',wacko:200,desc:'Gom đủ 10 mảnh ghép 1 Hộp Hero.',give:()=>{S.pieces+=6}},
+    {key:'juice',e:'🔋',name:'Battery Juice ×40',wacko:200,desc:'Juice cao cấp, vắt từ pin "xịn".',give:()=>{S.juice+=40}},
+    {key:'gas',e:'⛽',name:'Đầy bình xăng',wacko:150,desc:'Đổ đầy bình ngay lập tức.',
+      pre:()=>S.gas>=S.maxGas?'Bình đã đầy rồi!':null,give:()=>{S.gas=S.maxGas}},
+    {key:'hatch',e:'🥚',name:'Nở trứng tức thì',wacko:250,desc:'Ép mọi trứng đang ấp chín ngay.',
+      pre:()=>S.boxes.some(b=>b.t==='egg')?null:'Không có trứng nào đang ấp.',give:()=>{S.boxes.forEach(b=>{if(b.t==='egg')b.ready=0})}},
+    {key:'arena',e:'🎟️',name:'+3 lượt Arena',wacko:200,desc:'Nạp thêm 3 lượt đấu trường hôm nay.',
+      pre:()=>(S.daily.arena||0)<=0?'Còn nguyên lượt arena rồi.':null,give:()=>{S.daily.arena=Math.max(0,(S.daily.arena||0)-3)}},
+    {key:'refresh',e:'🔄',name:'Làm mới hàng tiệm',wacko:250,desc:'Reset suất mua của tiệm hôm nay.',
+      pre:()=>(S.daily.shop&&Object.keys(S.daily.shop).length)?null:'Hàng tiệm còn nguyên suất.',give:()=>{S.daily.shop={}}},
+  ];
+}
+function blackSheet(key){
+  const b=BLACK_MARKET().find(x=>x.key===key);if(!b)return;
+  const blocked=b.pre&&b.pre(),ready=w3Ready();
+  $('hd-modal').innerHTML=`
+    <button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <div class="hd-top"><span style="flex-shrink:0;font-size:58px">${b.e}</span>
+      <div><h3>${b.name}</h3><div class="quote">${b.desc}</div></div></div>
+    <div class="skillbox" style="border-color:var(--purple)"><h5 style="color:var(--purple)">🔥 Giá: đốt ${fmt(b.wacko)} $WACKO</h5>
+      <p style="font-size:12px;color:var(--muted)">Mua = chuyển token tới địa chỉ chết (đốt vĩnh viễn). ${ready?'Đã nối ví — không cần ký nếu đã phê duyệt.':'Cần nối ⛓️ Ví trước.'}</p></div>
+    <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:12px">
+      ${blocked?`<button class="btn" disabled>${blocked}</button>`
+        :ready?`<button class="btn pu" onclick="buyBlack('${key}')">🔥 Đốt ${fmt(b.wacko)} $WACKO</button>`
+        :`<button class="btn cy" onclick="openWallet()">⛓️ Nối ví trước</button>`}
+    </div>`;
+  openModal('hd-bg');
+}
+async function buyBlack(key){
+  const b=BLACK_MARKET().find(x=>x.key===key);if(!b)return;
+  if(!w3Ready())return openWallet();
+  const blocked=b.pre&&b.pre();if(blocked)return toast(blocked);
+  if(w3Busy)return;
+  const ok=await w3Burn(b.wacko,'shop:'+key);
+  if(!ok)return;
+  b.give();SFX.buy&&SFX.buy();flashScreen&&flashScreen('#b36bff',.18);feat('wacko_buy');
+  toast(`🛒 Nhận <b>${b.name}</b>!`);
+  renderRes();renderCraft();closeModal('hd-bg');
+}
 function bonusTxt(b,fm){
   fm=fm||1;const p=[];const r=v=>Math.round(v*fm*100);
   if(b.atk)p.push('⚔️ +'+r(b.atk)+'% Tấn công');
@@ -5777,7 +5834,7 @@ function instanceSheet(uid){
         :!eqBy?`<button class="btn gh" onclick="salvageInstance(${uid})">♻️ Rã món này</button>`:'<button class="btn gh" disabled>🔗 Tháo ở hồ sơ hero để rã</button>'}
       ${g.minted
         ?`<button class="btn gh" disabled>⛓️ NFT ✓</button>`
-        :`<button class="btn gh" style="border-color:var(--purple)" onclick="w3MintGear(${uid})">⛓️ Mint NFT</button>`}
+        :(W3_MINT_ENABLED?`<button class="btn gh" style="border-color:var(--purple)" onclick="w3MintGear(${uid})">⛓️ Mint NFT</button>`:'')}
     </div>`;
   openModal('hd-bg');
 }
@@ -5829,6 +5886,21 @@ function renderCraft(){
       <span class="si-price" ${out?'':`onclick="buyShop('${s.key}')"`} title="${out?'Hết suất hôm nay':'🛒 Bấm để MUA ngay'}">🛒 ${fmt(s.price)}</span></div>`;
   });
   h+=`</div></div>`;
+  }
+  // kệ CHỢ ĐEN $WACKO — mua bằng token (đốt khi mua), tiện ích & tiêu hao
+  {
+    const ready=w3Ready();
+    h+=`<div class="shelf" style="background:linear-gradient(180deg,#2a1f33,#1c1526)">
+      <div class="shelf-label" style="color:var(--purple)">🔥 CHỢ ĐEN $WACKO — mua = ĐỐT token ${ready?'':'· <span style="color:var(--muted)">nối ⛓️ Ví để mở</span>'}</div>
+      <div class="shelf-row">`;
+    BLACK_MARKET().forEach(b=>{
+      const blocked=b.pre&&b.pre();
+      h+=`<div class="shitem ${blocked?'sold':''}">
+        <span class="si-click" onclick="blackSheet('${b.key}')" title="${b.name}">
+          <span class="si-e">${b.e}</span><span class="si-name">${b.name}</span></span>
+        <span class="si-price" style="background:var(--purple);color:#fff" ${(ready&&!blocked)?`onclick="buyBlack('${b.key}')"`:''} title="${blocked||(ready?'🔥 Đốt $WACKO mua ngay':'Nối ví trước')}">🔥 ${fmt(b.wacko)}</span></div>`;
+    });
+    h+=`</div></div>`;
   }
   // kệ 2–4: xưởng chế theo slot
   SLOTS.forEach(sl=>{
@@ -6501,6 +6573,34 @@ ui:{
 '⛓️ Hero đã mint NFT không tái chế được — bản đó giờ là tài sản trên chain!':'⛓️ Minted heroes can\'t be recycled — that copy is an on-chain asset now!',
 '⛓️ Có bản đã mint NFT trong lựa chọn — bản trên chain không dùng làm nguyên liệu được!':'⛓️ A minted NFT copy is selected — on-chain copies can\'t be used as material!',
 '⛓️ Đã nối ví':'⛓️ Wallet connected:','— MegaETH testnet!':'— MegaETH testnet!','📡 Đang tải…':'📡 Loading…',
+/* ---- $WACKO sink: chợ đen + phê duyệt + loa phường ---- */
+'🔥 Dùng $WACKO (đốt token)':'🔥 Spend $WACKO (burn token)',
+'✍️ Phê duyệt chi $WACKO (1 lần)':'✍️ Approve $WACKO spending (once)',
+'📢 Loa phường — phát thông điệp toàn thành phố (đốt 200)':'📢 City Loudspeaker — broadcast a message city-wide (burn 200)',
+'🚧 Tạm tắt — sẽ mở lại sau. Hiện $WACKO tập trung làm':'🚧 Temporarily off — back later. For now $WACKO is the in-game',
+'đồng tiền tiêu trong game':'spending currency','(Chợ Đen + loa phường).':'(Black Market + loudspeaker).',
+'Nối ví để dùng $WACKO mua đồ ở 🦫 Chợ Đen và phát loa toàn thành phố.':'Connect a wallet to spend $WACKO at the 🦫 Black Market and broadcast city-wide.',
+'⚠️ TESTNET — token chưa có giá trị tiền thật. Mua bằng $WACKO sẽ ĐỐT token (chuyển tới địa chỉ chết, không thu hồi).':'⚠️ TESTNET — token has no real value yet. Buying with $WACKO BURNS it (sent to a dead address, unrecoverable).',
+'✍️ Ký phê duyệt (miễn gas, chỉ 1 lần)…':'✍️ Sign approval (gasless, one time only)…',
+'⛓️ Đang ghi phê duyệt lên chain…':'⛓️ Writing approval on-chain…',
+'✅ Đã phê duyệt! Từ giờ mua bằng $WACKO KHÔNG cần ký nữa.':'✅ Approved! From now on $WACKO purchases need NO signing.',
+'✋ Cần phê duyệt chi $WACKO 1 lần trước — mở ⛓️ Ví.':'✋ Approve $WACKO spending once first — open ⛓️ Wallet.',
+'💸 Không đủ $WACKO trong ví. Claim thêm ở ⛓️ Ví!':'💸 Not enough $WACKO. Claim more in ⛓️ Wallet!',
+'💸 Không đủ $WACKO. Claim thêm ở ⛓️ Ví!':'💸 Not enough $WACKO. Claim more in ⛓️ Wallet!',
+'⛓️ Nối ví ở ⛓️ Ví trước để phát loa toàn thành phố!':'⛓️ Connect a wallet first to broadcast city-wide!',
+'🔥 Đốt $WACKO mua ngay':'🔥 Burn $WACKO to buy now','Nối ví trước':'Connect wallet first',
+'⛓️ Nối ví trước':'⛓️ Connect wallet first','Cần nối ⛓️ Ví trước.':'Connect ⛓️ Wallet first.',
+'Đã nối ví — không cần ký nếu đã phê duyệt.':'Wallet connected — no signing needed once approved.',
+'Mua = chuyển token tới địa chỉ chết (đốt vĩnh viễn).':'Buying transfers the token to a dead address (burned forever).',
+'Bình đã đầy rồi!':'Tank is already full!','Không có trứng nào đang ấp.':'No eggs are incubating.',
+'Còn nguyên lượt arena rồi.':'You still have all arena attempts.','Hàng tiệm còn nguyên suất.':'Shop stock is untouched.',
+'Mystery Can ×2':'Mystery Can ×2','Mảnh Hộp ×6':'Box Pieces ×6','Battery Juice ×40':'Battery Juice ×40',
+'Đầy bình xăng':'Full Gas Tank','Nở trứng tức thì':'Instant Egg Hatch','+3 lượt Arena':'+3 Arena Attempts','Làm mới hàng tiệm':'Refresh Shop Stock',
+'Hai lon từ "kho riêng" của hải ly. Đốt token, đừng hỏi nguồn gốc.':'Two cans from the beaver\'s "private stash". Burn token, don\'t ask.',
+'Gom đủ 10 mảnh ghép 1 Hộp Hero.':'Collect 10 pieces to build a Hero Box.',
+'Juice cao cấp, vắt từ pin "xịn".':'Premium juice, squeezed from "good" batteries.',
+'Đổ đầy bình ngay lập tức.':'Refill your gas tank instantly.','Ép mọi trứng đang ấp chín ngay.':'Force all incubating eggs to hatch now.',
+'Nạp thêm 3 lượt đấu trường hôm nay.':'Add 3 more arena attempts today.','Reset suất mua của tiệm hôm nay.':'Reset today\'s shop purchase limits.',
 '➖ Rời đội':'➖ Leave team','➕ Vào đội':'➕ Join team','về nghỉ ngơi':'take a break','xuất trận ngay':'fight right away',
 '🎭 MEME ARENA':'🎭 MEME ARENA','🌐 ĐẤU TRƯỜNG ONLINE':'🌐 ONLINE ARENA','🤖 LUYỆN TẬP VỚI BOT':'🤖 BOT PRACTICE',
 '😌 Dễ':'😌 Easy','😤 Ngang cơ':'😤 Even','😈 Khó':'😈 Hard',
@@ -6775,6 +6875,20 @@ rx:[
 [/^⛓️ Mint thất bại: (.*)$/,'⛓️ Mint failed: $1'],
 [/^🪙 Claim lỗi: (.*)$/,'🪙 Claim error: $1'],
 [/^Cần (.+) ×(\d+) trong kho chưa mint NFT \(đồ đang lắp không tính — tháo ra trước\)\.$/,'Need $1 ×$2 unminted in storage (equipped copies don\'t count — unequip first).'],
+/* ---- $WACKO sink ---- */
+[/^🔥 Đốt <b>([\d.,]+) \$WACKO<\/b> · tx (.+)$/,'🔥 Burned <b>$1 $WACKO</b> · tx $2'],
+[/^🔥 Đốt lỗi: (.*)$/,'🔥 Burn error: $1'],
+[/^🛒 Nhận <b>(.+)<\/b>!$/,'🛒 Got <b>$1</b>!'],
+[/^📢 Đã lên sóng toàn thành phố! Đốt (\d+) \$WACKO · tx (.+)$/,'📢 Live across the whole city! Burned $1 $WACKO · tx $2'],
+[/^⏳ Vừa phát loa xong — chờ ~(\d+) phút nữa\.$/,'⏳ Just broadcast — wait ~$1 more minutes.'],
+[/^📢 Phát loa lỗi: (.*)$/,'📢 Broadcast error: $1'],
+[/^✍️ Phê duyệt lỗi: (.*)$/,'✍️ Approval error: $1'],
+[/^🔥 CHỢ ĐEN \$WACKO — mua = ĐỐT token.*nối ⛓️ Ví để mở.*$/,'🔥 $WACKO BLACK MARKET — buy = BURN token · connect ⛓️ Wallet to unlock'],
+[/^🔥 CHỢ ĐEN \$WACKO — mua = ĐỐT token.*$/,'🔥 $WACKO BLACK MARKET — buy = BURN token'],
+[/^🔥 Giá: đốt ([\d.,]+) \$WACKO$/,'🔥 Price: burn $1 $WACKO'],
+[/^🔥 Đốt ([\d.,]+) \$WACKO$/,'🔥 Burn $1 $WACKO'],
+[/^⛓️ Mint NFT đang tạm tắt.*Chợ Đen!$/,'⛓️ NFT minting is temporarily off — coming back later. For now $WACKO buys gear at the 🦫 Black Market!'],
+[/^(.+) phát loa:$/,'$1 broadcasts:'],
 ],
 data(){
   // ---- ITEMS: tên VN + mô tả ----
@@ -7471,7 +7585,8 @@ function startNetFight(i,quick){
 const W3_CHAIN={chainId:'0x18c7',chainName:'MegaETH Testnet',nativeCurrency:{name:'Ether',symbol:'ETH',decimals:18},
   rpcUrls:['https://carrot.megaeth.com/rpc'],blockExplorerUrls:['https://www.megaexplorer.xyz']};
 const W3_EXPLORER='https://www.megaexplorer.xyz';
-let ethersLib=null,w3Busy=false;
+const W3_MINT_ENABLED=false; // 🚧 Mint NFT tạm TẮT theo yêu cầu — bật lại = true
+let ethersLib=null,w3Busy=false,W3_STATUS=null;
 const w3Short=a=>a?a.slice(0,6)+'…'+a.slice(-4):'';
 const w3TxLink=h=>`<a href="${W3_EXPLORER}/tx/${h}" target="_blank" style="color:var(--cyan)">${h.slice(0,10)}…</a>`;
 async function w3Ethers(){ // nạp ethers UMD từ CDN khi cần (bản web3 vốn online-only)
@@ -7516,6 +7631,7 @@ const w3HeroIdx=hid=>Object.keys(HEROES).indexOf(hid);
 const w3ItemIdx=iid=>Object.keys(ITEMS).indexOf(iid);
 const RAR_IDX={common:0,uncommon:1,rare:2,epic:3,legendary:4};
 async function w3MintHero(uid){
+  if(!W3_MINT_ENABLED)return toast('⛓️ Mint NFT đang tạm tắt — sẽ mở lại sau. Giờ token $WACKO dùng để mua đồ ở 🦫 Chợ Đen!');
   const inst=instById(uid);if(!inst||inst.minted)return;
   if(!S.net)return toast('🌐 Cần tài khoản online trước (Đấu Trường → BXH).');
   if(!S.w3||!S.w3.addr)return openWallet();
@@ -7541,6 +7657,7 @@ async function w3MintHero(uid){
   w3Busy=false;
 }
 async function w3MintGear(itemUid){
+  if(!W3_MINT_ENABLED)return toast('⛓️ Mint NFT đang tạm tắt — sẽ mở lại sau. Giờ token $WACKO dùng để mua đồ ở 🦫 Chợ Đen!');
   const g=itemById(itemUid);if(!g||g.minted)return;
   if(!S.net)return toast('🌐 Cần tài khoản online trước (Đấu Trường → BXH).');
   if(!S.w3||!S.w3.addr)return openWallet();
@@ -7579,6 +7696,62 @@ async function w3Claim(){
   w3Busy=false;
   openWallet();
 }
+/* ===== $WACKO sink: phê duyệt 1 lần (permit) → đốt token khi mua (signless) ===== */
+async function w3Approve(){ // ký permit EIP-2612 1 lần, miễn gas — cấp quyền cho server đốt hộ
+  if(!S.net||!S.w3||!S.w3.addr)return openWallet();
+  if(w3Busy)return;w3Busy=true;
+  try{
+    if(!W3_STATUS)W3_STATUS=await netApi('/nft/status',{id:S.net.id,secret:S.net.secret});
+    const st=W3_STATUS;if(!st||!st.ok)throw new Error('Server web3 chưa sẵn sàng.');
+    const signer=await w3Signer();
+    if((await signer.getAddress()).toLowerCase()!==S.w3.addr.toLowerCase())
+      throw new Error('Ví đang mở khác ví đã link.');
+    const e=await w3Ethers();
+    const tk=new e.Contract(st.contracts.token,['function nonces(address) view returns (uint256)'],signer);
+    const nonce=await tk.nonces(S.w3.addr);
+    const value=e.parseEther('1000000').toString(); // hạn mức 1.000.000 $WACKO (đốt dần, ký lại khi hết)
+    const deadline=Math.floor(Date.now()/1000)+365*86400;
+    const domain={name:'Wasteland Wacko',version:'1',chainId:6343,verifyingContract:st.contracts.token};
+    const types={Permit:[{name:'owner',type:'address'},{name:'spender',type:'address'},{name:'value',type:'uint256'},{name:'nonce',type:'uint256'},{name:'deadline',type:'uint256'}]};
+    toast('✍️ Ký phê duyệt (miễn gas, chỉ 1 lần)…');
+    const sig=await signer.signTypedData(domain,types,{owner:S.w3.addr,spender:st.signer,value,nonce,deadline});
+    toast('⛓️ Đang ghi phê duyệt lên chain…');
+    const r=await netApi('/nft/wacko-approve',{id:S.net.id,secret:S.net.secret,value,deadline,sig});
+    if(!r||!r.ok)throw new Error('Server: '+(r&&r.err||'mạng'));
+    W3_STATUS=null;
+    toast('✅ Đã phê duyệt! Từ giờ mua bằng $WACKO KHÔNG cần ký nữa.');SFX.buy&&SFX.buy();
+  }catch(e){toast('✍️ Phê duyệt lỗi: '+String(e.shortMessage||e.message||e).slice(0,130))}
+  w3Busy=false;
+}
+// đốt $WACKO (signless). Trả true nếu thành công. reason chỉ để log.
+async function w3Burn(amount,reason){
+  if(!S.net||!S.w3||!S.w3.addr){openWallet();return false}
+  try{
+    const r=await netApi('/nft/wacko-burn',{id:S.net.id,secret:S.net.secret,amount,reason:reason||''});
+    if(r&&r.ok){toast(`🔥 Đốt <b>${fmt(amount)} $WACKO</b> · tx ${w3TxLink(r.tx)}`);return true}
+    if(r&&r.err==='need_approve'){toast('✋ Cần phê duyệt chi $WACKO 1 lần trước — mở ⛓️ Ví.');openWallet();return false}
+    if(r&&r.err==='low_balance'){toast('💸 Không đủ $WACKO trong ví. Claim thêm ở ⛓️ Ví!');return false}
+    toast('🔥 Đốt lỗi: '+(r&&r.err||'mạng'));return false;
+  }catch(e){toast('🔥 Đốt lỗi mạng.');return false}
+}
+function w3Ready(){return !!(S.net&&S.w3&&S.w3.addr)} // đã đủ điều kiện dùng $WACKO chưa
+async function w3Shout(){ // loa phường: đốt $WACKO phát thông điệp chạy trên bảng tin mọi người
+  if(!w3Ready())return toast('⛓️ Nối ví ở ⛓️ Ví trước để phát loa toàn thành phố!');
+  const COST=200;
+  const msg=(prompt(`📢 LOA PHƯỜNG — phát 1 dòng chạy trên bảng tin TOÀN THÀNH PHỐ (mọi người chơi đều thấy).\nĐốt ${COST} $WACKO. Nhập nội dung (tối đa 80 ký tự):`)||'').trim();
+  if(!msg)return;
+  if(w3Busy)return;w3Busy=true;
+  try{
+    toast('📢 Đang đốt $WACKO & phát loa…');
+    const r=await netApi('/nft/wacko-shout',{id:S.net.id,secret:S.net.secret,msg,amount:COST});
+    if(r&&r.ok){toast(`📢 Đã lên sóng toàn thành phố! Đốt ${COST} $WACKO · tx ${w3TxLink(r.tx)}`);SFX.jackpot&&SFX.jackpot();loadShouts(true)}
+    else if(r&&r.err==='need_approve'){toast('✋ Cần phê duyệt chi $WACKO 1 lần trước — mở ⛓️ Ví.');openWallet()}
+    else if(r&&r.err==='cooldown')toast(`⏳ Vừa phát loa xong — chờ ~${r.wait} phút nữa.`);
+    else if(r&&r.err==='low_balance')toast('💸 Không đủ $WACKO. Claim thêm ở ⛓️ Ví!');
+    else toast('📢 Phát loa lỗi: '+(r&&r.err||'mạng'));
+  }catch(e){toast('📢 Phát loa lỗi mạng.')}
+  w3Busy=false;
+}
 async function openWallet(){
   $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>⛓️ VÍ WEB3 — MegaETH Testnet</h3><p class="sub">📡 Đang tải…</p>`;
@@ -7597,6 +7770,7 @@ async function openWallet(){
       <h3>⛓️ VÍ WEB3</h3><p class="sub">📡 Server web3 chưa bật hoặc mất mạng (${st&&st.err||'…'}). Thử lại sau nhé.</p>`;
     return;
   }
+  W3_STATUS=st;
   let balTxt='—';
   if(S.w3&&S.w3.addr){
     try{
@@ -7606,23 +7780,28 @@ async function openWallet(){
       balTxt=fmt(Math.floor(Number(e.formatEther(await tk.balanceOf(S.w3.addr)))))+' $WACKO';
     }catch(e){balTxt='(không đọc được — mạng?)'}
   }
-  const nMint=S.roster.filter(i=>i.minted).length+S.inv.filter(g=>g.minted).length;
   $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>⛓️ VÍ WEB3 — MegaETH Testnet</h3>
     ${S.w3&&S.w3.addr?`
       <div class="skillbox"><h5 style="color:var(--green)">🔗 Ví đã nối</h5>
         <p><b>${w3Short(S.w3.addr)}</b> · <a href="${W3_EXPLORER}/address/${S.w3.addr}" target="_blank" style="color:var(--cyan)">xem trên explorer</a></p>
-        <p style="margin-top:4px">💰 Số dư: <b>${balTxt}</b></p></div>
+        <p style="margin-top:4px">💰 Số dư: <b>${balTxt}</b> · 🔥 đã đốt: <b>${fmt(st.burned||0)}</b></p></div>
       <div class="skillbox" style="border-color:var(--yellow)"><h5 style="color:var(--yellow)">🪙 $WACKO tích lũy từ tiến trình</h5>
         <p>Đã tích: <b>${fmt(st.entitled)}</b> · đã nhận: <b>${fmt(st.claimed)}</b> · <b style="color:var(--green)">nhận được ngay: ${fmt(st.due)}</b></p>
         <p style="font-size:11.5px;color:var(--muted)">Tích từ: chương đã phá (+100/chương), cúp PvP trên 1000, trận thắng PvP (+10). Trần testnet 5.000.</p>
         <button class="btn or" style="width:100%;margin-top:8px" onclick="w3Claim()" ${st.due<10?'disabled':''}>🪙 Claim ${fmt(st.due)} $WACKO${st.due<10?' (cần ≥10)':''}</button></div>
-      <div class="skillbox"><h5 style="color:var(--purple)">🖼️ NFT của bạn</h5>
-        <p>Đã mint <b>${nMint}</b> NFT từ game này. Mint thêm: mở hồ sơ <b>hero</b> hoặc <b>trang bị</b> → nút ⛓️ Mint NFT.</p></div>`
-    :`<p class="sub">Nối ví để mint hero/trang bị thành NFT và nhận $WACKO theo tiến trình chơi.</p>
+      <div class="skillbox" style="border-color:var(--cyan)"><h5 style="color:var(--cyan)">🔥 Dùng $WACKO (đốt token)</h5>
+        ${st.approved
+          ?`<p style="color:var(--green)">✅ Đã phê duyệt — mua ở 🦫 <b>Chợ Đen</b> & phát 📢 loa phường KHÔNG cần ký nữa.</p>`
+          :`<p>Phê duyệt <b>1 lần</b> (ký off-chain, miễn gas) để mua bằng $WACKO mà không phải ký mỗi lần.</p>
+            <button class="btn cy" style="width:100%;margin-top:8px" onclick="w3Approve()">✍️ Phê duyệt chi $WACKO (1 lần)</button>`}
+        <button class="btn gh" style="width:100%;margin-top:8px" onclick="w3Shout()">📢 Loa phường — phát thông điệp toàn thành phố (đốt 200)</button></div>
+      <div class="skillbox" style="opacity:.7"><h5 style="color:var(--muted)">🖼️ Mint NFT</h5>
+        <p style="font-size:12.5px">🚧 Tạm tắt — sẽ mở lại sau. Hiện $WACKO tập trung làm <b>đồng tiền tiêu trong game</b> (Chợ Đen + loa phường).</p></div>`
+    :`<p class="sub">Nối ví để dùng $WACKO mua đồ ở 🦫 Chợ Đen và phát loa toàn thành phố.</p>
       <button class="btn cy" style="width:100%;margin:10px 0" onclick="w3Connect()">🦊 Nối ví (MetaMask)</button>
       <p style="font-size:12px;color:var(--muted)">Chưa có ví? Cài MetaMask, game sẽ tự thêm mạng MegaETH testnet giúp bạn.</p>`}
-    <p class="demonote">⚠️ TESTNET — token/NFT chưa có giá trị tiền thật. Hero/trang bị đã mint sẽ KHÓA tái chế/rã trong game (vì đã là tài sản trên chain).</p>`;
+    <p class="demonote">⚠️ TESTNET — token chưa có giá trị tiền thật. Mua bằng $WACKO sẽ ĐỐT token (chuyển tới địa chỉ chết, không thu hồi).</p>`;
 }
 async function netPvpReport(oid,win){
   if(!S.net)return;
@@ -7826,6 +8005,7 @@ applyStaticArt();checkUnlocks(true);renderNavLocks();
 document.addEventListener('pointerdown',()=>{if(S.sfx)ac()},{once:true}); // autoplay policy: tạo AudioContext sau cử chỉ đầu tiên
 /* telemetry playtest: đếm phiên + ngày chơi */
 teleInit();S.tele.sessions++;S.tele.days[new Date().toDateString()]=1;scheduleSave();
+loadShouts(); // kéo loa phường $WACKO vào bảng tin chạy chữ
 </script>
 </body>
 </html>
