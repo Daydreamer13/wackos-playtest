@@ -710,6 +710,14 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 @keyframes coachIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 .tut-glow{animation:tutPulse 1.25s ease-in-out infinite}
 @keyframes tutPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,210,63,.8)}55%{box-shadow:0 0 0 10px rgba(255,210,63,0)}}
+/* spotlight onboarding: làm tối toàn màn, chừa "lỗ sáng" quanh đúng nút cần bấm */
+.tut-spot{position:fixed;z-index:88;border-radius:14px;pointer-events:none;opacity:0;
+  box-shadow:0 0 0 3px var(--yellow),0 0 22px 4px rgba(255,210,63,.55),0 0 0 9999px rgba(7,9,16,.78);
+  transition:left .28s ease,top .28s ease,width .28s ease,height .28s ease,opacity .2s;animation:spotRing 1.3s ease-in-out infinite}
+@keyframes spotRing{0%,100%{box-shadow:0 0 0 3px var(--yellow),0 0 22px 4px rgba(255,210,63,.55),0 0 0 9999px rgba(7,9,16,.78)}55%{box-shadow:0 0 0 6px var(--yellow),0 0 30px 8px rgba(255,210,63,.35),0 0 0 9999px rgba(7,9,16,.78)}}
+.coach{z-index:92}
+.coach.ctop{bottom:auto;top:74px}
+.coach .ce-next{flex:none;font-size:11px;color:var(--bg);background:var(--yellow);border-radius:99px;padding:3px 8px;font-weight:900;align-self:center;white-space:nowrap}
 
 @media (max-width:560px){
   .arena{height:375px}
@@ -6327,28 +6335,58 @@ function resetDaily(){
 
 /* ================= TUTORIAL (người chơi mới) ================= */
 const TUT=[
-  {e:'👉',msg:'Mở tab <b>⚔️ Đánh</b> để bắt đầu trận đầu tiên!',sel:'#nb-battle'},
-  {e:'⚔️',msg:'Đánh <b>Junkyard District</b> (5 ⛽). Trận đấu hoàn toàn tự động — chiến thuật nằm ở xếp đội!',sel:'#tut-junkyard'},
-  {e:'🏆',msg:'Thắng rồi! Vào tab <b>🦸 Heroes</b> để nâng cấp đội bằng 🪙 vừa nhặt.',sel:'#nb-heroes'},
-  {e:'⬆️',msg:'Bấm vào một hero rồi bấm <b>⬆️ Nâng Lv</b> — mỗi level +9% chỉ số.',sel:'#hero-grid .hcard'},
-  {e:'🥫',msg:'Mở tab <b>🥫 Loot</b> — lon bí ẩn chứa 🧩 mảnh hộp hero.',sel:'#nb-loot'},
-  {e:'🧩',msg:'Bấm vào lon để mở! Gom <b>10 🧩</b> ghép Hộp Hero — mở hộp được CHỌN 1 trong 3 hero.',sel:'#thecan'},
-  {e:'✅',msg:'Cuối cùng: tab <b>✅ Việc</b> — làm nhiệm vụ ngày để nhận rương thưởng!',sel:'#nb-missions'},
+  {e:'👋',msg:'Chào lính mới! Mở tab <b>⚔️ Đánh</b> để ra trận đầu tiên.',sel:'#nb-battle',tip:'Bấm nút ⚔️ đang sáng ở thanh dưới'},
+  {e:'⚔️',msg:'Đánh <b>Junkyard</b> (5 ⚡). <b>⚡ $WACKO</b> là năng lượng — tự hồi theo thời gian, lên cấp càng nhiều. Trận tự động, chiến thuật nằm ở xếp đội!',sel:'#tut-junkyard',tip:'Bấm điểm Junkyard đang sáng trên bản đồ'},
+  {e:'🏆',msg:'Thắng rồi! Mở <b>🦸 Heroes</b> để nâng cấp đội bằng 🪙 vừa nhặt.',sel:'#nb-heroes',tip:'Bấm nút 🦸 đang sáng'},
+  {e:'⬆️',msg:'Bấm 1 hero rồi bấm <b>⬆️ Nâng Lv</b> (mỗi cấp +9% chỉ số). Mẹo: <b>Tank đứng trước</b>, DPS & healer đứng sau!',sel:'#hero-grid .hcard',tip:'Bấm hero đang sáng → nút Nâng Lv'},
+  {e:'🥫',msg:'Mở tab <b>🥫 Loot</b> — lon bí ẩn rơi 🧩 mảnh hộp hero.',sel:'#nb-loot',tip:'Bấm nút 🥫 đang sáng'},
+  {e:'🧩',msg:'Bấm lon để mở! Gom <b>10 🧩</b> = 1 Hộp Hero → mở được CHỌN 1 trong 3.',sel:'#thecan',tip:'Bấm cái lon đang sáng'},
+  {e:'✅',msg:'Cuối cùng: tab <b>✅ Việc</b> — nhiệm vụ ngày đổi rương. Quay lại <b>mỗi ngày</b> nhé!',sel:'#nb-missions',tip:'Bấm nút ✅ đang sáng'},
 ];
-let coachEl=null;
+let coachEl=null,spotEl=null,tutTimer=null,tutBlocker=null,lastTutStep=-1;
+function tutTargetEl(){const t=TUT[S.tut];return t?document.querySelector(t.sel):null}
+function positionSpot(){
+  if(!spotEl)return;const el=tutTargetEl();
+  if(!el||el.getBoundingClientRect().width===0){spotEl.style.opacity='0';return}
+  const r=el.getBoundingClientRect(),pad=7;
+  spotEl.style.opacity='1';
+  spotEl.style.left=(r.left-pad)+'px';spotEl.style.top=(r.top-pad)+'px';
+  spotEl.style.width=(r.width+pad*2)+'px';spotEl.style.height=(r.height+pad*2)+'px';
+  if(coachEl){const lowHalf=r.top>(window.innerHeight||800)*0.5;coachEl.classList.toggle('ctop',lowHalf)} // bong bóng tránh che mục tiêu
+}
+function teardownTut(){
+  [coachEl,spotEl].forEach(x=>{if(x)x.remove()});coachEl=spotEl=null;lastTutStep=-1;
+  if(tutTimer){clearInterval(tutTimer);tutTimer=null}
+  if(tutBlocker){if(document.removeEventListener)document.removeEventListener('click',tutBlocker,true);tutBlocker=null}
+  document.querySelectorAll('.tut-glow').forEach(x=>x.classList.remove('tut-glow'));
+}
 function renderTut(){
   document.querySelectorAll('.tut-glow').forEach(x=>x.classList.remove('tut-glow'));
   const introOpen=$('intro-bg')&&$('intro-bg').classList.contains('open');
-  if(S.tut>=TUT.length||S.busy||introOpen){if(coachEl){coachEl.remove();coachEl=null}return}
+  if(S.tut>=TUT.length||S.busy||introOpen){teardownTut();return}
   const t=TUT[S.tut];
   if(!coachEl){coachEl=document.createElement('div');coachEl.className='coach';document.body.appendChild(coachEl)}
   coachEl.innerHTML=`<span class="ce2">${t.e}</span><div>${t.msg}
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">Hướng dẫn ${S.tut+1}/${TUT.length}</div></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px">👆 ${t.tip} · ${WLANG==='en'?'Guide':WLANG==='zh'?'指南':WLANG==='ja'?'ガイド':'Hướng dẫn'} ${S.tut+1}/${TUT.length}</div></div>
     <button class="skip" title="Bỏ qua hướng dẫn" onclick="tutSkip()">✕</button>`;
-  const target=document.querySelector(t.sel);
-  if(target)target.classList.add('tut-glow');
+  if(!spotEl){spotEl=document.createElement('div');spotEl.className='tut-spot';document.body.appendChild(spotEl)}
+  const target=tutTargetEl();
+  if(target){
+    target.classList.add('tut-glow');
+    if(S.tut!==lastTutStep){lastTutStep=S.tut;try{target.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}}
+  }
+  setTimeout(positionSpot,60);positionSpot();
+  if(!tutTimer)tutTimer=setInterval(positionSpot,220); // bám theo mục tiêu khi layout đổi
+  if(!tutBlocker){ // FUNNEL: chặn click ngoài mục tiêu/modal/bong bóng → "phải bấm đúng mới qua"
+    tutBlocker=(e)=>{if(S.tut>=TUT.length)return;const tgt=tutTargetEl();
+      const ok=(tgt&&tgt.contains(e.target))||e.target.closest('.coach')||e.target.closest('.modal-bg')||e.target.closest('.intro');
+      if(!ok){e.stopPropagation();e.preventDefault();
+        if(coachEl){coachEl.animate?coachEl.animate([{transform:coachEl.classList.contains('ctop')?'translateX(-50%) scale(1)':'translateX(-50%) scale(1)'},{transform:'translateX(-50%) scale(1.05)'},{transform:'translateX(-50%) scale(1)'}],{duration:240}):0}
+      }};
+    document.addEventListener('click',tutBlocker,true);
+  }
 }
-function tutSkip(){S.tut=99;renderTut();toast('Đã tắt hướng dẫn. Chúc quẩy vui! 🛢️');scheduleSave()}
+function tutSkip(){S.tut=99;teardownTut();toast('Đã tắt hướng dẫn. Chúc quẩy vui! 🛢️');scheduleSave()}
 function tutAdvance(step){
   if(S.tut!==step)return;
   S.tut++;
@@ -6472,13 +6510,14 @@ craft:['🩹 Duct Tape Workshop','Clear Battery Slum to unlock'],shop:['🦫 Bea
 arena:['🎭 Meme Arena','Clear Snack Town to unlock'],lab:['🧬 The Lab (Breed)','Defeat the Chapter 1 Boss to unlock'],
 dgn:['🕳️ Daily Dungeon','Defeat the Chapter 1 Boss to unlock'],tower:['🗼 Chaos Tower','Clear the first Chapter 2 node to unlock'],
 enhance:['⬆️ Enhance','Clear the first Chapter 2 node to unlock'],recycle:['♻️ Recycler','Defeat the Chapter 2 Boss to unlock']},
-tut:['Open the <b>⚔️ Battle</b> tab to start your first fight!',
-'Attack <b>Junkyard District</b> (5 ⛽). Battles are fully automatic — strategy lives in your team setup!',
-'Victory! Open the <b>🦸 Heroes</b> tab and upgrade your crew with the 🪙 you just looted.',
-'Tap a hero, then tap <b>⬆️ Level Up</b> — each level gives +9% stats.',
-'Open the <b>🥫 Loot</b> tab — mystery cans hold 🧩 hero-box pieces.',
-'Tap the can to open it! Collect <b>10 🧩</b> to build a Hero Box — open it and PICK 1 of 3 heroes.',
-'Finally: the <b>✅ Tasks</b> tab — finish daily tasks for reward chests!'],
+tut:['Welcome, rookie! Open the <b>⚔️ Battle</b> tab for your first fight.',
+'Attack <b>Junkyard</b> (5 ⚡). <b>⚡ $WACKO</b> is your energy — it refills over time, faster as you level up. Battles are auto; strategy is your team setup!',
+'Victory! Open <b>🦸 Heroes</b> and upgrade your crew with the 🪙 you just looted.',
+'Tap a hero, then <b>⬆️ Level Up</b> (+9% stats each). Tip: <b>Tanks in front</b>, DPS & healers in back!',
+'Open the <b>🥫 Loot</b> tab — mystery cans drop 🧩 hero-box pieces.',
+'Tap the can to open it! Collect <b>10 🧩</b> = 1 Hero Box → PICK 1 of 3.',
+'Finally: the <b>✅ Tasks</b> tab — daily tasks give reward chests. Come back <b>every day</b>!'],
+tutTip:['Tap the glowing ⚔️ button in the bottom bar','Tap the glowing Junkyard node on the map','Tap the glowing 🦸 button','Tap the glowing hero → Level Up button','Tap the glowing 🥫 button','Tap the glowing can','Tap the glowing ✅ button'],
 heroes:{
 spam:['Shields the whole team for 22% of each member\'s max HP.','Immortal Canned Meat: takes 10% less damage in the front row.'],
 noodle:['Heals the weakest ally for 32% HP + extra regen for 2 turns.','Holy Broth: basic attacks slightly heal himself.'],
@@ -7125,13 +7164,13 @@ craft:['🩹 胶带工坊','通关电池贫民窟解锁'],shop:['🦫 海狸商�
 arena:['🎭 梗竞技场','通关罐头小镇解锁'],lab:['🧬 实验室（繁殖）','击败第一章BOSS解锁'],
 dgn:['🕳️ 每日地牢','击败第一章BOSS解锁'],tower:['🗼 混沌之塔','通关第二章第一关解锁'],
 enhance:['⬆️ 强化','通关第二章第一关解锁'],recycle:['♻️ 回收机','击败第二章BOSS解锁']},
-tut:['打开<b>⚔️ 战斗</b>页开始第一战！',
-'进攻<b>废品场街区</b>（5 ⛽）。战斗全自动——策略全在排兵布阵！',
+tut:['新人你好！打开<b>⚔️ 战斗</b>页开始第一战。',
+'进攻<b>废品场</b>（5 ⚡）。<b>⚡ $WACKO</b> 是能量——随时间自动恢复，升级越快。战斗全自动，策略在排兵布阵！',
 '赢了！打开<b>🦸 Heroes</b>页，用刚捡的 🪙 升级队伍。',
-'点一名英雄，再点<b>⬆️ 升级</b>——每级+9%属性。',
-'打开<b>🥫 Loot</b>页——神秘罐头里有 🧩 英雄箱碎片。',
-'点罐头开罐！攒<b>10 🧩</b>拼一个英雄箱——开箱三选一英雄。',
-'最后：<b>✅ 任务</b>页——做每日任务领奖励宝箱！'],
+'点一名英雄→<b>⬆️ 升级</b>（每级+9%）。提示：<b>坦克在前</b>，输出和奶妈在后！',
+'打开<b>🥫 Loot</b>页——神秘罐头掉落 🧩 英雄箱碎片。',
+'点罐头开罐！攒<b>10 🧩</b>=1个英雄箱→三选一。',
+'最后：<b>✅ 任务</b>页——每日任务领宝箱。<b>每天</b>回来哦！'],
 heroes:{
 spam:['给全队套上等于各自最大生命22%的护盾。','不朽罐头肉：站前排受到的伤害-10%。'],
 noodle:['治疗最弱队友32%生命+持续恢复2回合。','神圣高汤：普攻为自己回少量血。'],
@@ -7313,13 +7352,13 @@ craft:['🩹 ダクトテープ工房','バッテリースラム攻略で解放'
 arena:['🎭 ミームアリーナ','スナックタウン攻略で解放'],lab:['🧬 ラボ（ブリード）','第1章ボス撃破で解放'],
 dgn:['🕳️ デイリーダンジョン','第1章ボス撃破で解放'],tower:['🗼 カオスタワー','第2章最初のステージ攻略で解放'],
 enhance:['⬆️ 強化','第2章最初のステージ攻略で解放'],recycle:['♻️ リサイクル機','第2章ボス撃破で解放']},
-tut:['<b>⚔️ バトル</b>タブを開いて初戦闘を始めよう！',
-'<b>ジャンクヤード地区</b>を攻撃（5 ⛽）。戦闘は全自動——戦略は編成で決まる！',
-'勝利！<b>🦸 Heroes</b>タブで、拾った 🪙 を使って仲間を強化しよう。',
-'ヒーローをタップして<b>⬆️ レベルUP</b>——1レベルごとにステータス+9%。',
-'<b>🥫 Loot</b>タブを開こう——ミステリー缶には 🧩 ヒーローボックスの欠片が入っている。',
-'缶をタップして開封！<b>10 🧩</b>集めてヒーローボックスを作ろう——開けると3体から1体選べる。',
-'最後に<b>✅ クエスト</b>タブ——デイリークエストで報酬チェストをゲット！'],
+tut:['ようこそ新人！<b>⚔️ バトル</b>タブを開いて初戦闘を。',
+'<b>ジャンクヤード</b>を攻撃（5 ⚡）。<b>⚡ $WACKO</b> はエネルギー——時間で自動回復、レベルが上がるほど速い。戦闘は全自動、戦略は編成！',
+'勝利！<b>🦸 Heroes</b>タブで、拾った 🪙 で仲間を強化。',
+'ヒーローをタップ→<b>⬆️ レベルUP</b>（各+9%）。コツ：<b>タンクは前</b>、火力とヒーラーは後ろ！',
+'<b>🥫 Loot</b>タブを開こう——ミステリー缶から 🧩 ヒーローボックスの欠片。',
+'缶をタップして開封！<b>10 🧩</b>=ヒーローボックス1個→3体から1体。',
+'最後に<b>✅ クエスト</b>タブ——デイリーで報酬チェスト。<b>毎日</b>来てね！'],
 heroes:{
 spam:['味方全員に各自の最大HP22%のシールドを張る。','不滅の缶詰肉：前列にいる時、被ダメージ-10%。'],
 noodle:['最も弱った味方をHP32%回復+2ターンの継続回復。','聖なるスープ：通常攻撃で自分を少し回復。'],
@@ -7485,7 +7524,8 @@ rx:[
     CHAPTERS.forEach((c,i)=>{const t=L.chapters[i];if(t){c.name=t[0];c.desc=t[1]}});
     MISSIONS.forEach(m=>{if(L.missions[m.id])m.t=L.missions[m.id]});
     Object.entries(L.unlocks).forEach(([k,t])=>{if(UNLOCK_DEFS[k]){UNLOCK_DEFS[k].label=t[0];UNLOCK_DEFS[k].hint=t[1]}});
-    L.tut.forEach((m,i)=>{if(TUT[i])TUT[i].msg=m});
+    if(L.tut)L.tut.forEach((m,i)=>{if(TUT[i])TUT[i].msg=m});
+    if(L.tutTip)L.tutTip.forEach((t,i)=>{if(TUT[i])TUT[i].tip=t}); // zh/ja thiếu → giữ tip EN (layer en chạy trước)
     Object.entries(L.heroes).forEach(([id,t])=>{const h=HEROES[id];if(h){h.skill.desc=t[0];h.passive=t[1]}});
     Object.entries(L.enemies).forEach(([id,nm])=>{if(ENEMIES[id])ENEMIES[id].name=nm});
     if(L.data)L.data(); // overlay mở rộng (items/lore/shout/...) — hàm tự sửa object tại chỗ
