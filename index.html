@@ -8393,11 +8393,24 @@ if(LOADED){ // người chơi cũ: bỏ qua intro
   $('intro-bg').classList.remove('open');
   setTimeout(()=>toast('💾 Đã tải tiến trình — mừng trở lại vùng đất hoang!'),300);
 }
+// ⚡ idle $WACKO: cộng theo THỜI GIAN THỰC đã trôi (không phụ thuộc số lần interval chạy).
+// Vì tab nền bị browser throttle/đóng băng, cộng "5s mỗi lần fire" sẽ thiếu rất nhiều khi quay lại.
+let lastGasTs=Date.now(); // loadGame đã cộng phần offline qua d.ts → mốc tính từ bây giờ
+function creditIdle(){
+  const now=Date.now();
+  if(S.gas<S.maxGas){
+    const gain=wackoRate()*(now-lastGasTs)/86400000; // /ngày × số ngày đã trôi
+    if(gain>0){S.gas=Math.min(S.maxGas,S.gas+gain);renderRes()}
+  }
+  lastGasTs=now; // luôn dời mốc, kể cả khi đang đầy (để sau khi tiêu mới tính lại từ lúc đó)
+}
 setInterval(()=>{
-  // ⚡ idle $WACKO: sản lượng/ngày tăng theo cấp; tick 5s → cộng wackoRate*5/86400 (thanh tiến trình thấy chạy mượt)
-  if(S.gas<S.maxGas){S.gas=Math.min(S.maxGas,S.gas+wackoRate()*5/86400);renderRes()}
+  creditIdle();
   if($('v-loot').classList.contains('on'))renderLoot(); // cập nhật đồng hồ ấp trứng
 },5000);
+// quay lại tab/cửa sổ → cộng bù NGAY (tab nền bị throttle nên interval chạy thiếu)
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)creditIdle()});
+window.addEventListener('focus',creditIdle);
 $('intro-heroes').innerHTML=['spam','noodle','intern'].map(id=>
   `<div style="text-align:center">${sprite(id,72)}<br><b style="font-size:12px">${HEROES[id].name}</b><br><span style="font-size:11px;color:var(--muted)">${CLS_VI[HEROES[id].cls]}</span></div>`).join('');
 renderRes();renderHub();renderTeam();renderMap();renderTut();renderSfxBtn();
