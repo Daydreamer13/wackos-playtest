@@ -8094,7 +8094,9 @@ window.addEventListener('load',()=>setTimeout(teleUpload,4000));
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')teleUpload()});
 
 /* ================= SAVE / LOAD (localStorage) ================= */
-const SAVE_KEY='wackos_web3_save_v1'; // KHÁC bản giải (cùng origin GitHub Pages) — không đè save nhau, không lẫn inv instance↔count
+// root (bản test chính) dùng key CŨ → người chơi cũ giữ tiến trình (loadGame tự migrate count→instance);
+// /web3/ giữ key riêng để 2 nhóm tester không đè save nhau (cùng origin GitHub Pages).
+const SAVE_KEY=(typeof location!=='undefined'&&(location.pathname||'').includes('/web3/'))?'wackos_web3_save_v1':'wackos_save_v1';
 let saveTimer=null,WIPING=false;
 function saveGame(){
   if(WIPING)return; // đang xóa save để chơi lại — chặn beforeunload/interval ghi đè lại save cũ
