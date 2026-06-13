@@ -616,58 +616,43 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .cratestack{position:absolute;bottom:10px;font-size:30px;opacity:.45;pointer-events:none;line-height:1.15;letter-spacing:-5px}
 .cratestack.left{left:8px;text-align:left}
 .cratestack.right{right:8px;text-align:right}
-/* ---------- v2.39: BẢNG VIỆC (corkboard redesign) ---------- */
-.corkboard{position:relative;margin-top:10px;border:6px solid #4a3014;border-radius:var(--radius);padding:34px 14px 12px;
-  background:#73552f radial-gradient(rgba(0,0,0,.13) 1.7px,transparent 2.1px);background-size:15px 15px;
-  box-shadow:inset 0 0 34px rgba(0,0,0,.35),0 6px 16px rgba(0,0,0,.3)}
-.cb-sign{position:absolute;top:-6px;left:50%;transform:translateX(-50%);z-index:3;
-  background:linear-gradient(180deg,#8a5a28,#6f4a2a);border:2px solid #4a3014;border-top:none;
-  border-radius:0 0 12px 12px;padding:5px 20px;font-size:11px;font-weight:900;letter-spacing:.13em;color:#f7e9b5;
-  box-shadow:0 4px 8px rgba(0,0,0,.3)}
-.cb-sign span{color:#ffd23f}
-.corkboard #missionlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:18px;padding-top:6px}
-.corkboard .mission{flex-direction:column;align-items:flex-start;gap:4px;margin-top:0;border:none;border-radius:3px;
-  background:linear-gradient(180deg,#fbf3cf,#f3e6ab);color:#41320f;box-shadow:0 8px 14px rgba(0,0,0,.4);
-  position:relative;transform:rotate(-1.4deg);transition:.18s;padding:16px 13px 13px}
-.corkboard .mission:nth-child(even){transform:rotate(1.3deg);background:linear-gradient(180deg,#fdf7dc,#f6ecbd)}
-.corkboard .mission:hover{transform:rotate(0) translateY(-4px) scale(1.02);z-index:2}
-.wtape{position:absolute;top:-11px;left:50%;width:66px;height:20px;box-shadow:0 2px 4px rgba(0,0,0,.25);
-  border-left:2px dashed rgba(255,255,255,.55);border-right:2px dashed rgba(255,255,255,.55);opacity:.9}
-.wtape.t0{background:#7fd8c5;transform:translateX(-50%) rotate(-5deg)}
-.wtape.t1{background:#f2a3b3;transform:translateX(-50%) rotate(4deg)}
-.wtape.t2{background:#ffd97a;transform:translateX(-50%) rotate(-3deg)}
-.wtape.t3{background:#b3a3f2;transform:translateX(-50%) rotate(5deg)}
-.wtape.t4{background:#a3d8f2;transform:translateX(-50%) rotate(-4deg)}
-.corkboard .mhead{display:flex;gap:10px;align-items:flex-start;width:100%}
-.corkboard .mission .me{font-size:30px;line-height:1.1;filter:drop-shadow(0 2px 1px rgba(0,0,0,.18))}
-.corkboard .mission h5{color:#3a2c0c;font-size:14.5px;line-height:1.2}
-.corkboard .mission .mi{flex:1;min-width:0}
-.rwchip{display:inline-block;background:#fffdf2;border:1.5px dashed #b89b5e;border-radius:99px;
-  padding:1.5px 9px;font-size:11px;font-weight:800;color:#7a6430;margin-top:5px}
-.ckrow{display:flex;gap:6px;align-items:center;margin-top:9px}
-.ckb{width:21px;height:21px;border:2.5px solid #8a6f3d;border-radius:6px;background:#fffdf2;flex:none;
-  display:flex;align-items:center;justify-content:center;font-weight:900;color:#1d7a33;font-size:14px;transition:.2s}
-.ckb.on{background:#d9f2c2;border-color:#1d7a33;transform:rotate(-4deg)}
-.ckn{font-size:11px;font-weight:900;color:#a08550;margin-left:2px}
-.donestamp{position:absolute;right:10px;bottom:12px;transform:rotate(-12deg);font-size:12.5px;font-weight:900;
-  color:#1d7a33;border:3px solid #1d7a33;border-radius:8px;padding:2px 9px;letter-spacing:.12em;opacity:.85;
-  background:rgba(255,255,255,.4)}
-.corkboard .mission.got{filter:saturate(.55) brightness(.96)}
-.corkboard .mission .btn{align-self:flex-end;margin-top:9px}
-.cb-scrap{background:#fffdf2;border-radius:3px;box-shadow:0 6px 10px rgba(0,0,0,.35);padding:14px 13px;
-  transform:rotate(2.2deg);font-size:12px;line-height:1.75;color:#8a7445;position:relative;font-style:italic}
-.cb-scrap::before{content:'📌';position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:16px;
-  filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
-.cb-scrap b{color:#6f5a2e;font-style:normal;letter-spacing:.06em;font-size:10.5px;text-transform:uppercase}
-.cb-scrap s{opacity:.55}
-.corkboard .bonusnote{margin-top:18px;flex-direction:row;align-items:center;gap:12px;
-  background:linear-gradient(135deg,#ffe9a8,#ffd97a);transform:rotate(.4deg);
-  border:2px dashed #c79a14;box-shadow:0 8px 16px rgba(0,0,0,.4)}
-.corkboard .bonusnote::before{content:'📌';position:absolute;top:-11px;left:14%;font-size:16px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
-.corkboard .bonusnote::after{content:'📌';position:absolute;top:-11px;right:14%;font-size:16px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
-.corkboard .bonusnote:hover{transform:rotate(0)}
-.corkboard .bonusnote .btn{align-self:center;flex:none}
-.cb-foot{text-align:center;font-size:11.5px;color:#caa36a;margin-top:14px;font-weight:700}
+/* ---------- BẢNG VIỆC (dark quest board — đồng tông UI game) ---------- */
+.qb-head{display:flex;align-items:center;gap:12px;background:var(--bg2);border:2px solid var(--line);
+  border-radius:14px;padding:11px 15px;margin:10px 0;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.qb-ttl{font-size:12px;font-weight:900;letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+.qb-ttl b{color:var(--yellow)}
+.qb-bar{flex:1;height:11px;background:var(--bg3);border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.45)}
+.qb-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd23f,#ff9f2e);transition:width .45s}
+#missionlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.qtask{position:relative;background:var(--bg2);border:2px solid var(--line);border-radius:14px;padding:12px;
+  display:flex;flex-direction:column;gap:9px;transition:transform .15s,border-color .15s}
+.qtask:hover{transform:translateY(-2px)}
+.qt-top{display:flex;gap:11px;align-items:center}
+.qt-ico{width:44px;height:44px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-size:24px;background:var(--bg3);border:1px solid var(--line)}
+.qt-mid{flex:1;min-width:0}
+.qtask h5{font-size:13.5px;line-height:1.25;margin-bottom:4px}
+.rwchip{display:inline-block;background:var(--bg3);border:1px solid var(--line);border-radius:99px;
+  padding:2px 9px;font-size:11px;font-weight:800;color:var(--yellow)}
+.qt-prog{display:flex;align-items:center;gap:9px}
+.qt-bar{flex:1;height:8px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.qt-bar i{display:block;height:100%;background:var(--cyan);transition:width .3s}
+.qt-n{font-size:11px;font-weight:900;color:var(--muted);flex:none}
+.qtask.done{border-color:var(--green)}
+.qtask.done .qt-ico{border-color:var(--green)}
+.qtask.done .qt-bar i{background:var(--green)}
+.qtask.got{opacity:.5}
+.qtask.got .qt-ico{background:var(--green);border-color:var(--green)}
+.qt-done{align-self:flex-end;font-size:12px;font-weight:900;color:var(--green);letter-spacing:.08em}
+.qtask .btn{align-self:flex-end}
+.qchest{display:flex;gap:13px;align-items:center;margin-top:12px;padding:14px;border-radius:14px;
+  background:linear-gradient(135deg,#3a300f,#241c08);border:2px solid var(--yellow);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.qchest.ready{animation:chestGlow 1.6s ease-in-out infinite}
+@keyframes chestGlow{0%,100%{box-shadow:0 6px 18px rgba(0,0,0,.35)}50%{box-shadow:0 0 18px 2px rgba(255,210,63,.4)}}
+.qc-ico{font-size:38px;flex:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+.qc-mid{flex:1;min-width:0}
+.qchest h5{color:var(--yellow);font-size:14px;margin-bottom:5px}
+.qb-foot{text-align:center;font-size:11.5px;color:var(--muted);margin-top:12px}
 
 /* ---------- v2.34: kệ hộp hero + khóa tính năng ---------- */
 .boxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:12px}
@@ -720,18 +705,24 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .pickcell{display:flex;flex-direction:column;gap:6px}
 .pickcell .hcard{margin:0}
 .pickjoin{width:100%}
-/* 💞 giường breed */
-.bed{position:relative;display:flex;align-items:flex-end;justify-content:center;gap:16px;
-  background:linear-gradient(180deg,#3a2740,#241830);border:3px solid #7a4e2e;border-radius:18px 18px 8px 8px;
-  padding:16px 18px 14px;margin:10px 0}
-.bed::after{content:'';position:absolute;left:10px;right:10px;bottom:8px;height:13px;background:rgba(179,107,255,.32);border-radius:6px;z-index:1}
-.bedslot{position:relative;z-index:2;min-width:96px;display:flex;flex-direction:column;align-items:center;gap:1px;
-  background:rgba(255,255,255,.05);border:2px dashed var(--line);border-radius:12px;padding:8px 6px;transition:.15s}
-.bedslot.filled{border-style:solid;border-color:var(--purple);cursor:pointer}
-.bedslot.filled:hover{transform:translateY(-2px)}
-.bedslot.low{border-color:var(--red)}
-.bedheart{z-index:2;font-size:24px;align-self:center;animation:beat 1.4s ease-in-out infinite}
-@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+/* 💞 GIƯỜNG breed — khung gỗ + nệm + chăn tím + gối trắng */
+.bed{position:relative;display:flex;align-items:flex-start;justify-content:center;gap:20px;
+  padding:18px 22px 32px;margin:10px 0;border-radius:16px;
+  background:linear-gradient(180deg,#8a5a30,#5e3c20);border:3px solid #3a2410;
+  box-shadow:0 6px 16px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.15)}
+.bed::before{content:'';position:absolute;left:9px;right:9px;top:9px;height:55%;border-radius:11px;
+  background:linear-gradient(180deg,#f3ead4,#e2d2b2);box-shadow:inset 0 -4px 7px rgba(0,0,0,.08)} /* nệm */
+.bed::after{content:'';position:absolute;left:9px;right:9px;bottom:9px;height:42%;border-radius:9px;
+  background:linear-gradient(180deg,#9170e8,#6a4fc8);box-shadow:inset 0 5px 0 rgba(255,255,255,.28),inset 0 -4px 9px rgba(0,0,0,.22)} /* chăn + mép gập */
+.bedslot{position:relative;z-index:2;min-width:104px;display:flex;flex-direction:column;align-items:center;gap:1px;
+  background:linear-gradient(180deg,#fff,#edeff4);border:2px solid #ccd2df;border-radius:18px;
+  padding:9px 9px 12px;color:#2a2410;box-shadow:0 5px 10px rgba(0,0,0,.3);transition:transform .15s,border-color .15s}
+.bedslot small{color:#8a8275}
+.bedslot.filled{border-color:var(--purple);box-shadow:0 5px 14px rgba(179,107,255,.42);cursor:pointer}
+.bedslot.filled:hover{transform:translateY(-3px)}
+.bedslot.low{border-color:var(--red);box-shadow:0 5px 14px rgba(255,93,108,.42)}
+.bedheart{z-index:3;align-self:center;margin-top:34px;font-size:28px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45));animation:beat 1.4s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 
 @media (max-width:560px){
   .arena{height:375px}
@@ -1075,17 +1066,15 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
   <section class="view" id="v-missions">
     <h2 class="sec">✅ Bảng Việc Khu Phố</h2>
     <p class="sub">Sống sót thêm một ngày nữa. Tuyệt. Việc mới dán lên bảng mỗi sáng.</p>
-    <div class="corkboard">
-      <div class="cb-sign">📋 VIỆC HÔM NAY — <span id="cb-count">0/5</span> XONG</div>
-      <div id="missionlist"></div>
-      <div class="mission bonusnote" id="bonusrow">
-        <span class="me" style="font-size:34px">🎁</span>
-        <div class="mi"><h5>RƯƠNG THƯỞNG NGÀY — xong cả 5 việc là mở</h5>
-          <span class="rwchip">🪙 +1.000</span> <span class="rwchip">🥫 +1</span> <span class="rwchip">⛽ +20</span></div>
-        <button class="btn sm pu" id="bonusbtn" onclick="claimBonus()" disabled>Nhận</button>
-      </div>
-      <p class="cb-foot">🌅 Qua nửa đêm, chú hải ly dán loạt việc mới lên bảng. Đừng để rương nguội!</p>
+    <div class="qb-head"><span class="qb-ttl">📋 VIỆC HÔM NAY <b id="cb-count">0/5</b></span><span class="qb-bar"><i id="qb-fill"></i></span></div>
+    <div id="missionlist"></div>
+    <div class="qchest" id="bonusrow">
+      <span class="qc-ico">🎁</span>
+      <div class="qc-mid"><h5>RƯƠNG THƯỞNG NGÀY — xong cả 5 việc là mở</h5>
+        <span class="rwchip">🪙 +1.000</span> <span class="rwchip">🥫 +1</span> <span class="rwchip">⚡ +20</span></div>
+      <button class="btn sm pu" id="bonusbtn" onclick="claimBonus()" disabled>Nhận</button>
     </div>
+    <p class="qb-foot">🌅 Qua nửa đêm, chú hải ly dán loạt việc mới lên bảng. Đừng để rương nguội!</p>
   </section>
 </div>
 
@@ -6115,7 +6104,7 @@ function renderLab(){
     }
     const vi=WLANG==='vi';
     const bedSlot=(uid)=>{
-      if(uid==null)return `<div class="bedslot"><span style="font-size:30px;opacity:.4">＋</span><small style="color:var(--muted)">${vi?'chọn hero':'pick hero'}</small></div>`;
+      if(uid==null)return `<div class="bedslot"><span style="font-size:32px;color:#b8b0a0">＋</span><small>${vi?'chọn hero':'pick hero'}</small></div>`;
       const i=instById(uid),h=HEROES[i.heroId],low=i.lvl<BREED_MIN_LVL;
       return `<div class="bedslot filled${low?' low':''}" onclick="labTap(${uid})" title="${vi?'bấm để cho xuống giường':'tap to remove'}">
         ${sprite(i.heroId,60)}<b style="font-size:11px;text-align:center">${h.name}</b>
@@ -6367,27 +6356,22 @@ function renderLoot(){
 function renderMissions(){
   const box=$('missionlist');box.innerHTML='';
   let doneCount=0;
-  MISSIONS.forEach((m,idx)=>{
+  MISSIONS.forEach((m)=>{
     const p=Math.min(S.daily[m.key],m.need),done=p>=m.need,claimed=S.daily.claimed[m.id];
     if(claimed)doneCount++;
-    box.innerHTML+=`<div class="mission ${done?'done':''} ${claimed?'got':''}">
-      <span class="wtape t${idx%5}"></span>
-      <div class="mhead">
-        <span class="me">${m.e}</span>
-        <div class="mi"><h5>${m.t}</h5><span class="rwchip">🎁 ${m.rwTxt}</span></div>
+    box.innerHTML+=`<div class="qtask ${done?'done':''} ${claimed?'got':''}">
+      <div class="qt-top">
+        <span class="qt-ico">${m.e}</span>
+        <div class="qt-mid"><h5>${m.t}</h5><span class="rwchip">🎁 ${m.rwTxt}</span></div>
       </div>
-      <div class="ckrow">
-        ${Array.from({length:m.need},(_,i)=>`<span class="ckb ${i<p?'on':''}">${i<p?'✓':''}</span>`).join('')}
-        <span class="ckn">${p}/${m.need}</span>
-      </div>
-      ${claimed?'<span class="donestamp">✓ XONG</span>'
+      <div class="qt-prog"><span class="qt-bar"><i style="width:${Math.round(p/m.need*100)}%"></i></span><span class="qt-n">${p}/${m.need}</span></div>
+      ${claimed?'<span class="qt-done">✓ XONG</span>'
         :`<button class="btn sm" onclick="claimMission('${m.id}')" ${done?'':'disabled'}>${done?'🎁 Nhận thưởng':'Chưa xong...'}</button>`}
     </div>`;
   });
-  // mẩu giấy doodle lấp ô trống cho bảng đỡ trống
-  box.innerHTML+=`<div class="cb-scrap"><b>📎 ghi chú của quản tộc</b><br>
-    ☑ <s>dậy trước trưa</s><br>☑ <s>đập máy bán nước</s><br>☐ thống trị khu phố<br>☐ mua thêm băng keo (khẩn)</div>`;
   const cnt=$('cb-count');if(cnt)cnt.textContent=doneCount+'/'+MISSIONS.length;
+  const qf=$('qb-fill');if(qf)qf.style.width=Math.round(doneCount/MISSIONS.length*100)+'%';
+  $('bonusrow').classList.toggle('ready',MISSIONS.every(m=>S.daily.claimed[m.id])&&!S.daily.bonus);
   const allClaimed=MISSIONS.every(m=>S.daily.claimed[m.id]);
   $('bonusbtn').disabled=!(allClaimed&&!S.daily.bonus);
   $('bonusbtn').textContent=S.daily.bonus?'✔ Đã mở rương':allClaimed?'🎁 MỞ RƯƠNG!':'🔒 Xong cả 5 đã';
@@ -6890,7 +6874,7 @@ ui:{
 'Phần hàn dính không tách được — kỹ thuật mà.':'The welded parts can\'t be separated — that\'s engineering.',
 /* ---- missions ---- */
 'Sống sót thêm một ngày nữa. Tuyệt. Việc mới dán lên bảng mỗi sáng.':'Survived another day. Great. New tasks get posted every morning.',
-'📋 VIỆC HÔM NAY —':'📋 TODAY\'S TASKS —','Chưa xong...':'Not done yet...','🎁 Nhận thưởng':'🎁 Claim','✔ Đã mở rương':'✔ Chest opened','🎁 MỞ RƯƠNG!':'🎁 OPEN CHEST!','🔒 Xong cả 5 đã':'🔒 Finish all 5 first',
+'📋 VIỆC HÔM NAY —':'📋 TODAY\'S TASKS —','📋 VIỆC HÔM NAY':'📋 TODAY\'S TASKS','Chưa xong...':'Not done yet...','🎁 Nhận thưởng':'🎁 Claim','✓ XONG':'✓ DONE','✔ Đã mở rương':'✔ Chest opened','🎁 MỞ RƯƠNG!':'🎁 OPEN CHEST!','🔒 Xong cả 5 đã':'🔒 Finish all 5 first',
 'RƯƠNG THƯỞNG NGÀY — xong cả 5 việc là mở':'DAILY REWARD CHEST — opens when all 5 tasks are done',
 '📎 ghi chú của quản tộc':'📎 junk-lord\'s notes','dậy trước trưa':'wake up before noon','đập máy bán nước':'punch the vending machine','☐ thống trị khu phố':'☐ dominate the neighborhood','☐ mua thêm băng keo (khẩn)':'☐ buy more duct tape (urgent)',
 '🌅 Qua nửa đêm, chú hải ly dán loạt việc mới lên bảng. Đừng để rương nguội!':'🌅 After midnight the beaver posts a fresh batch of tasks. Don\'t let the chest go cold!',
