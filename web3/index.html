@@ -4279,21 +4279,41 @@ function renderMap(){
   g.innerHTML=html;
   renderTut(); // gắn lại glow tutorial sau khi map render lại
 }
-/* ---------- Ước tính cửa thắng: sim nhanh 16 lượt với đội hiện tại ---------- */
-function estimateWin(node,trials=16){
+/* ---------- Ước tính cửa thắng: 40 sim với đội hiện tại, ĐÚNG giới hạn giờ của node ---------- */
+function estimateWin(node,trials=40){
   if(!teamIds().length)return null;
-  let w=0;for(let i=0;i<trials;i++){if(simLoop(buildUnits(node)))w++}
+  const lim=node.tickLimit||400; // KHỚP giới hạn tick của trận thật (hầm Tăng Ca = 250...) — đừng cho dư giờ
+  let w=0;for(let i=0;i<trials;i++){if(simLoop(buildUnits(node),lim))w++}
   return w/trials;
 }
 function winChanceTag(node){
   const p=estimateWin(node);
   if(p==null)return '';
-  const t=p>=0.75?['🟢','CỬA THẮNG: NGON','var(--green)','Vào đi, đội này cân được.']
-    :p>=0.35?['🟠','NĂM ĂN NĂM THUA','var(--orange)','Kịch tính đấy — muốn chắc thì nâng cấp thêm chút.']
-    :p>0?['🔴','CỬA THẮNG: THẤP','var(--red)','Thua nhiều hơn thắng. Nâng cấp / thêm hero trước đã.']
-    :['⚫','GẦN NHƯ KHÔNG CỬA','var(--red)','Đội hiện tại chưa với tới — cần lên level, đủ 5 hero, lắp đồ.'];
-  return `<div class="skillbox" style="border-color:${t[2]}"><h5 style="color:${t[2]}">${t[0]} ${t[1]}</h5>
-    <p style="font-size:12px">${t[3]} <span style="color:var(--muted)">(mô phỏng nhanh với đội hiện tại)</span></p></div>`;
+  // 🟢 chỉ khi THẬT SỰ chắc (≥85%); 0.6–0.85 = nghiêng thắng nhưng VẪN có thể thua
+  const idx=p>=0.85?0:p>=0.6?1:p>=0.35?2:p>0?3:4;
+  const COL=['var(--green)','var(--yellow)','var(--orange)','var(--red)','var(--red)'][idx];
+  const L={
+    vi:[['🟢','CỬA THẮNG: NGON','Vào đi, đội này cân tốt.'],
+        ['🟡','NGHIÊNG PHẦN THẮNG','Nhỉnh hơn nhưng VẪN có thể thua — đừng chủ quan, thủ sẵn nhé.'],
+        ['🟠','NĂM ĂN NĂM THUA','Hên xui thật sự — nâng cấp/đổi đội thêm cho chắc.'],
+        ['🔴','CỬA THẮNG THẤP','Thua nhiều hơn thắng. Nâng cấp / thêm hero trước đã.'],
+        ['⚫','GẦN NHƯ KHÔNG CỬA','Đội hiện tại chưa với tới — lên level, đủ 5 hero, lắp đồ.']],
+    en:[['🟢','WIN CHANCE: LOOKING GOOD','Go for it — your team handles this.'],
+        ['🟡','LEANING WIN','Likely but NOT certain — don\'t get cocky, play safe.'],
+        ['🟠','COIN FLIP','Genuinely 50/50 — upgrade or swap your team to be safe.'],
+        ['🔴','WIN CHANCE: LOW','You lose more than you win. Upgrade / add heroes first.'],
+        ['⚫','BASICALLY HOPELESS','Not there yet — level up, fill 5 heroes, gear up.']],
+    zh:[['🟢','胜率：稳','放心打，这队能赢。'],['🟡','略占上风','大概率赢但不保证——别大意，做好防守。'],
+        ['🟠','五五开','真·五五开——升级或换队更稳。'],['🔴','胜率：低','输多赢少。先升级/补人。'],
+        ['⚫','几乎没戏','现在打不过——升级、凑满5人、穿装备。']],
+    ja:[['🟢','勝率：イケる','行ける——この編成なら大丈夫。'],['🟡','やや有利','勝ちやすいが確実ではない——油断せず守りを。'],
+        ['🟠','五分五分','本当に五分——強化か編成変更を。'],['🔴','勝率：低い','負けの方が多い。先に強化/増員を。'],
+        ['⚫','ほぼ無理','まだ届かない——レベル上げ・5人・装備を。']],
+  };
+  const t=(L[WLANG]||L.en)[idx];
+  const note=WLANG==='en'?'quick sim with your current team':WLANG==='zh'?'用当前队伍快速模拟':WLANG==='ja'?'現編成でクイック模擬':'mô phỏng nhanh với đội hiện tại';
+  return `<div class="skillbox" style="border-color:${COL}"><h5 style="color:${COL}">${t[0]} ${t[1]}</h5>
+    <p style="font-size:12px">${t[2]} <span style="color:var(--muted)">(${note})</span></p></div>`;
 }
 /* ---------- Gợi ý sau khi thua: chỉ đường mạnh lên cụ thể ---------- */
 function lossTips(){
@@ -5348,6 +5368,10 @@ function simDamage(src,tgt,mult,units,opts={}){
   if(tgt.hero&&tgt.hero.id==='bubble'&&!tgt.usedCritGuard&&crit){tgt.usedCritGuard=1;dmg*=0.35}
   if(!src.ranged&&units.some(a=>a.alive&&a.side===tgt.side&&a.hero&&a.hero.id==='steve'))dmg*=0.9;
   if(src.ranged&&units.some(a=>a.alive&&a.side===tgt.side&&a.hero&&a.hero.id==='magnet'))dmg*=0.9;
+  if(opts.aoe){ // giảm sát thương AoE — KHỚP dealDamage (trước sim thiếu → lệch ước tính)
+    if(units.some(a=>a.alive&&a.side===tgt.side&&a.hero&&a.hero.id==='umbrella'))dmg*=0.75;
+    if(tgt.hero&&tgt.hero.id==='sewer')dmg*=0.8;
+  }
   dmg=Math.max(1,Math.round(dmg));
   if(tgt.shield>0){const ab=Math.min(tgt.shield,dmg);tgt.shield-=ab;dmg-=ab;src.statDmg=(src.statDmg||0)+ab}
   tgt.hp-=dmg;tgt.energy=Math.min(100,tgt.energy+12*PACE_DMG);
@@ -5395,18 +5419,19 @@ function simAttack(u,units){
 }
 function simLoop(units,limit=400){ // chạy đến khi một phe hết người; trả về true nếu phe ta thắng
   const aliveS=s=>units.filter(u=>u.alive&&u.side===s);
-  let queue=[],ticks=0;
-  while(ticks++<limit){
+  let queue=[],ticks=0,guard=0;
+  while(guard++<20000){
     if(!aliveS('pl').length)return false;
     if(!aliveS('en').length)return true;
     if(!queue.length)queue=units.filter(u=>u.alive).sort((a,b)=>effSpd(b)-effSpd(a));
     const u=queue.shift();
-    if(!u||!u.alive)continue;
+    if(!u||!u.alive)continue;        // unit chết: bỏ qua, KHÔNG tốn tick (khớp tick() live)
+    if(++ticks>limit)return false;   // chỉ đếm lượt THỰC SỰ hành động — khớp B.ticks live → ước tính đúng giới hạn giờ
     const st=startTurnStatus(u,units,false);
     if(st.stunned)continue;
     if(u.energy>=100)simSkill(u,units);else simAttack(u,units);
   }
-  return false; // hết 400 lượt chưa diệt sạch = THUA (không cho câu giờ bằng healer)
+  return false; // hết giờ chưa diệt sạch = THUA (không cho câu giờ bằng healer)
 }
 
 /* ---------- rewards dùng chung ---------- */
