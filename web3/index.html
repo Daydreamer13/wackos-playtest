@@ -275,6 +275,50 @@ h2.sec{font-size:22px;font-weight:900;margin:18px 2px 4px;letter-spacing:.3px}
 .flash{position:absolute;inset:0;z-index:36;pointer-events:none}
 .ringfx{position:absolute;border:3px solid var(--cyan);border-radius:50%;z-index:31;pointer-events:none;
   box-shadow:0 0 16px rgba(59,232,255,.5) inset,0 0 16px rgba(59,232,255,.5)}
+/* ---------- thanh thế trận (momentum) ---------- */
+#momentum{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:min(70%,330px);height:13px;
+  border:2px solid #14101c;border-radius:99px;overflow:hidden;z-index:34;
+  background:linear-gradient(90deg,#ff6d7a,#c8324a);box-shadow:0 2px 8px rgba(0,0,0,.45)}
+#mo-fill{position:absolute;left:0;top:0;bottom:0;width:50%;
+  background:linear-gradient(90deg,#7ee787,#36b85a);box-shadow:2px 0 7px rgba(0,0,0,.35);
+  transition:width .4s cubic-bezier(.3,.8,.4,1)}
+#momentum::after{content:'';position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:rgba(255,255,255,.55);transform:translateX(-50%);z-index:2}
+#momentum .mo-end{position:absolute;top:50%;transform:translateY(-50%);font-size:11px;z-index:3;pointer-events:none}
+#momentum .mo-l{left:4px}#momentum .mo-r{right:4px}
+/* ---------- ulti sẵn sàng: phát sáng ---------- */
+.unit.charged .uspr{filter:drop-shadow(0 0 7px var(--yellow)) drop-shadow(0 0 3px #fff);animation:chargePulse 1s ease-in-out infinite}
+@keyframes chargePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+/* ---------- combo / kill-streak banner ---------- */
+.combobann{position:absolute;left:50%;top:38%;z-index:40;pointer-events:none;font-weight:900;
+  font-size:34px;color:#fff;letter-spacing:.5px;text-align:center;white-space:nowrap;
+  text-shadow:0 0 10px var(--orange),0 3px 0 #7a1d2e,3px 3px 0 #14101c;-webkit-text-stroke:1.5px #14101c}
+.combobann span{display:block;font-size:18px;margin-bottom:-2px}
+/* ---------- finisher: dim + K.O. ---------- */
+.findim{position:fixed;inset:0;z-index:39;pointer-events:none;background:radial-gradient(circle at center,transparent 18%,#000 95%)}
+.kostamp{position:fixed;left:50%;top:40%;z-index:42;pointer-events:none;font-weight:900;font-size:64px;color:#fff;
+  letter-spacing:1px;white-space:nowrap;text-shadow:0 0 16px var(--orange),0 4px 0 #7a1d2e,4px 4px 0 #14101c;-webkit-text-stroke:2px #14101c}
+/* ---------- màn VS mở trận ---------- */
+.vsintro{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;gap:6px;
+  background:radial-gradient(circle at center,rgba(20,16,28,.55),rgba(10,8,14,.85));overflow:hidden}
+.vsintro .vsside{display:flex;flex-direction:column;gap:2px;align-items:center}
+.vsintro .vsm{width:58px}
+.vsintro .vsside.pl{animation:vsInL .5s cubic-bezier(.2,1.3,.4,1) backwards}
+.vsintro .vsside.en{animation:vsInR .5s cubic-bezier(.2,1.3,.4,1) backwards}
+.vsintro .vsside.en .vsm{transform:scaleX(-1)}
+@keyframes vsInL{from{transform:translateX(-120vw)}to{transform:translateX(0)}}
+@keyframes vsInR{from{transform:translateX(120vw)}to{transform:translateX(0)}}
+.vsintro .vsvs{font-weight:900;font-size:46px;color:var(--yellow);margin:0 4px;
+  text-shadow:0 0 14px var(--orange),3px 3px 0 #14101c;-webkit-text-stroke:2px #14101c;animation:vsPop .4s .15s backwards}
+@keyframes vsPop{from{transform:scale(0) rotate(-30deg);opacity:0}to{transform:scale(1) rotate(-8deg);opacity:1}}
+.vsgo{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);font-weight:900;font-size:72px;color:#fff;
+  text-shadow:0 0 18px var(--orange),4px 4px 0 #14101c;-webkit-text-stroke:2px #14101c;pointer-events:none}
+/* ---------- thẻ MVP ---------- */
+.mvpcard{display:flex;align-items:center;gap:12px;justify-content:center;background:linear-gradient(180deg,#2a2440,#1c1830);
+  border:2px solid var(--yellow);border-radius:16px;padding:10px 16px;margin:0 0 14px;
+  box-shadow:0 0 16px rgba(247,201,72,.2);animation:lootPop .5s cubic-bezier(.34,1.56,.64,1)}
+.mvpcard .mvpbadge{font-weight:900;color:var(--yellow);font-size:13px;letter-spacing:.5px}
+.mvpcard .mvpinfo{text-align:left}.mvpcard .mvpinfo b{font-size:15px}
+.mvpcard .mvpinfo span{display:block;font-size:11.5px;color:var(--muted)}
 .blog{margin-top:10px;background:#0e1424;border:2px solid var(--line);border-radius:14px;padding:10px 12px;
   font-size:12.5px;max-height:110px;overflow-y:auto;color:var(--muted);display:none}
 .blog.show{display:block}
@@ -1114,6 +1158,7 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
 <!-- MÀN HÌNH TRẬN: overlay toàn màn hình, chỉ hiện khi đang đánh -->
 <div id="battle-ov"><div class="bo-inner">
   <div class="arena" id="arena">
+    <div id="momentum"><span class="mo-end mo-l">🦸</span><i id="mo-fill"></i><span class="mo-end mo-r">👾</span></div>
     <span id="roundbadge"></span>
     <button class="btn sm gh speedbtn" id="speedbtn" onclick="toggleSpeed()" title="Đổi tốc độ trận: x1 → x2 → x4">▶ x1</button>
     <button class="btn sm cy skipbtn" id="skipbtn" onclick="skipBattle()">⏭ Hoàn thành ngay</button>
@@ -3418,6 +3463,8 @@ const SFX={
   buy(){tone(880,.07,'square',.06);tone(1175,.1,'square',.06,null,.06)},
   breed(){tone(300,.3,'sine',.09,600);tone(450,.3,'sine',.07,900,.1)},
   enrage(){tone(110,.4,'sawtooth',.11,80);noiseHit(.3,.09,0,300)},
+  combo(n){const b=520+Math.min(4,n)*110;noiseHit(.1,.12,0,800);tone(b,.1,'square',.08);tone(b*1.5,.13,'square',.08,null,.06);tone(b*2,.17,'sawtooth',.07,null,.13)},
+  ko(){tone(196,.5,'sawtooth',.12,60);tone(98,.6,'square',.08,null,.05);noiseHit(.4,.12,0,260)},
 };
 function renderSfxBtn(){const b=$('sfxbtn');if(b)b.innerHTML=`<span class="ico">${S.sfx?'🔊':'🔇'}</span>`}
 function toggleSfx(){
@@ -4637,7 +4684,8 @@ function startBattle(nodeId){
   setupArena(); // setupArena tự quyết nút ⏭ theo trạng thái đã-phá của màn
   blog(`🔔 Trận chiến tại <span class="imp">${node.name}</span> bắt đầu!`,true);
   if(!S.team.front.some(x=>x!=null))blog('⚠️ <b>Tuyến trước trống</b> — địch sẽ nhắm thẳng vào tuyến sau (kể cả healer)!',true);
-  B.timer=setInterval(tick,TICK_BASE/spd());
+  const startTicking=()=>{if(B&&!B.over)B.timer=setInterval(tick,TICK_BASE/spd())};
+  if(spd()>=4)startTicking(); else vsIntro(startTicking); // 4x = cày nhanh, bỏ màn VS
 }
 
 const ARENA_BGS={ // nền trận theo bối cảnh — chương/chế độ nào ra không khí đó
@@ -4650,6 +4698,7 @@ const ARENA_BGS={ // nền trận theo bối cảnh — chương/chế độ nà
 };
 function setupArena(){
   const n=B.node;
+  clearFinisherFx(); // dọn zoom/K.O. của trận trước
   $('battle-ov').classList.add('open'); // màn hình trận bật lên — đánh xong, đóng kết quả là tắt
   document.body.style.overflow='hidden';
   $('arena').style.background=n.arena?ARENA_BGS.arena:n.dungeon?ARENA_BGS.dgn:n.tower?ARENA_BGS.tower:(ARENA_BGS[n.ch]||ARENA_BGS[1]);
@@ -4677,6 +4726,7 @@ function setupArena(){
       <div class="enwrap"><i style="width:0%"></i></div>`;
     L.appendChild(el);
   });
+  updateMomentum();
   $('battle-ov').scrollTop=0;
 }
 function uEl(u){return $('u-'+u.key)}
@@ -4693,6 +4743,8 @@ function refreshUnit(u){
   el.querySelector('.fill').style.width=Math.max(0,u.hp/u.maxhp*100)+'%';
   el.querySelector('.ghost').style.width=Math.max(0,u.hp/u.maxhp*100)+'%';
   el.querySelector('.enwrap i').style.width=Math.min(100,u.energy)+'%';
+  el.classList.toggle('charged',u.alive&&u.energy>=100); // ulti sẵn sàng → phát sáng
+  updateMomentum();
   const bz=el.querySelector('.bubblezone');
   bz.innerHTML=(u.alive&&u.shield>0?'<span class="shieldbubble"></span>':'')+
     (u.alive&&u.slow>0?`<span class="slowmark spr">${SNAIL}</span>`:'')+
@@ -4821,6 +4873,88 @@ function cutin(name,shout,artId,color){
 }
 function blog(msg,imp){const d=document.createElement('div');if(imp)d.className='imp';d.innerHTML=msg;$('blog').prepend(d)}
 
+/* ---------- ĐỘ HẤP DẪN: momentum · combo · finisher ---------- */
+function updateMomentum(){
+  if(!B)return;const m=$('mo-fill');if(!m)return;
+  let pl=0,en=0;
+  B.units.forEach(u=>{if(!u.alive)return;const v=Math.max(0,u.hp)+(u.shield||0);u.side==='pl'?pl+=v:en+=v});
+  const tot=pl+en;m.style.width=(tot>0?pl/tot*100:50)+'%';
+}
+const COMBO_LBL={vi:['','','HẠ GỤC KÉP!','HẠ GỤC BA!','TÀN SÁT!','HỦY DIỆT!'],en:['','','DOUBLE KO!','TRIPLE KO!','RAMPAGE!','ANNIHILATION!']};
+function comboBanner(n){
+  const set=COMBO_LBL[WLANG==='vi'?'vi':'en']||COMBO_LBL.en;
+  const txt=(set[Math.min(n,5)]||set[5])+(n>5?' x'+n:'');
+  const b=document.createElement('div');b.className='combobann';
+  b.innerHTML=`<span>${'🔥'.repeat(Math.min(3,n-1))}</span>${txt}`;
+  $('vfx').appendChild(b);
+  b.animate([
+    {transform:'translate(-50%,-50%) scale(.3) rotate(-8deg)',opacity:0},
+    {transform:'translate(-50%,-50%) scale(1.18) rotate(-4deg)',opacity:1,offset:.2},
+    {transform:'translate(-50%,-50%) scale(1) rotate(-4deg)',opacity:1,offset:.72},
+    {transform:'translate(-50%,-50%) scale(1.06) rotate(-4deg)',opacity:0}
+  ],{duration:1150/spd(),easing:'cubic-bezier(.2,.9,.3,1)'}).onfinish=()=>b.remove();
+  SFX.combo(n);shakeArena(6+Math.min(8,n*2));
+}
+function onUnitDeath(tgt){ // gọi mỗi khi 1 unit gục (đánh thường, skill, DoT)
+  if(!B||B.over)return;
+  const now=performance.now();
+  if(B.lastKill&&now-B.lastKill<1300/spd())B.combo=(B.combo||1)+1;else B.combo=1;
+  B.lastKill=now;
+  if(B.combo>=2)comboBanner(B.combo);
+  if(!B.finished&&aliveOf(tgt.side).length===0){B.finished=true;finisher(tgt)} // đòn kết liễu
+}
+function finisher(tgt){ // slow-mo + zoom đòn kết liễu
+  const a=$('arena'),p=uPos(tgt);
+  const ox=Math.max(8,Math.min(92,p.x/a.clientWidth*100)),oy=Math.max(8,Math.min(92,p.y/a.clientHeight*100));
+  a.style.transformOrigin=ox+'% '+oy+'%';
+  a.animate([{transform:'scale(1)'},{transform:'scale(1.38)'},{transform:'scale(1.24)'}],
+    {duration:1150,easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'});
+  const dim=document.createElement('div');dim.className='findim';$('battle-ov').appendChild(dim);
+  dim.animate([{opacity:0},{opacity:.55},{opacity:.4}],{duration:1150,fill:'forwards'}).onfinish=()=>setTimeout(()=>dim.remove(),400);
+  fxPoof(p.x,p.y,2.2);
+  const stamp=document.createElement('div');stamp.className='kostamp';
+  stamp.textContent=WLANG==='vi'?'HẠ GỤC!':'K.O.!';
+  $('battle-ov').appendChild(stamp);
+  stamp.animate([{transform:'translate(-50%,-50%) scale(2.6) rotate(-12deg)',opacity:0},
+    {transform:'translate(-50%,-50%) scale(1) rotate(-8deg)',opacity:1,offset:.28},
+    {transform:'translate(-50%,-50%) scale(1) rotate(-8deg)',opacity:1,offset:.8},
+    {transform:'translate(-50%,-50%) scale(1.12) rotate(-8deg)',opacity:0}],
+    {duration:1300}).onfinish=()=>stamp.remove();
+  shakeArena(13);SFX.ko();
+}
+function clearFinisherFx(){const a=$('arena');if(a){a.style.transform='';a.style.transformOrigin=''}
+  document.querySelectorAll('.findim,.kostamp').forEach(e=>e.remove())}
+function mvpOf(units){
+  const pl=units.filter(u=>u.side==='pl');if(!pl.length)return null;
+  let best=null,bs=-1;
+  pl.forEach(u=>{const sc=(u.statDmg||0)+(u.statHeal||0)*0.8;if(sc>bs){bs=sc;best=u}});
+  if(!best||bs<=0)return null;
+  return{name:best.name,art:best.art,dmg:Math.round(best.statDmg||0),heal:Math.round(best.statHeal||0)};
+}
+function vsIntro(cb){ // màn VS mở trận — bấm để bỏ qua
+  const pls=B.units.filter(u=>u.side==='pl'),ens=B.units.filter(u=>u.side==='en');
+  const mini=u=>`<span class="vsm spr">${ART[u.art]}</span>`;
+  const w=document.createElement('div');w.className='vsintro';
+  w.innerHTML=`<div class="vsside pl">${pls.slice(0,5).map(mini).join('')}</div>
+    <div class="vsvs">VS</div>
+    <div class="vsside en">${ens.slice(0,5).map(mini).join('')}</div>
+    <div class="vsgo" id="vsgo"></div>`;
+  $('battle-ov').appendChild(w);
+  let done=false;const finish=()=>{if(done)return;done=true;timers.forEach(clearTimeout);w.remove();cb()};
+  w.onclick=finish;
+  const go=w.querySelector('#vsgo');
+  const seq=['3','2','1',WLANG==='vi'?'ĐÁNH!':'FIGHT!'];
+  const timers=[];
+  seq.forEach((s,i)=>timers.push(setTimeout(()=>{
+    go.textContent=s;
+    go.animate([{transform:'translate(-50%,-50%) scale(2.2)',opacity:0},
+      {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.4},
+      {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.7},
+      {transform:'translate(-50%,-50%) scale(.7)',opacity:0}],{duration:430});
+  },420+i*430)));
+  timers.push(setTimeout(finish,420+seq.length*430));
+}
+
 /* ---------- combat core ---------- */
 function aliveOf(side){return B.units.filter(u=>u.alive&&u.side===side)}
 function pickTarget(att){
@@ -4878,7 +5012,7 @@ function dealDamage(src,tgt,mult,opts={}){
   if(dmg>0){
     fxSpark(p.x+rnd(-8,8),p.y+rnd(-8,8),crit?'#ff9f2e':'#ffd23f',crit?60:42);
     fxFloat(tgt,'-'+dmg,crit?'var(--orange)':'#ff8a96',crit);
-    if(crit){shakeArena(7);SFX.crit()}else SFX.hit();
+    if(crit){shakeArena(8);fxRing(p.x,p.y,90,'var(--orange)');SFX.crit()}else SFX.hit(); // crit = sóng xung kích cam
   }
   if(tgt.hero&&tgt.hero.id==='spam')fxFloat(tgt,'🥫 leng keng!','var(--beige)');
   if(tgt.hp<=0){
@@ -4888,6 +5022,7 @@ function dealDamage(src,tgt,mult,opts={}){
     tgt.hp=0;tgt.alive=false;
     fxPoof(p.x,p.y,tgt.boss?1.8:1);SFX.death();
     blog(`💀 <b>${tgt.name}</b> gục! ${tgt.side==='en'?'(một cách rất hài hước)':''}`);
+    onUnitDeath(tgt);
     if(tgt.hero&&tgt.hero.id==='wifi'){ // No Signal: slow phe ĐỊCH của wifi (wifi có thể là rival arena)
       aliveOf(tgt.side==='pl'?'en':'pl').forEach(e=>{e.slow=Math.max(e.slow,2);refreshUnit(e)});
       fxRing(p.x,p.y,180,'var(--cyan)');
@@ -4992,7 +5127,7 @@ function startTurnStatus(u,units,live){
       if(live)fxFloat(u,'🔥-'+v,'var(--orange)')});
     u.dots=u.dots.filter(d=>d.dur>0);
     if(u.hp<=0){u.hp=0;u.alive=false;
-      if(live){refreshUnit(u);blog(`💀 ${u.name} bị nướng chín bởi vết bỏng!`)}
+      if(live){refreshUnit(u);blog(`💀 ${u.name} bị nướng chín bởi vết bỏng!`);onUnitDeath(u)}
       return{stunned:true}} // chết vì dot: khỏi hành động
     if(live)refreshUnit(u);
   }
@@ -5416,7 +5551,7 @@ function tick(){
 function checkEnd(){
   if(!B||B.over)return;
   const plA=aliveOf('pl').length,enA=aliveOf('en').length;
-  if(!plA||!enA){B.over=true;clearInterval(B.timer);setTimeout(()=>endBattle(plA>0),900/spd())}
+  if(!plA||!enA){B.over=true;clearInterval(B.timer);setTimeout(()=>endBattle(plA>0),B.finished?1250:900/spd())}
 }
 
 /* ================================================================
@@ -5723,6 +5858,7 @@ function endBattle(win){
   const node=B.node;
   const pandaAlive=B.units.some(u=>u.alive&&u.side==='pl'&&u.hero&&u.hero.id==='panda');
   const battleStats=statRows(unitsStats(B.units));
+  const mvp=mvpOf(B.units);
   B=null;
   const T=newTotals();
   grantRewards(node,win,pandaAlive,T);
@@ -5737,6 +5873,7 @@ function endBattle(win){
       <div style="font-size:54px">${win?'🏆':'🩹'}</div>
       <div class="rt ${win?'win':'lose'}">${win?'CHIẾN THẮNG!':'THUA RỒI'}</div>
       <div class="quip">"${quips[rnd(0,quips.length-1)]}"</div>
+      ${mvp?`<div class="mvpcard"><span class="mvpbadge">⭐ MVP</span>${sprite(mvp.art,52,false)}<div class="mvpinfo"><b>${mvp.name}</b><span>${WLANG==='vi'?'Sát thương':'Damage'} ${fmt(mvp.dmg)}${mvp.heal?` · ${WLANG==='vi'?'Hồi máu':'Heal'} ${fmt(mvp.heal)}`:''}</span></div></div>`:''}
       <div class="lootrow">${lootChips(T).map(l=>`<span class="lootchip">${l}</span>`).join('')}</div>
       ${win?'':lossTipsBox()}
       ${battleStats}
