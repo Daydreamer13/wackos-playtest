@@ -4108,6 +4108,11 @@ function openArena(){
       <button class="btn cy" style="width:100%" onclick="openNetJoin()">🚀 Tham gia BXH Online</button>
       <button class="btn sm gh" style="width:100%;margin-top:6px" onclick="openClaim()">🎟️ Mã nhận thưởng & chuyển máy</button>`}
     </div>
+    ${(()=>{const vi=WLANG==='vi';return `<div class="panel" style="margin:12px 0;border:2px dashed var(--purple);background:linear-gradient(135deg,#241830,#1b1426);opacity:.92" onclick="toast('${vi?'🛡️ Guild đang được xây — rủ bạn bè vào để sớm có băng đông vui nhé!':'🛡️ Guilds are in the works — bring friends so we hit the player count to launch them!'}')" >
+      <div style="display:flex;gap:10px;align-items:center"><span style="font-size:30px;filter:grayscale(.2)">🛡️</span>
+        <div style="flex:1;min-width:0"><b style="color:var(--purple)">${vi?'GUILD — SẮP RA MẮT':'GUILDS — COMING SOON'}</b> <span style="font-size:10px;background:var(--bg3);border:1px solid var(--purple);border-radius:99px;padding:1px 7px;color:var(--purple);font-weight:900">🔒 ${vi?'sắp có':'soon'}</span>
+        <p style="margin:3px 0 0;font-size:11.5px;color:var(--muted)">${vi?'Lập băng, đua BXH GUILD theo mùa, đánh boss băng & chia pool thưởng cùng nhau. Mở khi đủ đông người chơi — rủ thêm bạn nhé!':'Form a guild, climb the GUILD season leaderboard, fight guild bosses & share the prize pool. Unlocks once enough players join — invite friends!'}</p></div></div>
+    </div>`})()}
     <p style="margin:8px 0 0;font-size:12px;color:var(--muted)"><b>🤖 LUYỆN TẬP VỚI BOT</b> — Điểm: <b style="color:var(--yellow)">${S.arena.pts}</b> · ${arenaRank(S.arena.pts)} · còn <b>${left}/5</b> lượt hôm nay (miễn phí gas)</p>
     ${rvs.map((rv,i)=>{const t=ARENA_TIERS[i];return`
     <div class="panel" style="margin:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -8056,7 +8061,14 @@ async function openNetBoard(){
     const r=await netApi('/api/leaderboard'+(S.net?'?id='+S.net.id:''));
     if(!r||!r.top)throw 0;
     if(S.net&&r.me){S.net.tro=r.me.trophies;scheduleSave()}
-    $('net-bd').innerHTML=`<b>${r.total}</b> người chơi toàn cầu${S.net&&r.me?` · bạn đứng hạng <b style="color:var(--yellow)">#${r.me.rank}</b>`:''} — số liệu trực tiếp từ server.`;
+    const vi=WLANG==='vi';
+    if(r.season){const sn=r.season,dleft=Math.max(0,Math.ceil((sn.endAt-Date.now())/86400000)),myR=S.net&&r.me?r.me.reward:0;
+      $('net-bd').innerHTML=`<div class="skillbox" style="border-color:var(--yellow);margin:0 0 8px">
+        <h5 style="color:var(--yellow)">🏆 ${vi?'POOL THƯỞNG MÙA':'SEASON PRIZE POOL'} ${sn.no} — <b>${fmt(sn.pool)} $WACKO</b></h5>
+        <p style="font-size:11.5px;color:var(--muted)">${vi?'Pool lớn dần theo lượng $WACKO cả cộng đồng ĐỐT trong mùa (treasury bơm thêm) — cuối mùa chia cho TOP BXH.':'Pool grows with all the $WACKO the community BURNS this season (treasury matches) — paid to the TOP at season end.'} · 🔥 ${vi?'đã đốt':'burned'} ${fmt(sn.burned)} · ⏳ ${dleft} ${vi?'ngày':'days'}</p>
+        ${myR>0?`<p style="font-size:12px;color:var(--green);margin-top:3px">🎁 ${vi?'Hạng của bạn ăn':'Your rank earns'} <b>${fmt(myR)} $WACKO</b> ${vi?'nếu chốt bây giờ':'if it ended now'}</p>`:''}</div>
+        <b>${r.total}</b> ${vi?'người chơi toàn cầu':'players worldwide'}${S.net&&r.me?` · ${vi?'bạn hạng':'you are'} <b style="color:var(--yellow)">#${r.me.rank}</b>`:''}`;
+    }else $('net-bd').innerHTML=`<b>${r.total}</b> ${vi?'người chơi toàn cầu':'players worldwide'}.`;
     $('net-rows').innerHTML=r.top.map(x=>{
       const me=S.net&&r.me&&x.rank===r.me.rank&&x.name===r.me.name;
       const md=x.rank===1?'🥇':x.rank===2?'🥈':x.rank===3?'🥉':'#'+x.rank;
@@ -8064,6 +8076,7 @@ async function openNetBoard(){
       <span class="v" style="min-width:38px;text-align:left">${md}</span>
       <span class="nm2">${me?'🌟 ':''}${x.name}</span>
       <span style="font-size:11px;color:var(--muted);flex:1">⚡${fmt(x.power)} · ${x.wins}T/${x.losses}B</span>
+      ${x.reward>0?`<span class="v" style="color:var(--green);font-size:11px">🎁${fmt(x.reward)}</span>`:''}
       <span class="v" style="color:var(--yellow)">🏆 ${x.trophies}</span></div>`}).join('')
       +(S.net&&r.me&&r.me.rank>50?`<div class="statline" style="background:#1b2440;border-radius:10px;padding:6px 8px;margin-top:6px">
       <span class="v" style="min-width:38px;text-align:left">#${r.me.rank}</span><span class="nm2">🌟 ${r.me.name}</span>
