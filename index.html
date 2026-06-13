@@ -706,6 +706,16 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .pickcell .hcard{margin:0;flex:1} /* thẻ giãn bằng nhau theo hàng → nút thẳng đáy */
 .pickjoin{width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:4px;
   line-height:1.12;white-space:normal;text-align:center;flex-wrap:wrap} /* cùng chiều cao dù 1 hay 2 dòng */
+.hcard.bredout{opacity:.42;filter:grayscale(.65)} /* hero hết lượt breed */
+/* chỉ số cộng thêm (xanh) bên cạnh chỉ số gốc (trắng) */
+.statadd{color:var(--green);font-weight:900;font-size:.86em;margin-left:1px}
+/* chọn trang bị: xem chỉ số rồi mới bấm Lắp */
+.gpick{display:flex;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-top:7px}
+.gpick .gp-ico{flex:none}
+.gpick .gp-mid{flex:1;min-width:0}
+.gpick .gp-nm{font-size:13px}
+.gpick .gp-b{font-size:11px;color:var(--muted);line-height:1.45;margin-top:2px}
+.gpick .gp-eq{flex:none}
 /* 💞 GIƯỜNG breed — khung gỗ + nệm + chăn tím + gối trắng */
 .bed{position:relative;display:flex;align-items:flex-start;justify-content:center;gap:20px;
   padding:18px 22px 32px;margin:10px 0;border-radius:16px;
@@ -3797,12 +3807,13 @@ function openHero(uid){
       </div>
     </div>
     <div id="pd-chooser"></div>
-    <div class="statgrid">
-      <div class="stat">❤️ Máu <b>${fmt(s.hp)}</b></div>
-      <div class="stat">⚔️ Tấn công <b>${fmt(s.atk)}</b></div>
-      <div class="stat">🛡️ Phòng thủ <b>${fmt(s.def)}</b></div>
-      <div class="stat">⚡ Tốc độ <b>${s.spd}</b></div>
-    </div>
+    ${(()=>{const mm=(1+0.09*(inst.lvl-1))*RSTAT[inst.rarity]; // chỉ số GỐC (chưa đồ) — phần còn lại là cộng thêm từ đồ/set/rèn
+      const base={hp:Math.round(h.base.hp*mm),atk:Math.round(h.base.atk*mm),def:Math.round(h.base.def*mm),spd:h.base.spd};
+      const row=(e,lbl,bv,tv)=>{const d=Math.round(tv)-bv;return `<div class="stat">${e} ${lbl} <b>${fmt(bv)}</b>${d>0?`<span class="statadd">+${fmt(d)}</span>`:''}</div>`};
+      return `<div class="statgrid">
+        ${row('❤️','Máu',base.hp,s.hp)}${row('⚔️','Tấn công',base.atk,s.atk)}
+        ${row('🛡️','Phòng thủ',base.def,s.def)}${row('⚡','Tốc độ',base.spd,s.spd)}
+      </div>`})()}
     ${(()=>{const sets=activeSetsOf(inst.gear).filter(x=>x.bonus);
       return sets.length?`<div class="skillbox" style="border-color:var(--purple)"><h5 style="color:var(--purple)">🧩 Set bonus đang kích hoạt</h5>
         ${sets.map(x=>`<p style="font-size:12.5px">${x.name} (${x.have}/3): <b>${bonusTxt(x.bonus)}</b></p>`).join('')}</div>`:''})()}
@@ -3830,13 +3841,23 @@ function pdPick(uid,slot){
   pdSlot=slot;
   const cur=gearItem(inst,slot);
   const opts=invOfSlot(slot,true); // chỉ đồ CHƯA lắp ở đâu
+  const vi=WLANG==='vi';
+  const card=g=>{const it=ITEMS[g.id],fm=1+(g.plus||0)*FORGE_STEP;
+    return `<div class="gpick">
+      <span class="gp-ico">${itemIcon(g.id,38)}</span>
+      <div class="gp-mid">
+        <div class="gp-nm"><b>${it.name}${g.plus?` <span style="color:var(--orange)">+${g.plus}</span>`:''}</b> <span class="rar-${it.rarity}">●</span></div>
+        <div class="gp-b">📈 ${bonusTxt(it.bonus,fm)}${(g.subs&&g.subs.length)?'<br>✨ '+g.subs.map(subTxt).join(' · '):''}${g.affix?'<br>🎁 '+affixTxt(g.affix):''}</div>
+      </div>
+      <button class="btn sm cy gp-eq" onclick="equipItem(${uid},${g.uid})">⬇️ ${vi?'Lắp':'Equip'}</button>
+    </div>`};
   $('pd-chooser').innerHTML=`<div class="skillbox" style="border-color:var(--cyan);margin-top:14px">
-    <h5 style="color:var(--cyan)">${SLOT_VI[slot]} ${cur?`— <span class="rar-${ITEMS[cur.id].rarity}">${ITEMS[cur.id].name}${cur.plus?' +'+cur.plus:''}</span>`:'— ô đang trống'}
+    <h5 style="color:var(--cyan)">${SLOT_VI[slot]} ${cur?`— <span class="rar-${ITEMS[cur.id].rarity}">${ITEMS[cur.id].name}${cur.plus?' +'+cur.plus:''}</span>`:(vi?'— ô đang trống':'— empty')}
       <button class="close" style="float:right;width:24px;height:24px;font-size:11px" onclick="pdSlot=null;$('pd-chooser').innerHTML=''">✕</button></h5>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-      ${cur?`<button class="btn sm gh" onclick="unequipItem(${uid},'${slot}')">✕ Tháo ra</button>`:''}
-      ${opts.length?opts.map(g=>`<button class="btn sm gh" style="font-size:11.5px" onclick="equipItem(${uid},${g.uid})" title="bấm xem chi tiết / lắp">${itemLabel(g)}</button>`).join(''):'<span style="font-size:12px;color:var(--muted)">Không có đồ rảnh — chế ở 🩹 Xưởng.</span>'}
-    </div></div>`;
+    <p style="font-size:11px;color:var(--muted);margin:2px 0 0">${vi?'Xem chỉ số rồi bấm ⬇️ Lắp — không lắp nhầm nữa.':'Check the stats, then tap ⬇️ Equip.'}</p>
+    ${cur?`<button class="btn sm gh" style="margin:8px 0 2px" onclick="unequipItem(${uid},'${slot}')">✕ ${vi?'Tháo món đang lắp':'Unequip current'}</button>`:''}
+    ${opts.length?opts.map(card).join(''):`<p style="font-size:12px;color:var(--muted);margin-top:8px">${vi?'Không có đồ rảnh — chế ở 🩹 Xưởng.':'No spare gear — craft at the 🩹 Workshop.'}</p>`}
+  </div>`;
 }
 function heroBreed(uid){
   const inst=instById(uid);if(!inst)return;
@@ -6062,6 +6083,7 @@ function labTap(uid){
   const max=labMode==='enh'?ENH_NEED:labMode==='rec'?1:2;
   if(labSel.includes(uid)){labSel=labSel.filter(x=>x!==uid)}
   else{
+    if(labMode==='breed'&&instById(uid).breeds>=BREED_MAX)return toast(`${HEROES[instById(uid).heroId].name} đã hết lượt breed (${BREED_MAX}/${BREED_MAX}).`);
     if(labMode==='enh'&&labSel.length&&instById(uid).rarity!==instById(labSel[0]).rarity)
       return toast(`Enhance cần ${ENH_NEED} bản CÙNG rarity (đang chọn ${RNAME[instById(labSel[0]).rarity]}).`);
     if(labMode==='enh'&&!labSel.length&&rIdx(instById(uid).rarity)>=RARITY_CAP)
@@ -6147,10 +6169,14 @@ function renderLabGrid(){
   sortedRoster().forEach(inst=>{
     const sel=labSel.includes(inst.uid);
     if(labMode==='breed'){ // bấm thẻ = mở hồ sơ (nâng cấp tại chỗ) · nút riêng = lên/xuống giường
-      let inner=instCard(inst,`openHero(${inst.uid})`,sel?'sel':'');
-      inner=inner.replace('</div></div>',`</div><div class="q" style="min-height:auto">🧬 ${BREED_MAX-inst.breeds}/${BREED_MAX}</div></div>`);
+      const maxed=inst.breeds>=BREED_MAX; // hết lượt breed → làm mờ, không cho chọn
+      let inner=instCard(inst,`openHero(${inst.uid})`,(sel?'sel':'')+(maxed?' bredout':''));
+      inner=inner.replace('</div></div>',`</div><div class="q" style="min-height:auto">${maxed?'🚫 '+(vi?'hết lượt breed':'no breeds left'):'🧬 '+(BREED_MAX-inst.breeds)+'/'+BREED_MAX}</div></div>`);
       const low=inst.lvl<BREED_MIN_LVL;
-      g.innerHTML+=`<div class="pickcell">${inner}<button class="btn sm ${sel?'pu':'cy'} pickjoin" onclick="event.stopPropagation();labTap(${inst.uid})">${sel?(vi?'⤓ Xuống giường':'⤓ Off bed'):(vi?'💞 Lên giường':'💞 To bed')+(low?` ⚠️Lv${inst.lvl}`:'')}</button></div>`;
+      const btn=maxed
+        ? `<button class="btn sm gh pickjoin" disabled>🚫 ${vi?'Hết lượt breed':'No breeds left'}</button>`
+        : `<button class="btn sm ${sel?'pu':'cy'} pickjoin" onclick="event.stopPropagation();labTap(${inst.uid})">${sel?(vi?'⤓ Xuống giường':'⤓ Off bed'):(vi?'💞 Lên giường':'💞 To bed')+(low?` ⚠️Lv${inst.lvl}`:'')}</button>`;
+      g.innerHTML+=`<div class="pickcell">${inner}${btn}</div>`;
     }else{
       const isMain=labMode==='enh'&&sel&&labSel[0]===inst.uid;
       g.innerHTML+=instCard(inst,`labTap(${inst.uid})`,(sel?'sel':'')+(isMain?' main':''));
@@ -6704,6 +6730,10 @@ ui:{
 /* ---- $WACKO sink: chợ đen + phê duyệt + loa phường ---- */
 '🔥 Dùng $WACKO (đốt token)':'🔥 Spend $WACKO (burn token)',
 '📢 LOA PHƯỜNG':'📢 CITY LOUDSPEAKER','🔥 đốt':'🔥 burn',
+/* ---- nhãn sub-stat / affix (gear picker + item sheet) ---- */
+'🎯 Chí mạng':'🎯 Crit','🛡️ Thủ':'🛡️ Def','💥 Kỹ năng':'💥 Skill',
+'🩸 Hút máu':'🩸 Lifesteal','💨 Né đòn':'💨 Dodge','🔋 Khởi đầu energy':'🔋 Start energy','🪞 Phản đòn':'🪞 Reflect','🛡 Khiên mở màn':'🛡 Start shield','💀 Truy kích máu thấp':'💀 Execute',
+'Xem chỉ số rồi bấm ⬇️ Lắp — không lắp nhầm nữa.':'Check the stats, then tap ⬇️ Equip.',
 /* ---- ⚡ $WACKO năng lượng (thay Gas) ---- */
 '$WACKO (năng lượng)':'$WACKO (energy)',
 '⚡ Không đủ $WACKO. Chờ mỏ phế liệu hồi (idle theo cấp) hoặc nâng cấp tài khoản để tăng sản lượng nhé.':'⚡ Not enough $WACKO. Wait for your scrap mine to refill (idle scales with level), or level up to boost output.',
