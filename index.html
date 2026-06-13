@@ -1034,7 +1034,7 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
     </div>
     <div class="panel" style="margin-top:12px">
       <h2 class="sec" style="font-size:18px;margin:0 0 4px">📦 Kệ Hộp Hero</h2>
-      <p class="sub" style="margin-bottom:10px">📦 hộp ghép từ mảnh — mở ra <b>chọn 1 trong 3</b> · 🥚 trứng Lab nở theo giờ (2% sinh đôi!) · ♻️ hộp tái chế.</p>
+      <p class="sub" style="margin-bottom:10px">📦 hộp ghép từ mảnh — mở ra <b>chọn 1 trong 3</b> · 🥚 trứng Lab nở theo giờ (2% sinh đôi!) · ♻️ tái chế hero ra mảnh.</p>
       <div id="pieces-bar" style="font-size:14px;margin-bottom:10px"></div>
       <button class="btn sm" id="buildbox-btn" onclick="buildBoxFromPieces()">🧩 ×10 → Ghép Hộp Hero</button>
       <div class="boxgrid" id="boxshelf-list"></div>
@@ -2412,6 +2412,7 @@ const ENH_NEED=5;        // 5 bản CÙNG rarity -> 1 bản rarity cao hơn
 const PACE_DMG=1.45; // ~31% ít lượt hơn; áp cho cả player lẫn quái nên cân bằng giữ nguyên
 /* ---- Hộp Hero ---- */
 const PIECES_PER_BOX=10; // 10 mảnh hộp = 1 Hộp Hero (mở ra CHỌN 1 trong 3)
+const RECYCLE_PV={common:2,uncommon:3,rare:5,epic:8,legendary:12}; // ♻️ rã hero → mảnh hộp theo rarity (rã hero xịn được nhiều hơn)
 const enhCost=r=>600*(rIdx(r)+1); // phí junk theo bậc
 const HEROES={
   spam:{id:'spam',name:'Sir Spam-a-Lot',cls:'tank',starter:true,
@@ -6070,13 +6071,16 @@ function renderLab(){
   if(labMode==='rec'){
     const ready=labSel.length===2;
     const names=labSel.map(u=>{const i=instById(u);return `${HEROES[i.heroId].name} #${u} (${RNAME[i.rarity]})`});
-    const outR=ready?RNAME[RARITIES[Math.max(rIdx(instById(labSel[0]).rarity),rIdx(instById(labSel[1]).rarity))]]:null;
-    info.innerHTML=`<h3>♻️ Máy Tái Chế Bí Ẩn</h3>
-      <p class="sub">Bỏ <b>2 bản hero bất kỳ</b> vào, máy lắc lắc, nhả ra <b>1 hero NGẪU NHIÊN</b> bậc bằng bản cao nhất đưa vào. Máy có khẩu vị riêng: <b>70% ưu tiên nhả hero bạn CHƯA sở hữu</b>. Đừng hỏi nguyên lý hoạt động — kỹ sư trưởng là một con raccoon.</p>
-      <p style="font-size:13px;margin-top:6px">Đã chọn: ${names.length?names.join(' + '):'<i>chưa chọn ai (bấm vào thẻ bên dưới)</i>'}</p>
-      ${ready?`<p style="font-size:13px">→ Ra 1 hero ngẫu nhiên bậc <b>${outR}</b> · trang bị đang lắp tự về kho</p>`:''}
-      <button class="btn pu" style="margin-top:8px" ${ready&&S.junk>=500?'':'disabled'} onclick="doRecycle()">♻️ Tái chế! (500 🪙 phí vận hành)</button>
-      <p class="demonote" style="margin-top:6px">⚠️ 2 bản đưa vào biến mất vĩnh viễn. Level/skill của chúng không chuyển sang — máy không tinh vi đến thế.</p>`;
+    const gotP=ready?(RECYCLE_PV[instById(labSel[0]).rarity]||2)+(RECYCLE_PV[instById(labSel[1]).rarity]||2):0;
+    const vi=WLANG==='vi';
+    info.innerHTML=`<h3>♻️ ${vi?'Máy Tái Chế Bí Ẩn':'Mystery Recycler'}</h3>
+      <p class="sub">${vi
+        ?`Bỏ <b>2 bản hero bất kỳ</b> vào, máy rã chúng thành <b>🧩 mảnh hộp</b> (rarity càng cao càng nhiều mảnh). Gom <b>${PIECES_PER_BOX} mảnh</b> = 1 📦 Hộp Hero → mở ra <b>CHỌN 1 trong 3</b> — bạn tự quyết lấy ai!`
+        :`Drop in <b>any 2 hero copies</b> and the machine grinds them into <b>🧩 box pieces</b> (higher rarity = more pieces). Collect <b>${PIECES_PER_BOX} pieces</b> = 1 📦 Hero Box → open and <b>PICK 1 of 3</b> — your choice!`}</p>
+      <p style="font-size:13px;margin-top:6px">${vi?'Đã chọn':'Selected'}: ${names.length?names.join(' + '):`<i>${vi?'chưa chọn ai (bấm vào thẻ bên dưới)':'none yet (tap a card below)'}</i>`}</p>
+      ${ready?`<p style="font-size:13px">→ ${vi?'Rã thành':'Grinds into'} <b>+${gotP} 🧩 ${vi?'mảnh hộp':'pieces'}</b> (${vi?'đang có':'have'} ${S.pieces}/${PIECES_PER_BOX}) · ${vi?'trang bị đang lắp tự về kho':'equipped gear returns to storage'}</p>`:''}
+      <button class="btn pu" style="margin-top:8px" ${ready&&S.junk>=500?'':'disabled'} onclick="doRecycle()">♻️ ${vi?'Tái chế! (500 🪙 phí vận hành)':'Recycle! (500 🪙 fee)'}</button>
+      <p class="demonote" style="margin-top:6px">${vi?'⚠️ 2 bản đưa vào biến mất vĩnh viễn — nhưng đổi lấy quyền tự chọn hero ở Hộp.':'⚠️ The 2 copies are gone forever — but you trade them for the power to CHOOSE your hero.'} Common 2 · Uncommon 3 · Rare 5 · Epic 8 · Legend 12.</p>`;
     return renderLabGrid();
   }
   if(labMode==='breed'){
@@ -6137,14 +6141,16 @@ function doRecycle(){
   const a=instById(labSel[0]),b=instById(labSel[1]);
   if(!a||!b)return;
   if(a.minted||b.minted)return toast('⛓️ Hero đã mint NFT không tái chế được — bản đó giờ là tài sản trên chain!');
-  const outRar=RARITIES[Math.max(rIdx(a.rarity),rIdx(b.rarity))];
-  const inIds=[a.heroId,b.heroId];
+  const got=(RECYCLE_PV[a.rarity]||2)+(RECYCLE_PV[b.rarity]||2); // mảnh theo rarity 2 bản đưa vào
   S.junk-=500;
   removeInstance(labSel[0]);removeInstance(labSel[1]);
-  addBox('rec',outRar,{parents:inIds}); // mở ngay được — 70% ưu tiên hero chưa sở hữu lúc mở
+  S.pieces+=got;
   labSel=[];
-  SFX.breed();feat('recycle');
-  toast(`♻️ Máy lắc lắc, kêu vài tiếng đáng ngại... và nhả ra một <b>Hộp Tái Chế ${RNAME[outRar]}</b>! Mở ở 📦 Kệ Hộp (tab 🥫 Loot).`);
+  SFX.breed();feat('recycle');flashScreen('#b36bff',.25);navPulse('nb-loot');
+  const ready=S.pieces>=PIECES_PER_BOX,vi=WLANG==='vi';
+  toast(vi
+    ?`♻️ Máy lắc lắc, kêu vài tiếng đáng ngại... rã thành <b>+${got} 🧩 mảnh hộp</b>! (${S.pieces}/${PIECES_PER_BOX})${ready?' — đủ ghép 1 📦 Hộp Hero ở tab 🥫 Loot, CHỌN 1 trong 3!':''}`
+    :`♻️ The machine rattles ominously... and grinds out <b>+${got} 🧩 box pieces</b>! (${S.pieces}/${PIECES_PER_BOX})${ready?' — enough for a 📦 Hero Box in the 🥫 Loot tab, PICK 1 of 3!':''}`);
   renderLab();renderRes();
 }
 function doBreed(){
@@ -6833,7 +6839,7 @@ ui:{
 '🎲 Trong lon có gì?':'🎲 What\'s in the can?','🧩 3–5 mảnh hộp (10 mảnh = 1 📦 Hộp Hero) —':'🧩 3–5 box pieces (10 = 1 📦 Hero Box) —',
 '🩹 30–80 Băng keo —':'🩹 30–80 Duct Tape —','🎰 JACKPOT (đầy ⛽ + 2.500–3.500 🪙) —':'🎰 JACKPOT (full ⛽ + 2,500–3,500 🪙) —',
 '🗡️ Trang bị ngẫu nhiên —':'🗡️ Random gear —','📥 Kiếm từ đâu?':'📥 Where to earn it','📤 Tiêu vào đâu?':'📤 Where to spend it','Trong lon có tài nguyên + 🧩 mảnh hộp. Boss và nhiệm vụ cho thêm lon.':'Cans hold resources + 🧩 box pieces. Bosses and tasks give more cans.',
-'📦 hộp ghép từ mảnh — mở ra':'📦 boxes built from pieces — open and','chọn 1 trong 3':'pick 1 of 3','· 🥚 trứng Lab nở theo giờ (2% sinh đôi!) · ♻️ hộp tái chế.':'· 🥚 Lab eggs hatch on a timer (2% twins!) · ♻️ recycle boxes.',
+'📦 hộp ghép từ mảnh — mở ra':'📦 boxes built from pieces — open and','chọn 1 trong 3':'pick 1 of 3','· 🥚 trứng Lab nở theo giờ (2% sinh đôi!) · ♻️ tái chế hero ra mảnh.':'· 🥚 Lab eggs hatch on a timer (2% twins!) · ♻️ recycle heroes into pieces.',
 '🧩 Mảnh hộp:':'🧩 Box pieces:','🧩 ×10 → Ghép Hộp Hero':'🧩 ×10 → Build a Hero Box','Kệ trống. Ghép hộp từ 🧩 mảnh, hoặc 💞 đẻ trứng ở Lab.':'Shelf is empty. Build boxes from 🧩 pieces, or 💞 breed eggs in the Lab.',
 '— Đủ ghép 1 📦 Hộp Hero ngay bên dưới!':'— Enough to build 1 📦 Hero Box below!','📦 Hộp bật nắp... 3 ứng viên nhảy ra!':'📦 The box pops open... 3 candidates jump out!',
 '👯 SINH ĐÔI!!':'👯 TWINS!!','🧬 ĐỘT BIẾN!!':'🧬 MUTATION!!','🐣 TRỨNG NỞ!':'🐣 HATCHED!','📦 MỞ HỘP!':'📦 BOX OPENED!',
