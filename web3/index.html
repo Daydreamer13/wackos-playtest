@@ -720,6 +720,18 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .pickcell{display:flex;flex-direction:column;gap:6px}
 .pickcell .hcard{margin:0}
 .pickjoin{width:100%}
+/* 💞 giường breed */
+.bed{position:relative;display:flex;align-items:flex-end;justify-content:center;gap:16px;
+  background:linear-gradient(180deg,#3a2740,#241830);border:3px solid #7a4e2e;border-radius:18px 18px 8px 8px;
+  padding:16px 18px 14px;margin:10px 0}
+.bed::after{content:'';position:absolute;left:10px;right:10px;bottom:8px;height:13px;background:rgba(179,107,255,.32);border-radius:6px;z-index:1}
+.bedslot{position:relative;z-index:2;min-width:96px;display:flex;flex-direction:column;align-items:center;gap:1px;
+  background:rgba(255,255,255,.05);border:2px dashed var(--line);border-radius:12px;padding:8px 6px;transition:.15s}
+.bedslot.filled{border-style:solid;border-color:var(--purple);cursor:pointer}
+.bedslot.filled:hover{transform:translateY(-2px)}
+.bedslot.low{border-color:var(--red)}
+.bedheart{z-index:2;font-size:24px;align-self:center;animation:beat 1.4s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
 
 @media (max-width:560px){
   .arena{height:375px}
@@ -3853,6 +3865,7 @@ function refreshActiveView(){ // render lại view đang mở phía sau modal �
   if(id==='heroes'){renderHeroes();renderTeam()}
   else if(id==='hub')renderHub();
   else if(id==='battle')renderMap();
+  else if(id==='lab')renderLab(); // nâng cấp hero ngay trong Lab (breed) → giường + grid cập nhật level
 }
 function upgradeHero(uid){
   const inst=instById(uid),c=upCost(uid);
@@ -6080,7 +6093,7 @@ function renderLab(){
       <p style="font-size:13px;margin-top:6px">${vi?'Đã chọn':'Selected'}: ${names.length?names.join(' + '):`<i>${vi?'chưa chọn ai (bấm vào thẻ bên dưới)':'none yet (tap a card below)'}</i>`}</p>
       ${ready?`<p style="font-size:13px">→ ${vi?'Rã thành':'Grinds into'} <b>+${gotP} 🧩 ${vi?'mảnh hộp':'pieces'}</b> (${vi?'đang có':'have'} ${S.pieces}/${PIECES_PER_BOX}) · ${vi?'trang bị đang lắp tự về kho':'equipped gear returns to storage'}</p>`:''}
       <button class="btn pu" style="margin-top:8px" ${ready&&S.junk>=500?'':'disabled'} onclick="doRecycle()">♻️ ${vi?'Tái chế! (500 🪙 phí vận hành)':'Recycle! (500 🪙 fee)'}</button>
-      <p class="demonote" style="margin-top:6px">${vi?'⚠️ 2 bản đưa vào biến mất vĩnh viễn — nhưng đổi lấy quyền tự chọn hero ở Hộp.':'⚠️ The 2 copies are gone forever — but you trade them for the power to CHOOSE your hero.'} Common 2 · Uncommon 3 · Rare 5 · Epic 8 · Legend 12.</p>`;
+      <p class="demonote" style="margin-top:6px">${vi?'⚠️ Bản hero đưa vào biến mất vĩnh viễn — nhưng đổi lấy quyền tự chọn hero ở Hộp.':'⚠️ The hero copy is gone forever — but you trade it for the power to CHOOSE your hero.'} Common 2 · Uncommon 3 · Rare 5 · Epic 8 · Legend 12.</p>`;
     return renderLabGrid();
   }
   if(labMode==='breed'){
@@ -6095,17 +6108,28 @@ function renderLab(){
       const tA=rIdx(a.rarity),tB=rIdx(b.rarity),hiT=Math.max(tA,tB);
       add(tA,48.5);add(tB,48.5);add(hiT+1,2.5);add(hiT+2,0.5);
       const probTxt=RARITIES.filter(r=>probs[r]).map(r=>`<b>${+probs[r].toFixed(1)}%</b> ${RNAME[r]}`).join(' · ');
-      preview=`<p style="font-size:13px;margin-top:8px">Hero trong trứng: <b>49%</b> ${HEROES[a.heroId].name} · <b>49%</b> ${HEROES[b.heroId].name} · <b style="color:var(--purple)">2%</b> 🧬 đột biến ra hero khác hẳn!<br>
-        Rarity TRỨNG (di truyền từ cặp này): ${probTxt}${hiT+1>RARITY_CAP?' <span style="color:var(--muted)">(đụng trần Rare)</span>':' ✨'}
-        ${(a.lvl<BREED_MIN_LVL||b.lvl<BREED_MIN_LVL)?`<br><b style="color:var(--red)">⚠️ Cần cả hai đạt Lv ${BREED_MIN_LVL} (đang Lv ${a.lvl} & Lv ${b.lvl})</b>`:''}</p>`;
+      const pv=WLANG==='vi';
+      preview=`<p style="font-size:13px;margin-top:8px">${pv?'Hero trong trứng':'Hero in the egg'}: <b>49%</b> ${HEROES[a.heroId].name} · <b>49%</b> ${HEROES[b.heroId].name} · <b style="color:var(--purple)">2%</b> 🧬 ${pv?'đột biến ra hero khác hẳn!':'mutation into a totally different hero!'}<br>
+        ${pv?'Rarity TRỨNG (di truyền từ cặp này)':'EGG rarity (inherited from this pair)'}: ${probTxt}${hiT+1>RARITY_CAP?` <span style="color:var(--muted)">(${pv?'đụng trần Rare':'capped at Rare'})</span>`:' ✨'}
+        ${(a.lvl<BREED_MIN_LVL||b.lvl<BREED_MIN_LVL)?`<br><b style="color:var(--red)">⚠️ ${pv?`Cần cả hai đạt Lv ${BREED_MIN_LVL} (đang Lv ${a.lvl} & Lv ${b.lvl})`:`Both must reach Lv ${BREED_MIN_LVL} (now Lv ${a.lvl} & Lv ${b.lvl})`}</b>`:''}</p>`;
     }
+    const vi=WLANG==='vi';
+    const bedSlot=(uid)=>{
+      if(uid==null)return `<div class="bedslot"><span style="font-size:30px;opacity:.4">＋</span><small style="color:var(--muted)">${vi?'chọn hero':'pick hero'}</small></div>`;
+      const i=instById(uid),h=HEROES[i.heroId],low=i.lvl<BREED_MIN_LVL;
+      return `<div class="bedslot filled${low?' low':''}" onclick="labTap(${uid})" title="${vi?'bấm để cho xuống giường':'tap to remove'}">
+        ${sprite(i.heroId,60)}<b style="font-size:11px;text-align:center">${h.name}</b>
+        <span style="font-size:10px;color:${low?'var(--red)':'var(--yellow)'}">Lv${i.lvl}${low?' ⚠️':''}</span></div>`;
+    };
     info.innerHTML=`
-      <h4>💞 Breed — 2 hero đẻ 1 quả TRỨNG 🥚</h4>
-      <p style="font-size:13px;color:var(--muted);margin-top:4px">Cần cả bố lẫn mẹ <b>Lv ${BREED_MIN_LVL}+</b> · bố mẹ KHÔNG mất, mỗi bản đẻ tối đa ${BREED_MAX} lần · trứng <b>ấp ${INCUBATE_MIN.join('/')} phút</b> theo lần đẻ rồi nở ở 📦 Kệ Hộp · <b>2% SINH ĐÔI!</b> Phí breed cao hơn theo rarity bố mẹ · vượt cấp rất hiếm.</p>
-      <p style="font-size:13px;margin-top:6px">Đã chọn: ${names.length?names.join(' + '):'<i>chưa chọn ai</i>'}</p>
+      <h4>💞 Breed — ${vi?'2 hero lên giường → 1 quả TRỨNG':'2 heroes to bed → 1 EGG'} 🥚</h4>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:3px">${vi
+        ?`Bấm <b>💞 Lên giường</b> ở thẻ bên dưới để chọn bố/mẹ · bấm vào <b>thẻ hero</b> để xem & <b>nâng cấp</b> (chưa đủ Lv${BREED_MIN_LVL} thì nâng tại chỗ). Bố mẹ KHÔNG mất, mỗi bản đẻ tối đa ${BREED_MAX} lần · trứng ấp ${INCUBATE_MIN.join('/')} phút · 2% SINH ĐÔI!`
+        :`Tap <b>💞 To bed</b> on a card to pick a parent · tap the <b>card</b> to view & <b>upgrade</b> (level it up in place if under Lv${BREED_MIN_LVL}). Parents are NOT consumed, ${BREED_MAX} breeds each · egg hatches ${INCUBATE_MIN.join('/')} min · 2% TWINS!`}</p>
+      <div class="bed">${bedSlot(labSel[0])}<span class="bedheart">💞</span>${bedSlot(labSel[1])}</div>
       ${preview}
-      <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap">
-        <span style="font-size:13px;color:var(--beige)">Phí: ${ready?`🪙 ${fmt(breedCost(instById(labSel[0]),instById(labSel[1])).junk)} + 🩹 ${breedCost(instById(labSel[0]),instById(labSel[1])).tape}`:`🪙 ${fmt(BREED_BASE.junk)}+ · 🩹 ${BREED_BASE.tape}+ (theo rarity)`}</span>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--beige)">${vi?'Phí':'Cost'}: ${ready?`🪙 ${fmt(breedCost(instById(labSel[0]),instById(labSel[1])).junk)} + 🩹 ${breedCost(instById(labSel[0]),instById(labSel[1])).tape}`:`🪙 ${fmt(BREED_BASE.junk)}+ · 🩹 ${BREED_BASE.tape}+`}</span>
         <button class="btn sm pu" onclick="doBreed()" ${ready?'':'disabled'}>💞 Breed!</button>
       </div>`;
   }else{
@@ -6124,14 +6148,18 @@ function renderLab(){
 }
 function renderLabGrid(){
   const g=$('lab-grid');g.innerHTML='';
+  const vi=WLANG==='vi';
   sortedRoster().forEach(inst=>{
     const sel=labSel.includes(inst.uid);
-    const isMain=labMode==='enh'&&sel&&labSel[0]===inst.uid;
-    let card=instCard(inst,`labTap(${inst.uid})`,(sel?'sel':'')+(isMain?' main':''));
-    if(labMode==='breed'){
-      card=card.replace('</div></div>',`</div><div class="q" style="min-height:auto">🧬 còn ${BREED_MAX-inst.breeds}/${BREED_MAX} lần</div></div>`);
+    if(labMode==='breed'){ // bấm thẻ = mở hồ sơ (nâng cấp tại chỗ) · nút riêng = lên/xuống giường
+      let inner=instCard(inst,`openHero(${inst.uid})`,sel?'sel':'');
+      inner=inner.replace('</div></div>',`</div><div class="q" style="min-height:auto">🧬 ${BREED_MAX-inst.breeds}/${BREED_MAX}</div></div>`);
+      const low=inst.lvl<BREED_MIN_LVL;
+      g.innerHTML+=`<div class="pickcell">${inner}<button class="btn sm ${sel?'pu':'cy'} pickjoin" onclick="event.stopPropagation();labTap(${inst.uid})">${sel?(vi?'⤓ Xuống giường':'⤓ Off bed'):(vi?'💞 Lên giường':'💞 To bed')+(low?` ⚠️Lv${inst.lvl}`:'')}</button></div>`;
+    }else{
+      const isMain=labMode==='enh'&&sel&&labSel[0]===inst.uid;
+      g.innerHTML+=instCard(inst,`labTap(${inst.uid})`,(sel?'sel':'')+(isMain?' main':''));
     }
-    g.innerHTML+=card;
   });
   if(!S.roster.length)g.innerHTML='<div class="citem"><h4>Chưa có hero nào</h4><p>Đi săn mảnh từ Mystery Cans!</p></div>';
 }
