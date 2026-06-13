@@ -1004,6 +1004,7 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
     <div class="hqscene">
       <div class="hq-sign">📋 HỒ SƠ QUÂN ĐOÀN — <span id="hq-count">0</span></div>
       <div class="filterbar" id="hero-filter"></div>
+      <div class="filterbar" id="hero-rarfilter"></div>
       <div class="hgrid" id="hero-grid"></div>
     </div>
     <div class="panel" style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
@@ -3698,25 +3699,40 @@ function instCard(inst,onclick,extraCls=''){
     <span class="tag ${h.cls}">${CLS_VI[h.cls]}</span>
     <div class="q">${h.quote}</div></div>`;
 }
-let heroFilter='';
+let heroFilter='',heroRar='';
 function setHeroFilter(c){heroFilter=c;renderHeroes()}
+function setHeroRar(r){heroRar=r;renderHeroes()}
 const HERO_FCHIPS=[['','🌐'],['tank','🛡️'],['dps','⚔️'],['support','💚'],['controller','🎯'],['assassin','🗡️']];
+function rarVar(r){return'var(--r-'+(r==='legendary'?'leg':r)+')'}
 function renderHeroes(){
   const g=$('hero-grid');g.innerHTML='';
   const vi=WLANG==='vi';
-  // thanh lọc theo class
+  const mCls=i=>!heroFilter||HEROES[i.heroId].cls===heroFilter;
+  const mRar=i=>!heroRar||i.rarity===heroRar;
+  // thanh lọc theo class (số đếm tôn trọng bộ lọc bậc đang chọn)
   const fb=$('hero-filter');
   if(fb){
-    const cnt=c=>c?S.roster.filter(i=>HEROES[i.heroId].cls===c).length:S.roster.length;
+    const cnt=c=>S.roster.filter(i=>mRar(i)&&(!c||HEROES[i.heroId].cls===c)).length;
     fb.innerHTML=HERO_FCHIPS.map(([c,e])=>{
       const lbl=c?CLS_VI[c]:(vi?'Tất cả':'All');
       return`<button class="fchip ${heroFilter===c?'on':''}" onclick="setHeroFilter('${c}')">${e} ${lbl} <span class="fcount">${cnt(c)}</span></button>`;
     }).join('');
   }
-  let list=sortedRoster();
-  if(heroFilter)list=list.filter(i=>HEROES[i.heroId].cls===heroFilter);
+  // thanh lọc theo bậc (chỉ hiện bậc người chơi đang sở hữu; số đếm tôn trọng bộ lọc class)
+  const rf=$('hero-rarfilter');
+  if(rf){
+    const present=RARITIES.filter(r=>S.roster.some(i=>i.rarity===r));
+    const cnt=r=>S.roster.filter(i=>mCls(i)&&(!r||i.rarity===r)).length;
+    const chips=[['',vi?'Mọi bậc':'Any']].concat(present.map(r=>[r,RNAME[r]]));
+    rf.innerHTML=chips.map(([r,lbl])=>{
+      const on=heroRar===r,col=r?rarVar(r):'';
+      const sty=r?`border-color:${col};color:${col}${on?';background:var(--bg2)':''}`:(on?'background:var(--bg2);border-color:var(--yellow);color:var(--yellow)':'');
+      return`<button class="fchip${on?' on':''}" style="${sty}" onclick="setHeroRar('${r}')">${r?'●':'◇'} ${lbl} <span class="fcount">${cnt(r)}</span></button>`;
+    }).join('');
+  }
+  let list=sortedRoster().filter(i=>mCls(i)&&mRar(i));
   list.forEach(inst=>{g.innerHTML+=instCard(inst,`openHero(${inst.uid})`)});
-  if(!list.length)g.innerHTML=`<div style="grid-column:1/-1;padding:22px 10px;text-align:center;color:var(--muted);font-weight:700">${vi?'Không có hero loại này — đổi bộ lọc nhé':'No heroes of this class — try another filter'}</div>`;
+  if(!list.length)g.innerHTML=`<div style="grid-column:1/-1;padding:22px 10px;text-align:center;color:var(--muted);font-weight:700">${vi?'Không có hero khớp bộ lọc — đổi lại nhé':'No heroes match — adjust the filters'}</div>`;
   const cnt=$('hq-count');if(cnt)cnt.textContent=S.roster.length+' bản hero';
   const hp=$('hq-pieces');if(hp)hp.textContent=S.pieces;
   const hpb=$('hq-piecesbar');if(hpb)hpb.style.width=Math.min(100,S.pieces/PIECES_PER_BOX*100)+'%';
@@ -5986,8 +6002,9 @@ function salvageInstance(uid){
   toast(`♻️ Rã ${it.e} ${it.name}: +${fmt(rj)} 🪙${rt?` +${rt} 🩹`:''}${ru?` +${ru} 🔋`:''}.`);
   if(S.net)netSync();renderRes();renderCraft();
 }
-let craftSet='';
+let craftSet='',craftRar='';
 function setCraftFilter(k){craftSet=k;renderCraft()}
+function setCraftRar(r){craftRar=r;renderCraft()}
 let craftTab='shop';
 function setCraftTab(t){craftTab=t;renderCraft()}
 function renderCraft(){
@@ -6049,11 +6066,23 @@ function renderCraft(){
       h+=`<div class="shelf-label" style="color:#9be39b;margin:2px 14px 0;text-transform:none;letter-spacing:0;font-size:11.5px">🔗 ${vi?'Mặc 2 món':'2 pieces'}: ${setBonusTxt(s.b2)} · ${vi?'đủ 3 món':'3 pieces'}: ${setBonusTxt(s.b3)}</div>`;
     }
   }
+  // thanh lọc theo BẬC (rarity) — kết hợp với set
+  {
+    const vi=WLANG==='vi';
+    const present=RARITIES.filter(r=>Object.values(ITEMS).some(it=>it.rarity===r&&(!craftSet||ITEM_SET_OF[it.id]===craftSet)));
+    const chips=[['',vi?'Mọi bậc':'Any']].concat(present.map(r=>[r,RNAME[r]]));
+    h+=`<div class="filterbar" style="margin:6px 12px 4px">`+chips.map(([r,lbl])=>{
+      const on=craftRar===r,col=r?rarVar(r):'';
+      const sty=r?`border-color:${col};color:${col}${on?';background:var(--bg2)':''}`:(on?'background:var(--bg2);border-color:var(--yellow);color:var(--yellow)':'');
+      return`<button class="fchip${on?' on':''}" style="${sty}" onclick="setCraftRar('${r}')">${r?'●':'◇'} ${lbl}</button>`;
+    }).join('')+`</div>`;
+  }
+  const itemMatch=it=>(!craftSet||ITEM_SET_OF[it.id]===craftSet)&&(!craftRar||it.rarity===craftRar);
   // kệ 2–4: xưởng chế theo slot
   SLOTS.forEach(sl=>{
-    if(craftSet&&!Object.values(ITEMS).some(it=>it.slot===sl&&ITEM_SET_OF[it.id]===craftSet))return;
+    if(!Object.values(ITEMS).some(it=>it.slot===sl&&itemMatch(it)))return;
     h+=`<div class="shelf"><div class="shelf-label">${SLOT_VI[sl]} — xưởng chế</div><div class="shelf-row">`;
-    Object.values(ITEMS).filter(it=>it.slot===sl&&!it.locked&&(!craftSet||ITEM_SET_OF[it.id]===craftSet)).sort((a,b)=>rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
+    Object.values(ITEMS).filter(it=>it.slot===sl&&!it.locked&&itemMatch(it)).sort((a,b)=>rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
       const own=invCount(it.id);
       h+=`<div class="shitem">
         ${own?`<span class="si-own">×${own}</span>`:''}
@@ -6065,7 +6094,7 @@ function renderCraft(){
         <span class="si-rar" style="background:var(--r-${it.rarity==='legendary'?'leg':it.rarity})"></span></div>`;
     });
     // teaser Epic/Legendary (locked) — hé lộ trần đồ
-    Object.values(ITEMS).filter(it=>it.slot===sl&&it.locked&&(!craftSet||ITEM_SET_OF[it.id]===craftSet)).sort((a,b)=>rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
+    Object.values(ITEMS).filter(it=>it.slot===sl&&it.locked&&itemMatch(it)).sort((a,b)=>rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
       h+=`<div class="shitem sold" onclick="openItemSheet('${it.id}')" title="${it.name} — sắp mở" style="cursor:pointer">
         <span class="si-left">🔒</span>
         <span class="si-click"><span class="si-e" style="filter:grayscale(.5) brightness(.85)">${it.e}</span>
