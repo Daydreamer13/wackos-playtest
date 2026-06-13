@@ -538,6 +538,10 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .shop-bubble{position:relative;background:#f4ead8;color:#3a2a14;border-radius:14px;padding:9px 13px;
   font-size:13px;font-weight:700;line-height:1.4;border:2px solid #c9b690}
 .shop-bubble::before{content:'';position:absolute;left:-11px;top:16px;border:6px solid transparent;border-right-color:#c9b690}
+.crafttabs{display:flex;gap:7px;margin:6px 12px 4px}
+.ctab{flex:1;text-align:center;padding:10px 8px;border-radius:11px;background:var(--bg3);border:1.5px solid var(--line);font-weight:900;font-size:13.5px;color:var(--muted);cursor:pointer;transition:.13s}
+.ctab:active{transform:scale(.97)}
+.ctab.on{background:var(--bg2);border-color:var(--yellow);color:var(--yellow);box-shadow:0 0 0 2px rgba(247,201,72,.13)}
 .filterbar{display:flex;gap:6px;flex-wrap:wrap;margin:0 2px 11px;padding:0 2px}
 .fchip{background:var(--bg3);border:1.5px solid var(--line);border-radius:99px;padding:5px 11px;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;transition:.13s;white-space:nowrap;line-height:1.1}
 .fchip:active{transform:scale(.94)}
@@ -719,6 +723,7 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 .gpick .gp-ico{flex:none}
 .gpick .gp-mid{flex:1;min-width:0}
 .gpick .gp-nm{font-size:13px}
+.gpick .gp-set{font-size:10px;font-weight:800;color:var(--purple);background:rgba(155,108,224,.14);border:1px solid rgba(155,108,224,.35);border-radius:6px;padding:1px 5px;white-space:nowrap;vertical-align:middle}
 .gpick .gp-b{font-size:11px;color:var(--muted);line-height:1.45;margin-top:2px}
 .gpick .gp-eq{flex:none}
 /* 💞 GIƯỜNG breed — khung gỗ + nệm + chăn tím + gối trắng */
@@ -3866,10 +3871,11 @@ function pdPick(uid,slot){
   const opts=invOfSlot(slot,true); // chỉ đồ CHƯA lắp ở đâu
   const vi=WLANG==='vi';
   const card=g=>{const it=ITEMS[g.id],fm=1+(g.plus||0)*FORGE_STEP;
+    const sk=ITEM_SET_OF[g.id];
     return `<div class="gpick">
       <span class="gp-ico">${itemIcon(g.id,38)}</span>
       <div class="gp-mid">
-        <div class="gp-nm"><b>${it.name}${g.plus?` <span style="color:var(--orange)">+${g.plus}</span>`:''}</b> <span class="rar-${it.rarity}">●</span></div>
+        <div class="gp-nm"><b>${it.name}${g.plus?` <span style="color:var(--orange)">+${g.plus}</span>`:''}</b> <span class="rar-${it.rarity}">●</span>${sk?` <span class="gp-set">${ITEM_SETS[sk].name}</span>`:''}</div>
         <div class="gp-b">📈 ${bonusTxt(it.bonus,fm)}${(g.subs&&g.subs.length)?'<br>✨ '+g.subs.map(subTxt).join(' · '):''}${g.affix?'<br>🎁 '+affixTxt(g.affix):''}</div>
       </div>
       <button class="btn sm cy gp-eq" onclick="equipItem(${uid},${g.uid})">⬇️ ${vi?'Lắp':'Equip'}</button>
@@ -5982,10 +5988,18 @@ function salvageInstance(uid){
 }
 let craftSet='';
 function setCraftFilter(k){craftSet=k;renderCraft()}
+let craftTab='shop';
+function setCraftTab(t){craftTab=t;renderCraft()}
 function renderCraft(){
   if(!S.daily.shop)S.daily.shop={};
   $('shop-talk').innerHTML=`<b>🦫:</b> "${SHOP_TALK[dayHash()%SHOP_TALK.length]}" <span style="font-size:11px;opacity:.7">· hàng đổi mỗi ngày</span>`;
   let h='';
+  const vlang=WLANG==='vi';
+  h+=`<div class="crafttabs">
+    <button class="ctab ${craftTab==='shop'?'on':''}" onclick="setCraftTab('shop')">🛒 ${vlang?'Tiệm':'Shop'}</button>
+    <button class="ctab ${craftTab==='work'?'on':''}" onclick="setCraftTab('work')">🔨 ${vlang?'Xưởng chế':'Workshop'}</button>
+  </div>`;
+  if(craftTab==='shop'){
   // kệ 1: hàng tiệm hôm nay (mở sau Snack Town)
   if(!isU('shop')){
     h+=`<div class="shelf"><div class="shelf-label">🦫 Hàng hôm nay</div>
@@ -6020,6 +6034,8 @@ function renderCraft(){
     });
     h+=`</div></div>`;
   }
+  } // hết tab Tiệm
+  if(craftTab==='work'){
   // thanh lọc theo BỘ trang bị (set)
   {
     const vi=WLANG==='vi';
@@ -6059,6 +6075,7 @@ function renderCraft(){
     });
     h+=`</div></div>`;
   });
+  } // hết tab Xưởng
   h+=`<div style="height:16px"></div>`;
   $('shelves').innerHTML=h;
 }
