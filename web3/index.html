@@ -6575,6 +6575,11 @@ ui:{
 '⛓️ Đã nối ví':'⛓️ Wallet connected:','— MegaETH testnet!':'— MegaETH testnet!','📡 Đang tải…':'📡 Loading…',
 /* ---- $WACKO sink: chợ đen + phê duyệt + loa phường ---- */
 '🔥 Dùng $WACKO (đốt token)':'🔥 Spend $WACKO (burn token)',
+'📢 LOA PHƯỜNG':'📢 CITY LOUDSPEAKER','🔥 đốt':'🔥 burn',
+'Phát một dòng chạy trên bảng tin TOÀN THÀNH PHỐ — mọi người chơi đều thấy.':'Broadcast a line across the WHOLE CITY ticker — every player sees it.',
+'📢 Phát loa toàn thành phố':'📢 Broadcast city-wide','📢 Đang phát…':'📢 Broadcasting…',
+'Đốt token vĩnh viễn (testnet). Cooldown 3 phút/lần. Nội dung bị lọc ký tự lạ.':'Burns token permanently (testnet). 3-min cooldown. Content is sanitized.',
+'📢 Nhập nội dung đã (tối thiểu 2 ký tự)!':'📢 Type a message first (min 2 chars)!',
 '✍️ Phê duyệt chi $WACKO (1 lần)':'✍️ Approve $WACKO spending (once)',
 '📢 Loa phường — phát thông điệp toàn thành phố (đốt 200)':'📢 City Loudspeaker — broadcast a message city-wide (burn 200)',
 '🚧 Tạm tắt — sẽ mở lại sau. Hiện $WACKO tập trung làm':'🚧 Temporarily off — back later. For now $WACKO is the in-game',
@@ -7735,22 +7740,40 @@ async function w3Burn(amount,reason){
   }catch(e){toast('🔥 Đốt lỗi mạng.');return false}
 }
 function w3Ready(){return !!(S.net&&S.w3&&S.w3.addr)} // đã đủ điều kiện dùng $WACKO chưa
-async function w3Shout(){ // loa phường: đốt $WACKO phát thông điệp chạy trên bảng tin mọi người
+const SHOUT_COST=200;
+function w3Shout(){ // loa phường: modal trong game (không dùng prompt() mặc định)
   if(!w3Ready())return toast('⛓️ Nối ví ở ⛓️ Ví trước để phát loa toàn thành phố!');
-  const COST=200;
-  const msg=(prompt(`📢 LOA PHƯỜNG — phát 1 dòng chạy trên bảng tin TOÀN THÀNH PHỐ (mọi người chơi đều thấy).\nĐốt ${COST} $WACKO. Nhập nội dung (tối đa 80 ký tự):`)||'').trim();
-  if(!msg)return;
+  $('hd-modal').innerHTML=`
+    <button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <h3>📢 LOA PHƯỜNG</h3>
+    <p class="sub">Phát một dòng chạy trên bảng tin TOÀN THÀNH PHỐ — mọi người chơi đều thấy.</p>
+    <input id="shout-msg" maxlength="80" placeholder="VD: Trùm Bãi Rác vừa ghé qua 👑"
+      style="width:100%;padding:11px;border-radius:10px;border:2px solid var(--purple);background:var(--bg3);color:var(--text);font-family:inherit;font-size:15px;margin:10px 0 4px"
+      oninput="var c=$('shout-count');if(c)c.textContent=this.value.length+'/80'">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
+      <span id="shout-count">0/80</span><span>🔥 đốt <b style="color:var(--purple)">${SHOUT_COST} $WACKO</b></span></div>
+    <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:14px">
+      <button class="btn pu" style="width:100%" onclick="w3ShoutSend()">📢 Phát loa toàn thành phố</button>
+    </div>
+    <p class="demonote" style="margin-top:8px">Đốt token vĩnh viễn (testnet). Cooldown 3 phút/lần. Nội dung bị lọc ký tự lạ.</p>`;
+  openModal('hd-bg');
+  setTimeout(()=>{const i=$('shout-msg');if(i)i.focus()},60);
+}
+async function w3ShoutSend(){
+  const i=$('shout-msg');const msg=((i&&i.value)||'').trim();
+  if(msg.length<2)return toast('📢 Nhập nội dung đã (tối thiểu 2 ký tự)!');
   if(w3Busy)return;w3Busy=true;
+  const btn=document.querySelector('#hd-modal .btn.pu');if(btn){btn.disabled=true;btn.textContent='📢 Đang phát…'}
   try{
-    toast('📢 Đang đốt $WACKO & phát loa…');
-    const r=await netApi('/nft/wacko-shout',{id:S.net.id,secret:S.net.secret,msg,amount:COST});
-    if(r&&r.ok){toast(`📢 Đã lên sóng toàn thành phố! Đốt ${COST} $WACKO · tx ${w3TxLink(r.tx)}`);SFX.jackpot&&SFX.jackpot();loadShouts(true)}
+    const r=await netApi('/nft/wacko-shout',{id:S.net.id,secret:S.net.secret,msg,amount:SHOUT_COST});
+    if(r&&r.ok){toast(`📢 Đã lên sóng toàn thành phố! Đốt ${SHOUT_COST} $WACKO · tx ${w3TxLink(r.tx)}`);SFX.jackpot&&SFX.jackpot();loadShouts(true);closeModal('hd-bg')}
     else if(r&&r.err==='need_approve'){toast('✋ Cần phê duyệt chi $WACKO 1 lần trước — mở ⛓️ Ví.');openWallet()}
     else if(r&&r.err==='cooldown')toast(`⏳ Vừa phát loa xong — chờ ~${r.wait} phút nữa.`);
     else if(r&&r.err==='low_balance')toast('💸 Không đủ $WACKO. Claim thêm ở ⛓️ Ví!');
     else toast('📢 Phát loa lỗi: '+(r&&r.err||'mạng'));
   }catch(e){toast('📢 Phát loa lỗi mạng.')}
   w3Busy=false;
+  if(btn){btn.disabled=false;btn.textContent='📢 Phát loa toàn thành phố'}
 }
 async function openWallet(){
   $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
