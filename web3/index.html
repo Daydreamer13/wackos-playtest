@@ -6179,10 +6179,14 @@ function openBox(uid){
     return toast(`🥚 Trứng chưa nở — còn ~${mins} phút. Kiên nhẫn, khoa học cần thời gian ấp.`);
   }
   if(b.t==='std'){ // mở ra 3 ứng viên — CHỌN 1
-    const ids=Object.keys(HEROES),picks=[];
-    while(picks.length<3&&picks.length<ids.length){
-      const h=ids[rnd(0,ids.length-1)];if(!picks.includes(h))picks.push(h);
+    if(!b.picks){ // 🔒 roll 3 ứng viên MỘT LẦN rồi khóa vào hộp — đóng/mở lại KHÔNG đổi (chống re-roll)
+      const ids=Object.keys(HEROES),picks=[];
+      while(picks.length<3&&picks.length<ids.length){
+        const h=ids[rnd(0,ids.length-1)];if(!picks.includes(h))picks.push(h);
+      }
+      b.picks=picks;scheduleSave();
     }
+    const picks=b.picks;
     $('hd-modal').innerHTML=`
       <button class="close" onclick="closeModal('hd-bg')">✕</button>
       <h3>📦 Hộp bật nắp... 3 ứng viên nhảy ra!</h3>
