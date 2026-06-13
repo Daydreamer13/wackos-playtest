@@ -6051,14 +6051,14 @@ function goLab(m){
   labMode=m;labSel=[];renderLab();
 }
 function labTap(uid){
-  const max=labMode==='enh'?ENH_NEED:2;
+  const max=labMode==='enh'?ENH_NEED:labMode==='rec'?1:2;
   if(labSel.includes(uid)){labSel=labSel.filter(x=>x!==uid)}
   else{
     if(labMode==='enh'&&labSel.length&&instById(uid).rarity!==instById(labSel[0]).rarity)
       return toast(`Enhance cần ${ENH_NEED} bản CÙNG rarity (đang chọn ${RNAME[instById(labSel[0]).rarity]}).`);
     if(labMode==='enh'&&!labSel.length&&rIdx(instById(uid).rarity)>=RARITY_CAP)
       return toast('🔒 Rare là bậc cao nhất bản này — Epic & Legendary mở sau!');
-    if(labSel.length>=max)return toast(labMode==='breed'?'Breed chỉ cần đúng 2 bố mẹ.':'Đủ 5 bản rồi!');
+    if(labSel.length>=max)return toast(labMode==='breed'?'Breed chỉ cần đúng 2 bố mẹ.':labMode==='rec'?'Tái chế mỗi lần 1 hero thôi.':'Đủ 5 bản rồi!');
     labSel.push(uid);
   }
   renderLab();
@@ -6069,14 +6069,14 @@ function renderLab(){
   $('labtab-rec').className='btn sm'+(labMode==='rec'?'':' gh')+(isU('recycle')?'':' locked');
   const info=$('lab-info');
   if(labMode==='rec'){
-    const ready=labSel.length===2;
+    const ready=labSel.length===1;
     const names=labSel.map(u=>{const i=instById(u);return `${HEROES[i.heroId].name} #${u} (${RNAME[i.rarity]})`});
-    const gotP=ready?(RECYCLE_PV[instById(labSel[0]).rarity]||2)+(RECYCLE_PV[instById(labSel[1]).rarity]||2):0;
+    const gotP=ready?(RECYCLE_PV[instById(labSel[0]).rarity]||2):0;
     const vi=WLANG==='vi';
     info.innerHTML=`<h3>♻️ ${vi?'Máy Tái Chế Bí Ẩn':'Mystery Recycler'}</h3>
       <p class="sub">${vi
-        ?`Bỏ <b>2 bản hero bất kỳ</b> vào, máy rã chúng thành <b>🧩 mảnh hộp</b> (rarity càng cao càng nhiều mảnh). Gom <b>${PIECES_PER_BOX} mảnh</b> = 1 📦 Hộp Hero → mở ra <b>CHỌN 1 trong 3</b> — bạn tự quyết lấy ai!`
-        :`Drop in <b>any 2 hero copies</b> and the machine grinds them into <b>🧩 box pieces</b> (higher rarity = more pieces). Collect <b>${PIECES_PER_BOX} pieces</b> = 1 📦 Hero Box → open and <b>PICK 1 of 3</b> — your choice!`}</p>
+        ?`Bỏ <b>1 bản hero</b> vào, máy rã nó thành <b>🧩 mảnh hộp</b> (rarity càng cao càng nhiều mảnh). Gom <b>${PIECES_PER_BOX} mảnh</b> = 1 📦 Hộp Hero → mở ra <b>CHỌN 1 trong 3</b> — bạn tự quyết lấy ai!`
+        :`Drop in <b>1 hero copy</b> and the machine grinds it into <b>🧩 box pieces</b> (higher rarity = more pieces). Collect <b>${PIECES_PER_BOX} pieces</b> = 1 📦 Hero Box → open and <b>PICK 1 of 3</b> — your choice!`}</p>
       <p style="font-size:13px;margin-top:6px">${vi?'Đã chọn':'Selected'}: ${names.length?names.join(' + '):`<i>${vi?'chưa chọn ai (bấm vào thẻ bên dưới)':'none yet (tap a card below)'}</i>`}</p>
       ${ready?`<p style="font-size:13px">→ ${vi?'Rã thành':'Grinds into'} <b>+${gotP} 🧩 ${vi?'mảnh hộp':'pieces'}</b> (${vi?'đang có':'have'} ${S.pieces}/${PIECES_PER_BOX}) · ${vi?'trang bị đang lắp tự về kho':'equipped gear returns to storage'}</p>`:''}
       <button class="btn pu" style="margin-top:8px" ${ready&&S.junk>=500?'':'disabled'} onclick="doRecycle()">♻️ ${vi?'Tái chế! (500 🪙 phí vận hành)':'Recycle! (500 🪙 fee)'}</button>
@@ -6136,14 +6136,14 @@ function renderLabGrid(){
   if(!S.roster.length)g.innerHTML='<div class="citem"><h4>Chưa có hero nào</h4><p>Đi săn mảnh từ Mystery Cans!</p></div>';
 }
 function doRecycle(){
-  if(labSel.length!==2)return toast('Chọn đúng 2 bản hero để tái chế.');
+  if(labSel.length!==1)return toast('Chọn 1 bản hero để tái chế.');
   if(S.junk<500)return toast('🪙 Thiếu 500 phí vận hành. Con raccoon kỹ sư trưởng không làm miễn phí.');
-  const a=instById(labSel[0]),b=instById(labSel[1]);
-  if(!a||!b)return;
-  if(a.minted||b.minted)return toast('⛓️ Hero đã mint NFT không tái chế được — bản đó giờ là tài sản trên chain!');
-  const got=(RECYCLE_PV[a.rarity]||2)+(RECYCLE_PV[b.rarity]||2); // mảnh theo rarity 2 bản đưa vào
+  const a=instById(labSel[0]);
+  if(!a)return;
+  if(a.minted)return toast('⛓️ Hero đã mint NFT không tái chế được — bản đó giờ là tài sản trên chain!');
+  const got=(RECYCLE_PV[a.rarity]||2); // mảnh theo rarity bản đưa vào
   S.junk-=500;
-  removeInstance(labSel[0]);removeInstance(labSel[1]);
+  removeInstance(labSel[0]);
   S.pieces+=got;
   labSel=[];
   SFX.breed();feat('recycle');flashScreen('#b36bff',.25);navPulse('nb-loot');
