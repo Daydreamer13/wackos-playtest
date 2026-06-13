@@ -731,7 +731,7 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 <div class="app">
 
   <div class="topbar">
-    <div class="res" onclick="openResInfo('gas')" title="Gas Cans — bấm xem chi tiết"><span class="ico">⛽</span><span class="gas-fill" id="r-gas">0</span>/<span id="r-gasmax">100</span></div>
+    <div class="res" onclick="openResInfo('gas')" title="$WACKO năng lượng — bấm xem chi tiết"><span class="ico">⚡</span><span class="gas-fill" id="r-gas">0</span>/<span id="r-gasmax">100</span></div>
     <div class="res" onclick="openResInfo('junk')" title="Junk Coins — bấm xem chi tiết"><span class="ico">🪙</span><span id="r-junk">0</span></div>
     <div class="res" onclick="openResInfo('juice')" title="Battery Juice — bấm xem chi tiết"><span class="ico">🔋</span><span id="r-juice">0</span></div>
     <div class="res" onclick="openResInfo('tape')" title="Duct Tape — bấm xem chi tiết"><span class="ico">🩹</span><span id="r-tape">0</span></div>
@@ -3080,9 +3080,7 @@ function itemIcon(id,w=46){
 const RW=i=>`<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g stroke="${INK}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">${i}</g></svg>`;
 /* mọi icon vẽ trong hộp ~28×28 quanh tâm (20,20) — cùng khối lượng thị giác để xếp hàng thẳng */
 const RES_ART_SVG={
-gas:RW(`<rect x="6" y="12" width="28" height="22" rx="4" fill="#e23d4e"/>
-  <rect x="9" y="6" width="10" height="8" rx="2.5" fill="#8d97ad"/>
-  <path d="M20 17 q6 7 0 12 q-6 -5 0 -12 Z" fill="#fff" stroke-width="2"/>`),
+gas:RW(`<path d="M23 4 L10 23 h7.5 l-3.5 13 L30 17 h-8 l5 -13 Z" fill="#ffd23f" stroke-linejoin="round"/>`),
 junk:RW(`<circle cx="20" cy="20" r="14" fill="#ffd23f"/>
   <circle cx="20" cy="20" r="9.2" fill="none" stroke="#c79a14" stroke-width="2.2"/>
   <path d="M20 13.8 l5.4 3.1 v6.2 l-5.4 3.1 l-5.4 -3.1 v-6.2 Z" fill="#c79a14" stroke-width="2"/>
@@ -3211,7 +3209,7 @@ const S={
   net:null, // tài khoản online: {id,secret,name,tro} — đăng ký qua Đấu Trường Online
   w3:null, // ví web3 đã link: {addr} — MegaETH testnet
   pendingSeasonWin:false,tut:0,sfx:true,
-  daily:{pve:0,upg:0,can:0,boss:0,craft:0,dgn:false,shop:{},arena:0,trash:0,claimed:{},bonus:false},
+  daily:{pve:0,upg:0,can:0,boss:0,craft:0,dgn:false,shop:{},arena:0,trash:0,claimed:{},bonus:false,wackoSpent:0},
 };
 /* ---------- vòng đời mùa ---------- */
 const SEASON_DEFS=[ // xoay vòng theo (seasonNo-1)%len
@@ -3591,9 +3589,9 @@ setTimeout(()=>{const lb=document.querySelector('.hs-ticker');if(lb){lb.style.cu
 
 /* ---------- modal thông tin tài nguyên (bấm chip topbar) ---------- */
 const RES_INFO={
-  gas:{e:'⛽',name:'Gas Cans',quip:'Nhiên liệu của mọi cuộc phiêu lưu. Hero không chạy bằng cơm — chạy bằng xăng.',
-    earn:['⏱️ Tự hồi 1 mỗi 10 giây (demo — bản thật: 10 phút)','🌅 +30 khi sang ngày mới','🌟 +20 mỗi lần lên cấp tài khoản','🎁 +20 từ rương nhiệm vụ ngày','🎰 Jackpot lon bí ẩn: đầy bình ngay','🛢️ Bình tối đa +10 mỗi 5 cấp (trần 200)'],
-    spend:['⚔️ Trận campaign: 5–20 ⛽','🗼 Tháp Hỗn Mang: 4 ⛽/tầng','🕳️ Hầm ngày: 12 ⛽','🎭 Meme Arena: MIỄN PHÍ (5 lượt/ngày)']},
+  gas:{e:'⚡',name:'$WACKO (năng lượng)',quip:'Đồng $WACKO bạn KIẾM IDLE theo thời gian và TIÊU khi chơi. Lên cấp tài khoản = mỏ phế liệu chạy mạnh hơn = sản lượng cao hơn.',
+    earn:['⏱️ Idle tự sinh theo thời gian — SẢN LƯỢNG TĂNG THEO CẤP','🌅 +30 khi sang ngày mới','🌟 +20 mỗi lần lên cấp tài khoản (+ tăng sản lượng idle)','🎁 +20 từ rương nhiệm vụ ngày','🎰 Jackpot lon bí ẩn: đầy kho ngay','🛢️ Kho tối đa +10 mỗi 5 cấp (trần 200)'],
+    spend:['⚔️ Trận campaign: 5–20 ⚡','🗼 Tháp Hỗn Mang: 4 ⚡/tầng','🕳️ Hầm ngày: 12 ⚡','🎭 Meme Arena: MIỄN PHÍ (5 lượt/ngày)','🔥 Càng tiêu nhiều trong NGÀY → mỗi hành động càng đắt (chống phá đảo bằng kho), reset nửa đêm']},
   junk:{e:'🪙',name:'Junk Coins',quip:'Tiền tệ chính thức của vùng đất hoang. Làm từ nắp chai, niềm tin và phế liệu ép khối.',
     earn:['⚔️ Thắng trận (mọi chế độ)','🎭 Arena 5 lượt miễn phí/ngày','🥫 Lon bí ẩn (30%)','✅ Nhiệm vụ ngày','♻️ Rã trang bị (hoàn 50%)','🗑️ Lục thùng rác ở Hub (5 lần/ngày)'],
     spend:['⬆️ Nâng level hero (sink chính)','🔨 Chế trang bị','💞 Breed 800 · ♻️ Tái chế 500 · ⬆️ Enhance 600×bậc','🦫 Tiệm Chú Hải Ly']},
@@ -3613,8 +3611,14 @@ function openResInfo(k){
   let extra='';
   if(k==='gas'){
     const miss=S.maxGas-Math.floor(S.gas);
-    extra=`<div class="skillbox" style="border-color:var(--orange)"><h5 style="color:var(--orange)">⏱️ Đồng hồ xăng</h5>
-      <p>${miss<=0?'Bình ĐẦY — đi đốt xăng thôi, để tràn là phí!':`Đầy bình sau <b>${Math.floor(miss*7/60)>0?Math.floor(miss*7/60)+' giờ ':''}${Math.round(miss*7%60)} phút</b> nữa (1 ⛽/7 phút — nhịp bản chính thức).`}</p></div>`;
+    const perMin=wackoRate()/1440;
+    const m=perMin>0?Math.ceil(miss/perMin):0,hh=Math.floor(m/60),mm=m%60;
+    const surge=energySurge();const vi=WLANG==='vi';
+    const full=vi?(hh>0?hh+' giờ ':'')+mm+' phút':(hh>0?hh+'h ':'')+mm+'m';
+    extra=`<div class="skillbox" style="border-color:var(--orange)"><h5 style="color:var(--orange)">${vi?'⏱️ Mỏ phế liệu (idle)':'⏱️ Scrap Mine (idle)'}</h5>
+      <p>${vi?'Sản lượng':'Output'}: <b>${fmt(wackoRate())} ⚡/${vi?'ngày':'day'}</b> (${vi?'cấp':'lvl'} ${S.plv}) · ${miss<=0?(vi?'KHO ĐẦY — đi tiêu thôi!':'STORAGE FULL — go spend it!'):(vi?'đầy sau ':'full in ')+'<b>'+full+'</b>'}<br>
+      ${vi?'⬆️ Lên cấp tài khoản để tăng sản lượng + kho chứa.':'⬆️ Level up your account to raise output + storage.'}</p></div>
+      ${surge>1?`<div class="skillbox" style="border-color:var(--red)"><h5 style="color:var(--red)">🔥 ${vi?'Giá đang':'Price now'} ×${surge.toFixed(1)}</h5><p>${vi?'Hôm nay tiêu nhiều → mỗi hành động đắt hơn (chống phá đảo bằng kho). Reset ×1 lúc nửa đêm.':'Spent a lot today → each action costs more (anti-steamroll). Resets to ×1 at midnight.'}</p></div>`:''}`;
   }
   if(k==='cans'){
     extra=`<div class="skillbox" style="border-color:var(--yellow)"><h5 style="color:var(--yellow)">🎲 Trong lon có gì?</h5>
@@ -4321,7 +4325,7 @@ function openNodeSheet(id){
     <div class="skillbox"><h5 style="color:var(--yellow)">🎁 Phần thưởng</h5><p>${n.rwTxt} · ✨ ${n.rw.xp} XP</p></div>
     ${winChanceTag(n)}
     <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:14px">
-      <button class="btn ${n.boss?'pu':''}" onclick="closeModal('hd-bg');startBattle('${id}')" ${S.busy?'disabled':''}>⚔️ Đánh — ${n.gas} ⛽</button>
+      <button class="btn ${n.boss?'pu':''}" onclick="closeModal('hd-bg');startBattle('${id}')" ${S.busy?'disabled':''}>⚔️ Đánh — ${energyCost(n.gas)} ⚡${energySurge()>1?' 🔥':''}</button>
       ${beaten?`<button class="btn cy" onclick="closeModal('hd-bg');openRaid('${id}')" ${S.busy?'disabled':''}>⚡ Nhanh ×N</button>`:''}
     </div>
     ${beaten?'':'<p class="demonote" style="margin-top:8px">⚡ Đánh nhanh sẽ mở sau khi bạn phá màn này lần đầu — trận đầu phải xem đội quẩy chứ!</p>'}`;
@@ -4338,10 +4342,10 @@ function openDgnSheet(){
       <div class="quote">${d.desc}</div></div>
     </div>
     <div class="skillbox"><h5 style="color:var(--cyan)">🎁 Phần thưởng</h5>
-      <p>${d.rw.juice?'🔋 Juice lớn · ':''}${d.rw.tape?'🩹 Băng keo lớn · ':''}${d.rw.pieces?'🧩 6–10 mảnh hộp · ':''}${d.rw.cans?'🥫 Mystery Can · ':''}${d.rw.xp>=200?'⭐ XP lớn · ':''}🪙 — 1 lượt thắng/ngày · thua không tốn lượt · 12 ⛽</p></div>
+      <p>${d.rw.juice?'🔋 Juice lớn · ':''}${d.rw.tape?'🩹 Băng keo lớn · ':''}${d.rw.pieces?'🧩 6–10 mảnh hộp · ':''}${d.rw.cans?'🥫 Mystery Can · ':''}${d.rw.xp>=200?'⭐ XP lớn · ':''}🪙 — 1 lượt thắng/ngày · thua không tốn lượt · 12 ⚡</p></div>
     ${teamLegal(dungeonNode()).ok?winChanceTag(dungeonNode()):'<div class="skillbox" style="border-color:var(--orange)"><h5 style="color:var(--orange)">⚠️ Đội chưa hợp luật hầm</h5><p style="font-size:12px">Chỉnh đội theo luật ở trên rồi vào.</p></div>'}
     <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:14px">
-      <button class="btn cy" onclick="closeModal('hd-bg');startBattle(dungeonNode())" ${done||S.busy?'disabled':''}>⚔️ Vào hầm — 12 ⛽</button>
+      <button class="btn cy" onclick="closeModal('hd-bg');startBattle(dungeonNode())" ${done||S.busy?'disabled':''}>⚔️ Vào hầm — ${energyCost(12)} ⚡</button>
       <button class="btn gh" onclick="closeModal('hd-bg');quickBattle(dungeonNode(),1)" ${done||S.busy?'disabled':''}>⚡ Đánh nhanh</button>
     </div>`;
   openModal('hd-bg');
@@ -4355,7 +4359,7 @@ function openTowerSheet(){
       <div class="quote">Leo càng cao quái càng dị (đổi màu mỗi tầng!). Mỗi 5 tầng có boss + thưởng đậm.</div></div>
     </div>
     <div class="skillbox"><h5 style="color:var(--purple)">📊 Tiến độ</h5>
-      <p>Đang ở tầng <b>${S.tower.floor}</b> · Kỷ lục: <b>${S.tower.best?'tầng '+S.tower.best:'chưa leo lần nào'}</b> · 4 ⛽/tầng · thưởng tăng theo độ cao</p></div>
+      <p>Đang ở tầng <b>${S.tower.floor}</b> · Kỷ lục: <b>${S.tower.best?'tầng '+S.tower.best:'chưa leo lần nào'}</b> · ${energyCost(4)} ⚡/tầng · thưởng tăng theo độ cao</p></div>
     ${winChanceTag(towerNode())}
     <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:14px">
       <button class="btn pu" onclick="closeModal('hd-bg');startTower()" ${S.busy?'disabled':''}>⚔️ Leo tầng ${S.tower.floor}</button>
@@ -4491,6 +4495,14 @@ function buildUnits(node){
   return units;
 }
 
+/* ===== ⚡ $WACKO NĂNG LƯỢNG (thay Gas — bản web3 Hybrid) =====
+   Idle nhận theo thời gian, SẢN LƯỢNG tăng theo cấp; hành động tốn $WACKO;
+   chống steamroll: càng tiêu nhiều trong ngày càng đắt (surge), reset nửa đêm.
+   Đây là $WACKO "trong game" (off-chain). $WACKO on-chain (ví) là lớp claim/Chợ Đen. */
+function wackoRate(){return 180+S.plv*6}                 // ⚡/ngày idle (cấp1≈186 ~ gas cũ, cấp40≈420)
+function energySurge(){return Math.min(4,1+0.5*Math.floor((S.daily.wackoSpent||0)/wackoRate()))}
+function energyCost(base){return base<=0?0:Math.max(1,Math.round(base*energySurge()))} // giá thực sau surge
+function spendEnergy(c){S.gas-=c;S.daily.wackoSpent=(S.daily.wackoSpent||0)+c}
 function startBattle(nodeId){
   if(S.busy)return;
   const node=typeof nodeId==='object'?nodeId:NODES.find(n=>n.id===nodeId);
@@ -4499,9 +4511,10 @@ function startBattle(nodeId){
   if(node.dungeon&&S.daily.dgn)return toast('Hầm hôm nay đã xong! Quay lại sau nửa đêm — ca mới, hầm mới.');
   if(node.arena&&!node.pvpOid){if((S.daily.arena||0)>=5)return toast('Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.');S.daily.arena=(S.daily.arena||0)+1}
   const L=teamLegal(node);if(!L.ok)return toast(L.msg);
-  if(S.gas<node.gas)return toast('⛽ Hero của bạn đói quá, không nhấc nổi mông. Chờ Gas hồi nhé.');
+  const ec=energyCost(node.gas);
+  if(S.gas<ec)return toast('⚡ Không đủ $WACKO. Chờ mỏ phế liệu hồi (idle theo cấp) hoặc nâng cấp tài khoản để tăng sản lượng nhé.');
   feat(node.arena?'arena':node.dungeon?'dgn':node.tower?'tower':'battle');
-  S.gas-=node.gas;S.busy=true;ac();renderRes();renderMap();
+  spendEnergy(ec);S.busy=true;ac();renderRes();renderMap();
 
   B={node,units:buildUnits(node),queue:[],over:false,ticks:0};
   setupArena(); // setupArena tự quyết nút ⏭ theo trạng thái đã-phá của màn
@@ -5486,8 +5499,9 @@ function towerRush(){ // tự leo bằng sim đến khi thua / hết gas / tối
   const T=newTotals();let climbed=0,startFloor=S.tower.floor;
   for(let i=0;i<20;i++){
     const node=towerNode();
-    if(S.gas<node.gas)break;
-    S.gas-=node.gas;
+    const ec=energyCost(node.gas);
+    if(S.gas<ec)break;
+    spendEnergy(ec);
     const units=buildUnits(node);
     const win=simLoop(units);
     const pandaAlive=units.some(u=>u.alive&&u.side==='pl'&&u.hero&&u.hero.id==='panda');
@@ -5518,27 +5532,29 @@ function openRaid(nodeId){
   if(S.busy)return toast('Đang có trận — xem xong hoặc bấm ⏭ Hoàn thành ngay đã.');
   if(!teamIds().length)return toast('Đội hình trống! Vào tab 🦸 Heroes thêm người đã.');
   const node=NODES.find(x=>x.id===nodeId);
-  if(S.gas<node.gas)return toast('⛽ Không đủ gas cho dù chỉ 1 lượt. Chờ hồi nhé.');
+  if(S.gas<energyCost(node.gas))return toast('⚡ Không đủ $WACKO cho dù chỉ 1 lượt. Chờ hồi nhé.');
   raidNodeId=nodeId;raidN=1;renderRaid();openModal('raid-bg');
 }
 function setRaidN(n){raidN=n;renderRaid()}
 function renderRaid(){
   const node=NODES.find(x=>x.id===raidNodeId);
-  const maxN=Math.max(1,Math.floor(S.gas/node.gas));
+  const per=energyCost(node.gas);
+  const maxN=Math.max(1,Math.floor(S.gas/per));
   if(raidN>maxN)raidN=maxN;
   let opts=[1,3,5,10].filter(n=>n<=maxN);
   if(!opts.includes(maxN))opts.push(maxN);
   opts=[...new Set(opts)].sort((a,b)=>a-b);
+  const vi=WLANG==='vi',surgeNote=energySurge()>1?(vi?' 🔥(giá cao do dùng nhiều hôm nay)':' 🔥(pricier — used a lot today)'):'';
   $('raid-modal').innerHTML=`
     <button class="close" onclick="closeModal('raid-bg')">✕</button>
-    <h3 style="font-size:20px">⚡ Đánh nhanh — ${node.name}</h3>
-    <p class="sub" style="margin-top:6px">Mô phỏng kết quả ngay, khỏi xem trận. ${node.gas} ⛽/lượt · đang có ${Math.floor(S.gas)} ⛽.</p>
+    <h3 style="font-size:20px">⚡ ${vi?'Đánh nhanh':'Quick clear'} — ${node.name}</h3>
+    <p class="sub" style="margin-top:6px">${vi?'Mô phỏng kết quả ngay, khỏi xem trận.':'Instant results, skip the fight.'} ${per} ⚡/${vi?'lượt':'run'}${surgeNote} · ${vi?'đang có':'you have'} ${Math.floor(S.gas)} ⚡.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
       ${opts.map(n=>`<button class="btn sm ${n===raidN?'cy':'gh'}" onclick="setRaidN(${n})">×${n}${n===maxN&&opts.length>1&&n>1?' (max)':''}</button>`).join('')}
     </div>
-    <div class="panel" style="margin-bottom:14px">Tổng chi: <b style="color:var(--orange)">${node.gas*raidN} ⛽</b> cho <b>${raidN}</b> lượt</div>
-    <button class="btn" style="width:100%" onclick="quickBattle('${node.id}',${raidN})">⚡ Quét ×${raidN}!</button>
-    <p class="demonote" style="text-align:center">Kết quả từng lượt tính y hệt trận thường (cùng công thức, cùng tỉ lệ thắng thua).</p>`;
+    <div class="panel" style="margin-bottom:14px">${vi?'Tổng chi':'Total'}: <b style="color:var(--orange)">${per*raidN} ⚡</b> ${vi?'cho':'for'} <b>${raidN}</b> ${vi?'lượt':'runs'}</div>
+    <button class="btn" style="width:100%" onclick="quickBattle('${node.id}',${raidN})">⚡ ${vi?'Quét':'Sweep'} ×${raidN}!</button>
+    <p class="demonote" style="text-align:center">${vi?'Kết quả từng lượt tính y hệt trận thường (cùng công thức, cùng tỉ lệ thắng thua).':'Each run uses the exact same formula and odds as a normal battle.'}</p>`;
 }
 function quickBattle(nodeId,n){
   if(S.busy)return;
@@ -5548,9 +5564,9 @@ function quickBattle(nodeId,n){
   if(node.dungeon&&S.daily.dgn)return toast('Hầm hôm nay đã xong! Quay lại sau nửa đêm — ca mới, hầm mới.');
   if(node.arena&&!node.pvpOid){if((S.daily.arena||0)>=5)return toast('Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.');S.daily.arena=(S.daily.arena||0)+1}
   const L=teamLegal(node);if(!L.ok)return toast(L.msg);
-  const cost=node.gas*n;
-  if(S.gas<cost)return toast(`⛽ Cần ${cost} gas cho ${n} lượt (đang có ${Math.floor(S.gas)}).`);
-  S.gas-=cost;
+  const per=energyCost(node.gas),cost=per*n;
+  if(S.gas<cost)return toast(`⚡ Cần ${cost} $WACKO cho ${n} lượt (đang có ${Math.floor(S.gas)}).`);
+  spendEnergy(cost);
   feat(node.arena?'arena':node.dungeon?'dgn':'battle');if(n>1)feat('sweep');
   const T=newTotals();
   for(let i=0;i<n;i++){
@@ -5570,7 +5586,7 @@ function quickBattle(nodeId,n){
     <div class="result">
       <div style="font-size:54px">⚡</div>
       <div class="rt ${T.wins?'win':'lose'}">QUÉT NHANH ×${n}</div>
-      <div class="quip">Thắng <b>${T.wins}/${n}</b> trận · tốn ${cost} ⛽ — "${quip}"</div>
+      <div class="quip">Thắng <b>${T.wins}/${n}</b> trận · tốn ${cost} ⚡ — "${quip}"</div>
       <div class="lootrow">${lootChips(T).map(l=>`<span class="lootchip">${l}</span>`).join('')}</div>
       ${T.wins===0?lossTipsBox():''}
       ${statRows(Object.values(T.stats))}
@@ -5612,8 +5628,8 @@ function addXp(v){
   while(S.xp>=S.plv*100){S.xp-=S.plv*100;S.plv++;leveled=true;
     S.gas=Math.min(S.maxGas,S.gas+20);
     if(S.plv%5===0&&S.maxGas<200){S.maxGas=Math.min(200,S.maxGas+10);
-      toast(`🌟 Lên <b>cấp ${S.plv}</b>! +20 ⛽ và 🛢️ <b>bình xăng +10</b> (mốc mỗi 5 cấp)!`)}
-    else toast(`🌟 Lên <b>cấp ${S.plv}</b>! +20 ⛽ · trần level hero giờ là Lv ${S.plv+4}.`)}
+      toast(`🌟 Lên <b>cấp ${S.plv}</b>! +20 ⚡ $WACKO · 🛢️ kho +10 · ⛏️ sản lượng idle giờ ${fmt(wackoRate())}/ngày!`)}
+    else toast(`🌟 Lên <b>cấp ${S.plv}</b>! +20 ⚡ $WACKO · ⛏️ sản lượng idle ${fmt(wackoRate())}/ngày · trần level hero Lv ${S.plv+4}.`)}
   if(leveled)SFX.levelup();
   renderRes();
 }
@@ -5700,8 +5716,8 @@ function BLACK_MARKET(){
     {key:'can',e:'🥫',name:'Mystery Can ×2',wacko:300,desc:'Hai lon từ "kho riêng" của hải ly. Đốt token, đừng hỏi nguồn gốc.',give:()=>{S.cans+=2}},
     {key:'piece',e:'🧩',name:'Mảnh Hộp ×6',wacko:200,desc:'Gom đủ 10 mảnh ghép 1 Hộp Hero.',give:()=>{S.pieces+=6}},
     {key:'juice',e:'🔋',name:'Battery Juice ×40',wacko:200,desc:'Juice cao cấp, vắt từ pin "xịn".',give:()=>{S.juice+=40}},
-    {key:'gas',e:'⛽',name:'Đầy bình xăng',wacko:150,desc:'Đổ đầy bình ngay lập tức.',
-      pre:()=>S.gas>=S.maxGas?'Bình đã đầy rồi!':null,give:()=>{S.gas=S.maxGas}},
+    {key:'gas',e:'⚡',name:'Nạp đầy $WACKO',wacko:150,desc:'Nạp đầy kho năng lượng ngay lập tức.',
+      pre:()=>S.gas>=S.maxGas?'Kho đã đầy rồi!':null,give:()=>{S.gas=S.maxGas}},
     {key:'hatch',e:'🥚',name:'Nở trứng tức thì',wacko:250,desc:'Ép mọi trứng đang ấp chín ngay.',
       pre:()=>S.boxes.some(b=>b.t==='egg')?null:'Không có trứng nào đang ấp.',give:()=>{S.boxes.forEach(b=>{if(b.t==='egg')b.ready=0})}},
     {key:'arena',e:'🎟️',name:'+3 lượt Arena',wacko:200,desc:'Nạp thêm 3 lượt đấu trường hôm nay.',
@@ -5973,7 +5989,7 @@ function openCan(){
       if(S.pieces>=PIECES_PER_BOX)msg+=' — Đủ ghép 1 📦 Hộp Hero ngay bên dưới!';
       renderLoot();
     }
-    else{S.gas=S.maxGas;const v=rnd(2500,3500);S.junk+=v;msg=`🎰 JACKPOT! ⛽ đầy bình + 🪙 +${fmt(v)}!`;confettiBurst();flashScreen('#ffd23f',.55)}
+    else{S.gas=S.maxGas;const v=rnd(2500,3500);S.junk+=v;msg=`🎰 JACKPOT! ⚡ đầy kho $WACKO + 🪙 +${fmt(v)}!`;confettiBurst();flashScreen('#ffd23f',.55)}
     roll<0.95?SFX.coin():SFX.jackpot();
     $('openresult').innerHTML=msg;renderRes();
   },500);
@@ -6299,13 +6315,13 @@ function claimMission(id){
 function claimBonus(){
   if(S.daily.bonus)return;
   S.daily.bonus=true;S.junk+=1000;S.cans+=1;S.gas=Math.min(S.maxGas,S.gas+20);
-  confettiBurst();SFX.jackpot();toast('🎁 Rương thưởng ngày: +1000 🪙, +1 🥫, +20 ⛽!');
+  confettiBurst();SFX.jackpot();toast('🎁 Rương thưởng ngày: +1000 🪙, +1 🥫, +20 ⚡ $WACKO!');
   renderMissions();
 }
 function resetDaily(){
-  S.daily={pve:0,upg:0,can:0,boss:0,craft:0,dgn:false,shop:{},arena:0,trash:0,claimed:{},bonus:false};
+  S.daily={pve:0,upg:0,can:0,boss:0,craft:0,dgn:false,shop:{},arena:0,trash:0,claimed:{},bonus:false,wackoSpent:0};
   S.gas=Math.min(S.maxGas,S.gas+30);
-  toast('🌅 Ngày mới ở vùng đất hoang! +30 ⛽ (daily login). Nhiệm vụ đã reset.');
+  toast('🌅 Ngày mới ở vùng đất hoang! +30 ⚡ $WACKO (daily login) · giá hành động về mức gốc. Nhiệm vụ đã reset.');
   renderMissions();
 }
 
@@ -6339,7 +6355,7 @@ function tutAdvance(step){
   if(S.tut>=TUT.length){ // tốt nghiệp!
     S.junk+=500;S.gas=Math.min(S.maxGas,S.gas+20);
     confettiBurst();SFX.jackpot();
-    toast('🎓 Xong hướng dẫn! Quà tốt nghiệp: <b>+500 🪙 · +20 ⛽</b>. Vùng đất hoang là của bạn!');
+    toast('🎓 Xong hướng dẫn! Quà tốt nghiệp: <b>+500 🪙 · +20 ⚡ $WACKO</b>. Vùng đất hoang là của bạn!');
     renderRes();
   }
   scheduleSave();renderTut();
@@ -6576,6 +6592,15 @@ ui:{
 /* ---- $WACKO sink: chợ đen + phê duyệt + loa phường ---- */
 '🔥 Dùng $WACKO (đốt token)':'🔥 Spend $WACKO (burn token)',
 '📢 LOA PHƯỜNG':'📢 CITY LOUDSPEAKER','🔥 đốt':'🔥 burn',
+/* ---- ⚡ $WACKO năng lượng (thay Gas) ---- */
+'$WACKO (năng lượng)':'$WACKO (energy)',
+'⚡ Không đủ $WACKO. Chờ mỏ phế liệu hồi (idle theo cấp) hoặc nâng cấp tài khoản để tăng sản lượng nhé.':'⚡ Not enough $WACKO. Wait for your scrap mine to refill (idle scales with level), or level up to boost output.',
+'⚡ Không đủ $WACKO cho dù chỉ 1 lượt. Chờ hồi nhé.':'⚡ Not enough $WACKO for even one run. Wait for it to refill.',
+'Nạp đầy $WACKO':'Refill $WACKO','Nạp đầy kho năng lượng ngay lập tức.':'Instantly refill your energy storage.','Kho đã đầy rồi!':'Storage is already full!',
+'🎁 Rương thưởng ngày: +1000 🪙, +1 🥫, +20 ⚡ $WACKO!':'🎁 Daily chest: +1000 🪙, +1 🥫, +20 ⚡ $WACKO!',
+'🎓 Xong hướng dẫn! Quà tốt nghiệp: <b>+500 🪙 · +20 ⚡ $WACKO</b>. Vùng đất hoang là của bạn!':'🎓 Tutorial complete! Graduation gift: <b>+500 🪙 · +20 ⚡ $WACKO</b>. The wasteland is yours!',
+'🌅 Ngày mới ở vùng đất hoang! +30 ⚡ $WACKO (daily login) · giá hành động về mức gốc. Nhiệm vụ đã reset.':'🌅 A new day in the wasteland! +30 ⚡ $WACKO (daily login) · action prices reset to base. Tasks reset.',
+'Mô phỏng kết quả ngay, khỏi xem trận.':'Instant results, skip the fight.','đang có':'you have','Tổng chi:':'Total:','🔥(giá cao do dùng nhiều hôm nay)':'🔥(pricier — spent a lot today)',
 'Phát một dòng chạy trên bảng tin TOÀN THÀNH PHỐ — mọi người chơi đều thấy.':'Broadcast a line across the WHOLE CITY ticker — every player sees it.',
 '📢 Phát loa toàn thành phố':'📢 Broadcast city-wide','📢 Đang phát…':'📢 Broadcasting…',
 'Đốt token vĩnh viễn (testnet). Cooldown 3 phút/lần. Nội dung bị lọc ký tự lạ.':'Burns token permanently (testnet). 3-min cooldown. Content is sanitized.',
@@ -7025,9 +7050,9 @@ data(){
   DUNGEONS.forEach((d,i)=>{if(DG[i]){d.name=DG[i][0];d.desc=DG[i][1]}});
   // ---- RES_INFO ----
   const RI={
-  gas:{quip:'Fuel for every adventure. Heroes don\'t run on rice — they run on gas.',
-    earn:['⏱️ Regenerates 1 every 7 minutes','🌅 +30 at the start of each new day','🌟 +20 per account level-up','🎁 +20 from the daily task chest','🎰 Mystery Can jackpot: instant full tank','🛢️ Max tank +10 every 5 levels (cap 200)'],
-    spend:['⚔️ Campaign battles: 5–20 ⛽','🗼 Chaos Tower: 4 ⛽/floor','🕳️ Daily dungeon: 12 ⛽','🎭 Meme Arena: FREE (5 tries/day)']},
+  gas:{name:'$WACKO (energy)',quip:'The $WACKO you EARN IDLE over time and SPEND to play. Leveling up your account = your scrap mine runs harder = higher output.',
+    earn:['⏱️ Idle production over time — OUTPUT SCALES WITH LEVEL','🌅 +30 at the start of each new day','🌟 +20 per account level-up (also raises idle output)','🎁 +20 from the daily task chest','🎰 Mystery Can jackpot: instant full storage','🛢️ Max storage +10 every 5 levels (cap 200)'],
+    spend:['⚔️ Campaign battles: 5–20 ⚡','🗼 Chaos Tower: 4 ⚡/floor','🕳️ Daily dungeon: 12 ⚡','🎭 Meme Arena: FREE (5 tries/day)','🔥 The more you spend in a DAY → the pricier each action (anti-steamroll), resets at midnight']},
   junk:{quip:'The official currency of the wasteland. Made of bottle caps, trust, and compressed scrap.',
     earn:['⚔️ Winning battles (any mode)','🎭 Arena: 5 free tries/day','🥫 Mystery cans (30%)','✅ Daily tasks','♻️ Recycling gear (50% refund)','🗑️ Digging through the Hub trash (5×/day)'],
     spend:['⬆️ Hero level-ups (main sink)','🔨 Crafting gear','💞 Breeding 800 · ♻️ Recycler 500 · ⬆️ Enhance 600×tier','🦫 Beaver\'s Shop']},
@@ -7041,7 +7066,7 @@ data(){
     earn:['👹 Defeating bosses (1–3 cans)','✅ The "Defeat 1 boss" task + daily chest','🥫 Canned Goods Dungeon (Saturday)','🏆 Season rewards (×3 for beating the season boss)','🦫 Shop: 3,000 🪙 (1/day)'],
     spend:['🧧 Open in the Loot tab — drop rates below']},
   };
-  Object.entries(RI).forEach(([k,t])=>{const r=RES_INFO[k];if(r){r.quip=t.quip;r.earn=t.earn;r.spend=t.spend}});
+  Object.entries(RI).forEach(([k,t])=>{const r=RES_INFO[k];if(r){r.quip=t.quip;r.earn=t.earn;r.spend=t.spend;if(t.name)r.name=t.name}});
   // ---- NEWS ticker ----
   NEWS.splice(0,NEWS.length,
   '📢 <b>Breaking:</b> Battery Granny is yelling at the clouds again. Weather forecast: clear skies, out of fear.',
@@ -7991,12 +8016,12 @@ function loadGame(){
     // dọn uid không còn tồn tại khỏi đội hình
     S.team.front=S.team.front.map(x=>instById(x)?x:null);
     S.team.back=S.team.back.map(x=>instById(x)?x:null);
-    // ⛽ hồi gas offline (1 gas/7 phút — nhịp bản thật)
-    const away=Math.floor((Date.now()-(d.ts||Date.now()))/420000);
-    if(away>0&&S.gas<S.maxGas){
-      const gain=Math.min(away,Math.ceil(S.maxGas-S.gas));
+    // ⚡ idle $WACKO offline: sản lượng theo cấp (tích lũy tới trần kho)
+    const awayMs=Date.now()-(d.ts||Date.now());
+    if(awayMs>0&&S.gas<S.maxGas){
+      const gain=Math.floor(Math.min(wackoRate()*awayMs/86400000,S.maxGas-S.gas));
       if(gain>0){S.gas=Math.min(S.maxGas,S.gas+gain);
-        setTimeout(()=>toast(`⛽ Trong lúc bạn vắng mặt, đội đã đổ được <b>+${gain} Gas</b>!`),900)}
+        setTimeout(()=>toast(`⚡ Trong lúc bạn vắng mặt, mỏ phế liệu đã sinh <b>+${gain} $WACKO</b>!`),900)}
     }
     if(d.day&&d.day!==new Date().toDateString())setTimeout(resetDaily,1300); // ngày mới
     return true;
@@ -8018,7 +8043,8 @@ if(LOADED){ // người chơi cũ: bỏ qua intro
   setTimeout(()=>toast('💾 Đã tải tiến trình — mừng trở lại vùng đất hoang!'),300);
 }
 setInterval(()=>{
-  if(S.gas<S.maxGas){S.gas=Math.min(S.maxGas,S.gas+10/420);renderRes()} // 1 gas/7 phút — nhịp bản thật (mô hình cân bằng 200/ngày)
+  // ⚡ idle $WACKO: sản lượng/ngày tăng theo cấp; tick 10s = 1/8640 ngày
+  if(S.gas<S.maxGas){S.gas=Math.min(S.maxGas,S.gas+wackoRate()/8640);renderRes()}
   if($('v-loot').classList.contains('on'))renderLoot(); // cập nhật đồng hồ ấp trứng
 },10000);
 $('intro-heroes').innerHTML=['spam','noodle','intern'].map(id=>
