@@ -727,14 +727,23 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
   .unit{width:68px}.unit.bossu{width:104px}
   .hd-top .spr{width:92px}
 }
-/* nút playtest nổi */
-.ptbtn{position:fixed;left:10px;z-index:70;width:44px;height:44px;border-radius:50%;font-size:19px;
-  background:var(--bg2);border:2px solid var(--yellow);box-shadow:0 4px 12px rgba(0,0,0,.45);transition:.15s}
-.ptbtn:hover{transform:scale(1.12)}
-#pt-fb{bottom:148px}
-#pt-ex{bottom:96px;border-color:var(--cyan)}
-#pt-lang{bottom:200px;border-color:var(--yellow)}
-#pt-w3{bottom:252px;border-color:var(--purple)}
+/* nút tiện ích nổi — GỘP vào 1 nút ☰, bấm mới bung (đỡ vướng, nhất là mobile) */
+.ptbtn{position:fixed;left:10px;z-index:70;width:42px;height:42px;border-radius:50%;font-size:18px;
+  background:var(--bg2);border:2px solid var(--yellow);box-shadow:0 4px 12px rgba(0,0,0,.45);
+  transition:transform .2s,opacity .2s;opacity:0;transform:translateX(-56px) scale(.7);pointer-events:none}
+body.ptopen .ptbtn{opacity:1;transform:none;pointer-events:auto}
+.ptbtn:active{transform:scale(.92)}
+#pt-fb{bottom:140px}
+#pt-ex{bottom:92px;border-color:var(--cyan)}
+#pt-lang{bottom:188px;border-color:var(--yellow)}
+#pt-w3{bottom:236px;border-color:var(--purple)}
+#pt-toggle{position:fixed;left:10px;bottom:44px;z-index:71;width:44px;height:44px;border-radius:50%;font-size:18px;
+  background:var(--bg2);border:2px solid var(--line);box-shadow:0 4px 12px rgba(0,0,0,.45);transition:.2s;opacity:.82}
+#pt-toggle:hover{opacity:1}
+body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacity:1}
+/* chip ⚡ năng lượng: thanh tiến trình hồi (thấy đang chạy dù số nguyên chưa nhảy) */
+#gaschip{position:relative;overflow:hidden}
+#gasprog{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--orange);pointer-events:none;transition:width .6s linear}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -742,7 +751,7 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 <div class="app">
 
   <div class="topbar">
-    <div class="res" onclick="openResInfo('gas')" title="$WACKO năng lượng — bấm xem chi tiết"><span class="ico">⚡</span><span class="gas-fill" id="r-gas">0</span>/<span id="r-gasmax">100</span></div>
+    <div class="res" id="gaschip" onclick="openResInfo('gas')" title="$WACKO năng lượng — bấm xem chi tiết"><span class="ico">⚡</span><span class="gas-fill" id="r-gas">0</span>/<span id="r-gasmax">100</span><i id="gasprog"></i></div>
     <div class="res" onclick="openResInfo('junk')" title="Junk Coins — bấm xem chi tiết"><span class="ico">🪙</span><span id="r-junk">0</span></div>
     <div class="res" onclick="openResInfo('juice')" title="Battery Juice — bấm xem chi tiết"><span class="ico">🔋</span><span id="r-juice">0</span></div>
     <div class="res" onclick="openResInfo('tape')" title="Duct Tape — bấm xem chi tiết"><span class="ico">🩹</span><span id="r-tape">0</span></div>
@@ -956,7 +965,7 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
       <div id="hub-team"></div>
      </div>
     </div>
-    <p class="demonote">🎁 <b>GIẢI THƯỞNG 100$:</b> 20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 <b>— vào 🎭 Arena đăng ký tên để lên sóng!</b> <span>· ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.</span></p>
+    <p class="demonote">🎁 <b>GIẢI THƯỞNG 100$:</b> 20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 <b>— vào 🎭 Arena đăng ký tên để lên sóng!</b> <span>· ⚡ $WACKO hồi theo thời gian (idle, tăng theo cấp) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.</span></p>
   </section>
 
   <section class="view" id="v-heroes">
@@ -1117,10 +1126,11 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 </div>
 
 <div class="toast" id="toast"></div>
-<button class="ptbtn" id="pt-fb" onclick="openFeedback()" title="Góp ý nhanh">📝</button>
-<button class="ptbtn" id="pt-ex" onclick="openExport()" title="Xuất dữ liệu gửi người tổ chức">📤</button>
-<button class="ptbtn" id="pt-lang" onclick="openLangPicker()" title="Language / Ngôn ngữ">🌐</button>
-<button class="ptbtn" id="pt-w3" onclick="openWallet()" title="Ví Web3 (MegaETH testnet)">⛓️</button>
+<button class="ptbtn" id="pt-fb" onclick="document.body.classList.remove('ptopen');openFeedback()" title="Góp ý nhanh">📝</button>
+<button class="ptbtn" id="pt-ex" onclick="document.body.classList.remove('ptopen');openExport()" title="Xuất dữ liệu gửi người tổ chức">📤</button>
+<button class="ptbtn" id="pt-lang" onclick="document.body.classList.remove('ptopen');openLangPicker()" title="Language / Ngôn ngữ">🌐</button>
+<button class="ptbtn" id="pt-w3" onclick="document.body.classList.remove('ptopen');openWallet()" title="Ví Web3 (MegaETH testnet)">⛓️</button>
+<button id="pt-toggle" onclick="document.body.classList.toggle('ptopen')" title="Tiện ích (góp ý / ngôn ngữ / ví)">☰</button>
 
 <script>
 /* =====================================================
@@ -3423,6 +3433,7 @@ function setRes(id,val){ // cập nhật số + hiệu ứng nảy khi giá tr�
 function renderRes(){
   scheduleSave(); // auto-save nhẹ sau mỗi thay đổi state
   $('r-gas').textContent=Math.floor(S.gas);$('r-gasmax').textContent=S.maxGas;
+  {const gp=$('gasprog');if(gp)gp.style.width=(S.gas>=S.maxGas?100:(S.gas-Math.floor(S.gas))*100)+'%'} // tiến trình hồi tới điểm kế
   setRes('r-junk',fmt(S.junk));setRes('r-juice',fmt(S.juice));
   setRes('r-tape',fmt(S.tape));setRes('r-cans',S.cans);
   $('r-plv').textContent='Lv '+S.plv;
@@ -4531,7 +4542,7 @@ function buildUnits(node){
    Idle nhận theo thời gian, SẢN LƯỢNG tăng theo cấp; hành động tốn $WACKO;
    chống steamroll: càng tiêu nhiều trong ngày càng đắt (surge), reset nửa đêm.
    Đây là $WACKO "trong game" (off-chain). $WACKO on-chain (ví) là lớp claim/Chợ Đen. */
-function wackoRate(){return 180+S.plv*6}                 // ⚡/ngày idle (cấp1≈186 ~ gas cũ, cấp40≈420)
+function wackoRate(){return 2880+S.plv*120}              // ⚡/ngày idle (test: ~1 điểm/29s ở cấp1, tăng theo cấp — đủ nhanh để thấy hồi)
 function energySurge(){return Math.min(4,1+0.5*Math.floor((S.daily.wackoSpent||0)/wackoRate()))}
 function energyCost(base){return base<=0?0:Math.max(1,Math.round(base*energySurge()))} // giá thực sau surge
 function spendEnergy(c){S.gas-=c;S.daily.wackoSpent=(S.daily.wackoSpent||0)+c}
@@ -6738,7 +6749,7 @@ ui:{
 'GIẢI THƯỞNG 100$:':'$100 PRIZE POOL:','GIẢI 100$:':'$100 PRIZES:','GIẢI 100$ ĐANG CHẠY:':'$100 EVENT LIVE:',
 '20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝':'$20 for leaderboard TOP 1 · $40 raffled to 4 players · $40 raffled to 4 feedback writers 📝',
 '— vào 🎭 Arena đăng ký tên để lên sóng!':'— open 🎭 Arena and register a name to join!',
-'· ⛽ hồi 1 Gas/7 phút (nhịp bản chính thức) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.':'· ⛽ 1 Gas/7 min (official pacing) · 💾 Auto-saves in this browser — don\'t clear your history! · 📝 Feedback: round button on the left.',
+'· ⚡ $WACKO hồi theo thời gian (idle, tăng theo cấp) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.':'· ⚡ $WACKO refills over time (idle, scales with level) · 💾 Auto-saves in this browser — don\'t clear your history! · 📝 Feedback: round button on the left.',
 '20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — chốt 23:59 ngày 26/06!':'$20 TOP 1 · $40 raffled to 4 players · $40 raffled to 4 feedback writers 📝 — ends June 26, 23:59 (GMT+7)!',
 '20$ TOP 1 BXH + bốc thăm 80$ — chốt 23:59 ngày 26/06!':'$20 for TOP 1 + $80 in raffles — ends June 26, 23:59 (GMT+7)!',
 '🎟️ Mã nhận thưởng & chuyển máy':'🎟️ Claim code & device transfer','🎟️ Mã định danh của bạn':'🎟️ Your identity code',
@@ -8199,10 +8210,10 @@ if(LOADED){ // người chơi cũ: bỏ qua intro
   setTimeout(()=>toast('💾 Đã tải tiến trình — mừng trở lại vùng đất hoang!'),300);
 }
 setInterval(()=>{
-  // ⚡ idle $WACKO: sản lượng/ngày tăng theo cấp; tick 10s = 1/8640 ngày
-  if(S.gas<S.maxGas){S.gas=Math.min(S.maxGas,S.gas+wackoRate()/8640);renderRes()}
+  // ⚡ idle $WACKO: sản lượng/ngày tăng theo cấp; tick 5s → cộng wackoRate*5/86400 (thanh tiến trình thấy chạy mượt)
+  if(S.gas<S.maxGas){S.gas=Math.min(S.maxGas,S.gas+wackoRate()*5/86400);renderRes()}
   if($('v-loot').classList.contains('on'))renderLoot(); // cập nhật đồng hồ ấp trứng
-},10000);
+},5000);
 $('intro-heroes').innerHTML=['spam','noodle','intern'].map(id=>
   `<div style="text-align:center">${sprite(id,72)}<br><b style="font-size:12px">${HEROES[id].name}</b><br><span style="font-size:11px;color:var(--muted)">${CLS_VI[HEROES[id].cls]}</span></div>`).join('');
 renderRes();renderHub();renderTeam();renderMap();renderTut();renderSfxBtn();
