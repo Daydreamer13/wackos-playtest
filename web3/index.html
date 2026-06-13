@@ -1126,6 +1126,8 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
         <button class="btn sm gh" id="labtab-rec" onclick="goLab('rec')">♻️ Tái Chế</button>
       </div>
       <div class="panel" id="lab-info"></div>
+      <div class="filterbar" id="lab-fcls"></div>
+      <div class="filterbar" id="lab-frar"></div>
       <div class="labgrid" id="lab-grid"></div>
     </div>
   </section>
@@ -3751,6 +3753,23 @@ function setHeroFilter(c){heroFilter=c;renderHeroes()}
 function setHeroRar(r){heroRar=r;renderHeroes()}
 const HERO_FCHIPS=[['','🌐'],['tank','🛡️'],['dps','⚔️'],['support','💚'],['controller','🎯'],['assassin','🗡️']];
 function rarVar(r){return'var(--r-'+(r==='legendary'?'leg':r)+')'}
+/* Bộ lọc class+bậc DÙNG CHUNG: render chip vào 2 element, trả list đã lọc. state={cls,rar} */
+function heroChips(state,clsElId,rarElId,onChangeFn,baseList){
+  const vi=WLANG==='vi';
+  const mCls=i=>!state.cls||HEROES[i.heroId].cls===state.cls;
+  const mRar=i=>!state.rar||i.rarity===state.rar;
+  const fb=$(clsElId);
+  if(fb){const cnt=c=>baseList.filter(i=>mRar(i)&&(!c||HEROES[i.heroId].cls===c)).length;
+    fb.innerHTML=HERO_FCHIPS.map(([c,e])=>`<button class="fchip ${state.cls===c?'on':''}" onclick="${onChangeFn}('cls','${c}')">${e} ${c?CLS_VI[c]:(vi?'Tất cả':'All')} <span class="fcount">${cnt(c)}</span></button>`).join('');}
+  const rf=$(rarElId);
+  if(rf){const present=RARITIES.filter(r=>baseList.some(i=>i.rarity===r));
+    const cnt=r=>baseList.filter(i=>mCls(i)&&(!r||i.rarity===r)).length;
+    const chips=[['',vi?'Mọi bậc':'Any']].concat(present.map(r=>[r,RNAME[r]]));
+    rf.innerHTML=chips.map(([r,lbl])=>{const on=state.rar===r,col=r?rarVar(r):'';
+      const sty=r?`border-color:${col};color:${col}${on?';background:var(--bg2)':''}`:(on?'background:var(--bg2);border-color:var(--yellow);color:var(--yellow)':'');
+      return`<button class="fchip${on?' on':''}" style="${sty}" onclick="${onChangeFn}('rar','${r}')">${r?'●':'◇'} ${lbl} <span class="fcount">${cnt(r)}</span></button>`;}).join('');}
+  return baseList.filter(i=>mCls(i)&&mRar(i));
+}
 function renderHeroes(){
   const g=$('hero-grid');g.innerHTML='';
   const vi=WLANG==='vi';
@@ -4038,18 +4057,11 @@ function renderTeam(){
   $('team-back').innerHTML=mk(S.team.back,'back');
 }
 /* ---------- PICKER ĐỘI HÌNH: bấm ô → chọn hero ngay tại chỗ ---------- */
-let pickSlot=null;
+let pickSlot=null,pickF={cls:'',rar:''};
 function openPicker(row,idx){
-  pickSlot={row,idx};
+  pickSlot={row,idx};pickF={cls:'',rar:''};
   const cur=S.team[row][idx];
   const curInst=cur?instById(cur):null;
-  const inTeam=new Set(teamIds());
-  // roster trừ hero đang đứng đúng ô này; class hợp tuyến xếp lên đầu
-  const list=sortedRoster().filter(i=>i.uid!==cur);
-  list.sort((a,b)=>{
-    const fit=h=>HEROES[h.heroId].cls==='tank'?(row==='front'?0:1):(row==='front'?1:0);
-    return fit(a)-fit(b);
-  });
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>${row==='front'?'🛡️ Tuyến trước':'🎯 Tuyến sau'} — ô ${idx+1}</h3>
@@ -4058,12 +4070,28 @@ function openPicker(row,idx){
       :`Bấm thẻ để XEM & nâng cấp hero · bấm <b>➕ Vào đội</b> để xếp vào ô. ${row==='front'?'Tuyến trước hứng đòn — Tank đứng đây cho khỏe.':'Tuyến sau an toàn — DPS/Support/Controller núp đây.'}`}</p>
     ${curInst?`<div style="display:flex;gap:8px;margin:4px 0 10px;flex-wrap:wrap">
       <button class="btn sm gh" onclick="clearSlot()">➖ Bỏ trống ô này</button></div>`:''}
-    ${list.length?`<div class="hgrid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">${
-      list.map(inst=>{const it=teamIds().includes(inst.uid);
-        return `<div class="pickcell">${instCard(inst,`openHero(${inst.uid})`)}
-          <button class="btn sm ${it?'pu':'cy'} pickjoin" onclick="event.stopPropagation();pickHero(${inst.uid})">${it?'🔄 Đổi vào ô này':'➕ Vào đội'}</button></div>`}).join('')}</div>`
-      :'<div class="citem"><h4>Chưa có hero nào khác</h4><p>Săn 🧩 mảnh từ Mystery Cans hoặc 💞 Breed thêm!</p></div>'}`;
+    <div class="filterbar" id="pk-fcls"></div>
+    <div class="filterbar" id="pk-frar"></div>
+    <div id="pk-grid"></div>`;
   openModal('hd-bg');
+  renderPickGrid();
+}
+function setPickF(k,v){pickF[k]=v;renderPickGrid()}
+function renderPickGrid(){
+  if(!pickSlot)return;
+  const {row,idx}=pickSlot,cur=S.team[row][idx],vi=WLANG==='vi',g=$('pk-grid');
+  if(!g)return;
+  // roster trừ hero đang đứng đúng ô này; class hợp tuyến xếp lên đầu
+  let base=sortedRoster().filter(i=>i.uid!==cur);
+  base.sort((a,b)=>{const fit=h=>HEROES[h.heroId].cls==='tank'?(row==='front'?0:1):(row==='front'?1:0);return fit(a)-fit(b)});
+  if(!base.length){$('pk-fcls').innerHTML='';$('pk-frar').innerHTML='';
+    g.innerHTML=`<div class="citem"><h4>${vi?'Chưa có hero nào khác':'No other heroes'}</h4><p>${vi?'Săn 🧩 mảnh từ Mystery Cans hoặc 💞 Breed thêm!':'Hunt 🧩 pieces or 💞 Breed more!'}</p></div>`;return}
+  const list=heroChips(pickF,'pk-fcls','pk-frar','setPickF',base);
+  if(!list.length){g.innerHTML=`<div style="padding:20px 10px;text-align:center;color:var(--muted);font-weight:700">${vi?'Không có hero khớp bộ lọc — đổi lại nhé':'No heroes match — adjust the filters'}</div>`;return}
+  g.innerHTML=`<div class="hgrid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">${
+    list.map(inst=>{const it=teamIds().includes(inst.uid);
+      return `<div class="pickcell">${instCard(inst,`openHero(${inst.uid})`)}
+        <button class="btn sm ${it?'pu':'cy'} pickjoin" onclick="event.stopPropagation();pickHero(${inst.uid})">${it?(vi?'🔄 Đổi vào ô này':'🔄 Swap here'):(vi?'➕ Vào đội':'➕ Add')}</button></div>`}).join('')}</div>`;
 }
 function pickHero(uid){
   if(!pickSlot||!instById(uid))return;
@@ -6295,7 +6323,8 @@ function openCan(){
 }
 
 /* ================= LAB: BREED & ENHANCE ================= */
-let labMode='breed',labSel=[];
+let labMode='breed',labSel=[],labF={cls:'',rar:''};
+function setLabF(k,v){labF[k]=v;renderLabGrid()}
 function goLab(m){
   if(m==='enh'&&!isU('enhance'))return toast(`🔒 ${UNLOCK_DEFS.enhance.label} — ${UNLOCK_DEFS.enhance.hint}!`);
   if(m==='rec'&&!isU('recycle'))return toast(`🔒 ${UNLOCK_DEFS.recycle.label} — ${UNLOCK_DEFS.recycle.hint}!`);
@@ -6388,7 +6417,9 @@ function renderLab(){
 function renderLabGrid(){
   const g=$('lab-grid');g.innerHTML='';
   const vi=WLANG==='vi';
-  sortedRoster().forEach(inst=>{
+  if(!S.roster.length){$('lab-fcls').innerHTML='';$('lab-frar').innerHTML='';g.innerHTML='<div class="citem"><h4>'+(vi?'Chưa có hero nào':'No heroes yet')+'</h4><p>'+(vi?'Đi săn mảnh từ Mystery Cans!':'Hunt pieces from Mystery Cans!')+'</p></div>';return}
+  const list=heroChips(labF,'lab-fcls','lab-frar','setLabF',sortedRoster());
+  list.forEach(inst=>{
     const sel=labSel.includes(inst.uid);
     if(labMode==='breed'){ // bấm thẻ = mở hồ sơ (nâng cấp tại chỗ) · nút riêng = lên/xuống giường
       const maxed=inst.breeds>=BREED_MAX; // hết lượt breed → làm mờ, không cho chọn
@@ -6404,7 +6435,7 @@ function renderLabGrid(){
       g.innerHTML+=instCard(inst,`labTap(${inst.uid})`,(sel?'sel':'')+(isMain?' main':''));
     }
   });
-  if(!S.roster.length)g.innerHTML='<div class="citem"><h4>Chưa có hero nào</h4><p>Đi săn mảnh từ Mystery Cans!</p></div>';
+  if(!list.length)g.innerHTML=`<div style="grid-column:1/-1;padding:20px 10px;text-align:center;color:var(--muted);font-weight:700">${vi?'Không có hero khớp bộ lọc — đổi lại nhé':'No heroes match — adjust the filters'}</div>`;
 }
 function doRecycle(){
   if(labSel.length!==1)return toast('Chọn 1 bản hero để tái chế.');
