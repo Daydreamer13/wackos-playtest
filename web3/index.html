@@ -6601,6 +6601,9 @@ ui:{
 '🎓 Xong hướng dẫn! Quà tốt nghiệp: <b>+500 🪙 · +20 ⚡ $WACKO</b>. Vùng đất hoang là của bạn!':'🎓 Tutorial complete! Graduation gift: <b>+500 🪙 · +20 ⚡ $WACKO</b>. The wasteland is yours!',
 '🌅 Ngày mới ở vùng đất hoang! +30 ⚡ $WACKO (daily login) · giá hành động về mức gốc. Nhiệm vụ đã reset.':'🌅 A new day in the wasteland! +30 ⚡ $WACKO (daily login) · action prices reset to base. Tasks reset.',
 'Mô phỏng kết quả ngay, khỏi xem trận.':'Instant results, skip the fight.','đang có':'you have','Tổng chi:':'Total:','🔥(giá cao do dùng nhiều hôm nay)':'🔥(pricier — spent a lot today)',
+'🔄 Đổi $WACKO — game ↔ ví':'🔄 Exchange $WACKO — game ↔ wallet','🔄 Mở cầu đổi $WACKO':'🔄 Open $WACKO exchange',
+'Tích từ tiến trình:':'From progress:','rút được':'withdrawable','· đã rút':'· withdrawn',
+'⬇️ Rút $WACKO tích lũy ra ví · ⬆️ Nạp token ví thành ⚡ năng lượng chơi.':'⬇️ Withdraw earned $WACKO to wallet · ⬆️ Deposit wallet tokens for ⚡ energy.',
 'Phát một dòng chạy trên bảng tin TOÀN THÀNH PHỐ — mọi người chơi đều thấy.':'Broadcast a line across the WHOLE CITY ticker — every player sees it.',
 '📢 Phát loa toàn thành phố':'📢 Broadcast city-wide','📢 Đang phát…':'📢 Broadcasting…',
 'Đốt token vĩnh viễn (testnet). Cooldown 3 phút/lần. Nội dung bị lọc ký tự lạ.':'Burns token permanently (testnet). 3-min cooldown. Content is sanitized.',
@@ -7800,6 +7803,50 @@ async function w3ShoutSend(){
   w3Busy=false;
   if(btn){btn.disabled=false;btn.textContent='📢 Phát loa toàn thành phố'}
 }
+/* ===== 🔄 CẦU ĐỔI $WACKO: game ↔ ví ===== */
+async function openBridge(){
+  if(!w3Ready())return toast('⛓️ Nối ví ở ⛓️ Ví trước nhé!');
+  const vi=WLANG==='vi';
+  $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <h3>🔄 ${vi?'ĐỔI $WACKO — GAME ↔ VÍ':'EXCHANGE $WACKO — GAME ↔ WALLET'}</h3><p class="sub">📡 ${vi?'Đang tải…':'Loading…'}</p>`;
+  openModal('hd-bg');
+  let st=null;try{st=await netApi('/nft/status',{id:S.net.id,secret:S.net.secret})}catch(e){}
+  if(!st||!st.ok){$('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button><h3>🔄 ${vi?'ĐỔI $WACKO':'EXCHANGE $WACKO'}</h3><p class="sub">📡 ${vi?'Server web3 chưa sẵn sàng.':'Web3 server not ready.'}</p>`;return}
+  W3_STATUS=st;
+  const space=Math.max(0,S.maxGas-Math.floor(S.gas)); // chỗ trống trong kho năng lượng
+  const sug=Math.min(space||100,200);
+  $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <h3>🔄 ${vi?'ĐỔI $WACKO — GAME ↔ VÍ':'EXCHANGE $WACKO — GAME ↔ WALLET'}</h3>
+    <div class="skillbox" style="border-color:var(--green)"><h5 style="color:var(--green)">⬇️ ${vi?'RÚT: game → ví (token thật)':'WITHDRAW: game → wallet (real token)'}</h5>
+      <p style="font-size:12.5px">${vi?'Đổi $WACKO tích lũy từ TIẾN TRÌNH ra token thật trong ví.':'Convert $WACKO earned from PROGRESS into real wallet tokens.'} ${vi?'Đã tích':'Earned'} <b>${fmt(st.entitled)}</b> · ${vi?'đã rút':'withdrawn'} <b>${fmt(st.claimed)}</b>.</p>
+      <button class="btn or" style="width:100%;margin-top:8px" onclick="w3Claim()" ${st.due<10?'disabled':''}>⬇️ ${vi?'Rút':'Withdraw'} ${fmt(st.due)} $WACKO${st.due<10?(vi?' (cần ≥10)':' (need ≥10)'):''}</button>
+      <p style="font-size:11px;color:var(--muted);margin-top:4px">${vi?'Trần testnet 5.000/tài khoản · 1 lần/giờ · chống bot. Idle KHÔNG rút thẳng được (phải qua tiến trình).':'Testnet cap 5,000/account · 1/hour · anti-bot. Idle can\'t be withdrawn directly.'}</p></div>
+    <div class="skillbox" style="border-color:var(--cyan)"><h5 style="color:var(--cyan)">⬆️ ${vi?'NẠP: ví → game (đốt token → năng lượng)':'DEPOSIT: wallet → game (burn token → energy)'}</h5>
+      <p style="font-size:12.5px">${vi?'Đốt token ví đổi lấy ⚡ năng lượng chơi ngay.':'Burn wallet tokens for ⚡ energy to play now.'} ${vi?'Kho':'Storage'}: <b>${Math.floor(S.gas)}/${S.maxGas}</b> · ${vi?'còn trống':'free'} <b>${space}</b>.</p>
+      <input id="dep-amt" type="number" min="10" max="600" value="${sug}" style="width:100%;padding:10px;border-radius:10px;border:2px solid var(--cyan);background:var(--bg3);color:var(--text);font-family:inherit;font-size:15px;margin:8px 0">
+      <button class="btn cy" style="width:100%" onclick="w3Deposit()">⬆️ ${vi?'Nạp (đốt $WACKO)':'Deposit (burn $WACKO)'}</button>
+      <p style="font-size:11px;color:var(--muted);margin-top:4px">${vi?'Trần 600/ngày (≈3 ngày idle) — giữ nhịp mùa, whale không nạp vô hạn. 1 $WACKO = 1 ⚡.':'Cap 600/day (≈3 idle days) — preserves season pace. 1 $WACKO = 1 ⚡.'}</p></div>
+    <p class="demonote">${vi?'⚠️ TESTNET. Rút = token thật từ kho thưởng (trần). Nạp = đốt token ví (sink).':'⚠️ TESTNET. Withdraw = real token from reward pool (capped). Deposit = burns wallet token (sink).'}</p>`;
+}
+async function w3Deposit(){
+  const i=$('dep-amt');let amount=Math.floor(Number(i&&i.value||0));
+  if(!(amount>=10))return toast(WLANG==='vi'?'Nhập số ≥10 $WACKO.':'Enter ≥10 $WACKO.');
+  const space=Math.max(0,S.maxGas-Math.floor(S.gas));
+  if(space<=0)return toast(WLANG==='vi'?'⚡ Kho năng lượng đã đầy — chơi bớt rồi nạp.':'⚡ Energy storage full — play some first.');
+  if(amount>space)amount=space; // không nạp tràn kho
+  if(w3Busy)return;w3Busy=true;
+  try{
+    toast(WLANG==='vi'?'⬆️ Đang đốt $WACKO ví → nạp năng lượng…':'⬆️ Burning wallet $WACKO → energy…');
+    const r=await netApi('/nft/bridge-deposit',{id:S.net.id,secret:S.net.secret,amount});
+    if(r&&r.ok){S.gas=Math.min(S.maxGas,S.gas+r.energy);scheduleSave();renderRes();feat('wacko_deposit');
+      toast(`⬆️ +${fmt(r.energy)} ⚡ $WACKO! ${WLANG==='vi'?'(đốt ví, còn nạp được hôm nay '+fmt(r.dayLeft)+')':'(burned from wallet, today\'s left '+fmt(r.dayLeft)+')'} · tx ${w3TxLink(r.tx)}`);SFX.coin&&SFX.coin();openBridge()}
+    else if(r&&r.err==='need_approve'){toast(WLANG==='vi'?'✋ Cần phê duyệt chi $WACKO 1 lần — mở ⛓️ Ví.':'✋ Approve $WACKO spending once — open ⛓️ Wallet.');openWallet()}
+    else if(r&&r.err==='day_cap')toast(WLANG==='vi'?`⏳ Hết hạn mức nạp hôm nay (còn ${fmt(r.left)}/${fmt(r.cap)}).`:`⏳ Daily deposit cap reached (${fmt(r.left)}/${fmt(r.cap)} left).`);
+    else if(r&&r.err==='low_balance')toast(WLANG==='vi'?'💸 Ví không đủ $WACKO.':'💸 Wallet has not enough $WACKO.');
+    else toast('⬆️ '+(WLANG==='vi'?'Nạp lỗi: ':'Deposit error: ')+(r&&r.err||'mạng'));
+  }catch(e){toast(WLANG==='vi'?'⬆️ Nạp lỗi mạng.':'⬆️ Deposit network error.')}
+  w3Busy=false;
+}
 async function openWallet(){
   $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>⛓️ VÍ WEB3 — MegaETH Testnet</h3><p class="sub">📡 Đang tải…</p>`;
@@ -7834,10 +7881,10 @@ async function openWallet(){
       <div class="skillbox"><h5 style="color:var(--green)">🔗 Ví đã nối</h5>
         <p><b>${w3Short(S.w3.addr)}</b> · <a href="${W3_EXPLORER}/address/${S.w3.addr}" target="_blank" style="color:var(--cyan)">xem trên explorer</a></p>
         <p style="margin-top:4px">💰 Số dư: <b>${balTxt}</b> · 🔥 đã đốt: <b>${fmt(st.burned||0)}</b></p></div>
-      <div class="skillbox" style="border-color:var(--yellow)"><h5 style="color:var(--yellow)">🪙 $WACKO tích lũy từ tiến trình</h5>
-        <p>Đã tích: <b>${fmt(st.entitled)}</b> · đã nhận: <b>${fmt(st.claimed)}</b> · <b style="color:var(--green)">nhận được ngay: ${fmt(st.due)}</b></p>
-        <p style="font-size:11.5px;color:var(--muted)">Tích từ: chương đã phá (+100/chương), cúp PvP trên 1000, trận thắng PvP (+10). Trần testnet 5.000.</p>
-        <button class="btn or" style="width:100%;margin-top:8px" onclick="w3Claim()" ${st.due<10?'disabled':''}>🪙 Claim ${fmt(st.due)} $WACKO${st.due<10?' (cần ≥10)':''}</button></div>
+      <div class="skillbox" style="border-color:var(--yellow)"><h5 style="color:var(--yellow)">🔄 Đổi $WACKO — game ↔ ví</h5>
+        <p>Tích từ tiến trình: <b style="color:var(--green)">rút được ${fmt(st.due)}</b> · đã rút ${fmt(st.claimed)}/${fmt(st.entitled)}.</p>
+        <p style="font-size:11.5px;color:var(--muted)">⬇️ Rút $WACKO tích lũy ra ví · ⬆️ Nạp token ví thành ⚡ năng lượng chơi.</p>
+        <button class="btn or" style="width:100%;margin-top:8px" onclick="openBridge()">🔄 Mở cầu đổi $WACKO</button></div>
       <div class="skillbox" style="border-color:var(--cyan)"><h5 style="color:var(--cyan)">🔥 Dùng $WACKO (đốt token)</h5>
         ${st.approved
           ?`<p style="color:var(--green)">✅ Đã phê duyệt — mua ở 🦫 <b>Chợ Đen</b> & phát 📢 loa phường KHÔNG cần ký nữa.</p>`
