@@ -3542,27 +3542,33 @@ function openSeasonVictory(){
     <p class="demonote" style="margin-top:6px">Mùa mới: giữ nguyên hero, trang bị, tài nguyên, cấp tài khoản. Map khóa lại + quái mạnh hơn ×${SEASON_K} mỗi mùa + modifier mới. Danh hiệu vào tủ vĩnh viễn.</p>`;
   openModal('hd-bg');
 }
-function claimSeason(){
-  if(S.seasonStats.claimed)return;
+// SYNC (vm-safe) — server-authoritative qua recipe; KHÔNG DOM/toast riêng (client wrapper lo UI)
+function claimSeasonLogic(){
+  if(S.seasonStats.claimed)return {err:'claimed'};
   const beat=!!S.seasonStats.bossDay;
   S.seasonStats.claimed=true;
-  SFX.jackpot();
-  if(beat){S.cans+=3;S.junk+=5000;S.tape+=150;toast('🎁 +3 🥫 · +5.000 🪙 · +150 🩹 — lương thưởng cuối mùa đã về!')}
-  else{S.cans+=1;S.junk+=1500;toast('🎁 +1 🥫 · +1.500 🪙 — "đã cố gắng", trích lời sếp.')}
-  renderRes();openSeasonVictory();
+  if(beat){S.cans+=3;S.junk+=5000;S.tape+=150}else{S.cans+=1;S.junk+=1500}
+  return {beat};
+}
+function claimSeasonToast(beat){SFX.jackpot();toast(beat?'🎁 +3 🥫 · +5.000 🪙 · +150 🩹 — lương thưởng cuối mùa đã về!':'🎁 +1 🥫 · +1.500 🪙 — "đã cố gắng", trích lời sếp.')}
+function claimSeason(){
+  if(S.seasonStats.claimed)return;
+  if(SRVMODE){act('claimseason').then(r=>{const d=r&&r.result;if(!d||d.err)return;claimSeasonToast(d.beat);renderRes();openSeasonVictory()});return}
+  const d=claimSeasonLogic();if(d.err)return;
+  claimSeasonToast(d.beat);renderRes();openSeasonVictory();
+}
+function startNewSeasonLogic(){
+  const ti=seasonTitle(S.seasonStats.bossDay);
+  S.trophies.push({season:S.seasonNo,name:seasonDef().name,day:S.seasonStats.bossDay,title:ti.t,e:ti.e});
+  S.seasonNo++;S.beaten={};S.tower.floor=1;S.seasonStart=Date.now();
+  S.seasonStats={wins:0,loss:0,bossDay:null,claimed:false};S.pendingSeasonWin=false;
+  return {seasonNo:S.seasonNo};
 }
 function startNewSeason(){
   if(!confirm(`Sang Mùa ${S.seasonNo+1}? Map sẽ khóa lại từ Chương 1 (quái mạnh hơn), hero/đồ/tài nguyên GIỮ NGUYÊN.`))return;
-  const ti=seasonTitle(S.seasonStats.bossDay);
-  S.trophies.push({season:S.seasonNo,name:seasonDef().name,day:S.seasonStats.bossDay,title:ti.t,e:ti.e});
-  S.seasonNo++;
-  S.beaten={};S.tower.floor=1;
-  S.seasonStart=Date.now();
-  S.seasonStats={wins:0,loss:0,bossDay:null,claimed:false};
-  S.pendingSeasonWin=false;
-  closeModal('hd-bg');
-  toast(`🌪️ <b>MÙA ${S.seasonNo}: ${seasonDef().name}</b> bắt đầu! ${seasonDef().modTxt||'Chúc may mắn. Bạn sẽ cần đấy.'}`);
-  saveGame();go('hub');
+  const after=()=>{closeModal('hd-bg');toast(`🌪️ <b>MÙA ${S.seasonNo}: ${seasonDef().name}</b> bắt đầu! ${seasonDef().modTxt||'Chúc may mắn. Bạn sẽ cần đấy.'}`);go('hub')};
+  if(SRVMODE){act('newseason').then(r=>{if(r&&r.ok)after()});return}
+  startNewSeasonLogic();saveGame();after();
 }
 function renderHub(){
   const d=seasonDay();
@@ -5921,7 +5927,7 @@ function confettiBurst(){
 
 /* ================= CRAFT ================= */
 /* ---------- TIỆM CHÚ HẢI LY: sink junk + chuyển đổi tài nguyên + mảnh hero chọn lọc ---------- */
-function dayHash(){let s=new Date().toDateString(),h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h}
+function dayHash(){let s=new Date().toISOString().slice(0,10),h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h} // UTC day → client render & vm grant rotate cùng lúc (tránh lệch món-của-ngày server-mode)
 function shopHeroOfDay(){const ids=Object.keys(HEROES);return ids[dayHash()%ids.length]}
 function shopItemOfDay(){const ids=craftableItems().map(it=>it.id);return ids[(dayHash()>>>3)%ids.length]}
 const SHOP_TALK=[
@@ -6333,6 +6339,7 @@ function labTap(uid){
   renderLab();
 }
 function renderLab(){
+  labSel=labSel.filter(u=>instById(u)); // self-heal: bỏ uid đã bị tiêu (breed/recycle/enhance server-mode) → tránh crash render
   $('labtab-breed').className='btn sm'+(labMode==='breed'?'':' gh');
   $('labtab-enh').className='btn sm'+(labMode==='enh'?'':' gh')+(isU('enhance')?'':' locked');
   $('labtab-rec').className='btn sm'+(labMode==='rec'?'':' gh')+(isU('recycle')?'':' locked');
@@ -6426,6 +6433,7 @@ function renderLabGrid(){
   if(!list.length)g.innerHTML=`<div style="grid-column:1/-1;padding:20px 10px;text-align:center;color:var(--muted);font-weight:700">${vi?'Không có hero khớp bộ lọc — đổi lại nhé':'No heroes match — adjust the filters'}</div>`;
 }
 function doRecycle(){
+  if(!isU('recycle'))return toast(`🔒 ${UNLOCK_DEFS.recycle.label} — ${UNLOCK_DEFS.recycle.hint}!`); // gate (composite recipe bỏ qua goLab → chốt ở đây)
   if(labSel.length!==1)return toast('Chọn 1 bản hero để tái chế.');
   if(S.junk<500)return toast('🪙 Thiếu 500 phí vận hành. Con raccoon kỹ sư trưởng không làm miễn phí.');
   const a=instById(labSel[0]);
@@ -6444,6 +6452,7 @@ function doRecycle(){
   renderLab();renderRes();
 }
 function doBreed(){
+  if(!isU('lab'))return toast(`🔒 ${UNLOCK_DEFS.lab.label} — ${UNLOCK_DEFS.lab.hint}!`); // gate (composite recipe bỏ qua → chốt ở đây)
   if(labSel.length!==2)return;
   const a=instById(labSel[0]),b=instById(labSel[1]);
   if(a.lvl<BREED_MIN_LVL||b.lvl<BREED_MIN_LVL)
@@ -6466,30 +6475,40 @@ function doBreed(){
   labSel=[];renderLab();renderRes();
   toast(`🥚 Trứng <b>${RNAME[egg.rar]}</b> đang ấp — nở sau ~${INCUBATE_MIN[idx]} phút. Xem ở 📦 Kệ Hộp (tab 🥫 Loot)!`);
 }
-function doEnhance(){
-  if(labSel.length!==ENH_NEED)return;
-  const main=instById(labSel[0]);
+// SYNC enhance (vm-safe) — gate + validate + mutation, trả descriptor reveal hoặc {err}. KHÔNG DOM.
+function doEnhanceLogic(){
+  if(!isU('enhance'))return {err:`🔒 ${UNLOCK_DEFS.enhance.label} — ${UNLOCK_DEFS.enhance.hint}!`}; // gate (composite recipe bỏ qua goLab → chốt ở đây)
+  if(labSel.length!==ENH_NEED)return {err:`Cần ${ENH_NEED} bản CÙNG rarity!`};
+  const main=instById(labSel[0]);if(!main)return {err:'bad'};
   const tier=rIdx(main.rarity);
-  if(tier>=RARITY_CAP)return toast('🔒 Rare là trần bản này — Epic & Legendary mở sau!');
-  if(labSel.some(u=>rIdx(instById(u).rarity)!==tier))return toast('Cần 5 bản CÙNG rarity!');
-  if(labSel.some(u=>instById(u).minted))return toast('⛓️ Có bản đã mint NFT trong lựa chọn — bản trên chain không dùng làm nguyên liệu được!');
+  if(tier>=RARITY_CAP)return {err:'🔒 Rare là trần bản này — Epic & Legendary mở sau!'};
+  if(labSel.some(u=>rIdx(instById(u).rarity)!==tier))return {err:'Cần 5 bản CÙNG rarity!'};
+  if(labSel.some(u=>instById(u).minted))return {err:'⛓️ Có bản đã mint NFT trong lựa chọn — bản trên chain không dùng làm nguyên liệu được!'};
   const cost=enhCost(main.rarity);
-  if(S.junk<cost)return toast(`🪙 Cần ${fmt(cost)} Junk Coins!`);
+  if(S.junk<cost)return {err:`🪙 Cần ${fmt(cost)} Junk Coins!`};
   S.junk-=cost;
   labSel.slice(1).forEach(removeInstance); // tiêu hủy 4 nguyên liệu, equip trả kho
   main.rarity=RARITIES[tier+1];
-  SFX.breed();feat('enhance');
-  labSel=[];renderLab();renderRes();confettiBurst();flashScreen('#b36bff',.4);
+  feat('enhance');labSel=[];
+  return {heroId:main.heroId,uid:main.uid,rar:main.rarity};
+}
+function renderEnhanceReveal(d){
+  SFX.breed();confettiBurst();flashScreen('#b36bff',.4);
   $('res-modal').innerHTML=`
     <div class="result">
       <div class="reveal-wrap">${sunburstHTML('rgba(179,107,255,.25)')}
-        <span class="spr reveal-pop" style="width:110px;filter:drop-shadow(0 0 16px var(--r-${main.rarity==='legendary'?'leg':main.rarity}))">${ART[main.heroId]}</span>
+        <span class="spr reveal-pop" style="width:110px;filter:drop-shadow(0 0 16px var(--r-${d.rar==='legendary'?'leg':d.rar}))">${ART[d.heroId]}</span>
       </div>
       <div class="rt win" style="font-size:24px;margin-top:6px">⬆️ ENHANCE THÀNH CÔNG!</div>
-      <div class="quip"><b>${HEROES[main.heroId].name}</b> #${main.uid} đã lên ${rBadge(main.rarity)}!<br>Chỉ số ×${RSTAT[main.rarity]} — 4 bản nguyên liệu đã hy sinh vì khoa học. 🫡</div>
+      <div class="quip"><b>${HEROES[d.heroId].name}</b> #${d.uid} đã lên ${rBadge(d.rar)}!<br>Chỉ số ×${RSTAT[d.rar]} — 4 bản nguyên liệu đã hy sinh vì khoa học. 🫡</div>
       <button class="btn" onclick="closeModal('res-bg')">Mạnh hẳn lên! 💪</button>
     </div>`;
   openModal('res-bg');
+}
+function doEnhance(){
+  if(SRVMODE){act('enhance',...labSel).then(r=>{const d=r&&r.result;if(!d)return;if(d.err)return toast(d.err);renderLab();renderRes();renderEnhanceReveal(d)});return}
+  const d=doEnhanceLogic();if(d.err)return toast(d.err);
+  renderLab();renderRes();renderEnhanceReveal(d);
 }
 
 /* ================= HỘP HERO: ghép mảnh / trứng lab / hộp tái chế ================= */
@@ -6507,106 +6526,103 @@ function buildBoxFromPieces(){
   SFX.buy();toast('📦 Ghép xong 1 <b>Hộp Hero</b>! Bấm vào hộp để mở — được CHỌN 1 trong 3.');
   renderLoot();renderRes();
 }
-function openBox(uid){
-  const b=S.boxes.find(x=>x.uid===uid);if(!b)return;
-  if(!boxReady(b)){
-    const mins=Math.max(1,Math.ceil((b.ready-Date.now())/60000));
-    return toast(`🥚 Trứng chưa nở — còn ~${mins} phút. Kiên nhẫn, khoa học cần thời gian ấp.`);
+// ===== MỞ HỘP/TRỨNG: tách LOGIC (vm-safe, trả descriptor) + RENDER (client) — server-mode hiện đúng picker/reveal =====
+// SYNC: std → roll 3 ứng viên (khóa vào hộp, KHÔNG tiêu hộp); egg/rec → tiêu hộp + addInstance. Trả descriptor.
+function openBoxLogic(uid){
+  const b=S.boxes.find(x=>x.uid===uid);if(!b)return {err:'no_box'};
+  if(!boxReady(b))return {err:'not_ready',mins:Math.max(1,Math.ceil((b.ready-Date.now())/60000))};
+  if(b.t==='std'){
+    if(!b.picks){const ids=Object.keys(HEROES),picks=[];while(picks.length<3&&picks.length<ids.length){const h=ids[rnd(0,ids.length-1)];if(!picks.includes(h))picks.push(h)}b.picks=picks} // khóa 1 lần (chống re-roll)
+    return {mode:'pick',uid,rar:b.rar,picks:b.picks};
   }
-  if(b.t==='std'){ // mở ra 3 ứng viên — CHỌN 1
-    if(!b.picks){ // 🔒 roll 3 ứng viên MỘT LẦN rồi khóa vào hộp — đóng/mở lại KHÔNG đổi (chống re-roll)
-      const ids=Object.keys(HEROES),picks=[];
-      while(picks.length<3&&picks.length<ids.length){
-        const h=ids[rnd(0,ids.length-1)];if(!picks.includes(h))picks.push(h);
-      }
-      b.picks=picks;scheduleSave();
-    }
-    const picks=b.picks;
-    const rm=RSTAT[b.rar]||1; // xem trước chỉ số ở bậc của hộp (Lv1)
-    $('hd-modal').innerHTML=`
-      <button class="close" onclick="closeModal('hd-bg')">✕</button>
-      <h3>📦 Hộp bật nắp... 3 ứng viên nhảy ra!</h3>
-      <p class="sub" style="margin-top:4px">Xem CHỈ SỐ rồi chọn MỘT người (bậc ${RNAME[b.rar]}). Hai người còn lại chui về hộp.</p>
-      <div class="hgrid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${picks.map(h=>{
-        const H=HEROES[h],bs=H.base,own=S.roster.filter(i=>i.heroId===h).length;
-        return `<div class="hcard ${b.rar}">
-          ${sprite(h,84)}<h4>${H.name}</h4>
-          <span class="tag ${H.cls}">${CLS_VI[H.cls]}</span>
-          <div class="pickstats" style="font-size:11px;line-height:1.55;margin:6px 0;text-align:left;width:100%">
-            ❤️ ${fmt(Math.round(bs.hp*rm))} · ⚔️ ${fmt(Math.round(bs.atk*rm))}<br>🛡️ ${fmt(Math.round(bs.def*rm))} · ⚡ ${bs.spd}
-            <div style="color:var(--cyan);margin-top:3px">💥 ${H.skill.name}</div></div>
-          <div class="q" style="margin:2px 0 8px">${own?'Đã có '+own+' bản':'🆕 CHƯA SỞ HỮU'}</div>
-          <button class="btn sm cy" style="width:100%" onclick="pickFromBox(${b.uid},'${h}')">✓ Chọn người này</button>
-        </div>`}).join('')}</div>`;
-    openModal('hd-bg');
-    return;
-  }
-  // egg / rec: roll tại chỗ
   let outs=[];
   if(b.t==='egg'){
-    const roll=()=>{const r=Math.random();
-      if(r<0.02){const pool=Object.keys(HEROES).filter(h=>!b.parents.includes(h));
-        if(pool.length)return{h:pool[rnd(0,pool.length-1)],mut:true}}
-      return{h:r<0.51?b.parents[0]:b.parents[1],mut:false}};
-    outs.push(roll());
-    if(Math.random()<TWIN_CHANCE)outs.push(roll()); // 👯 SINH ĐÔI!
-  }else{ // rec: 70% ưu tiên hero chưa sở hữu
-    const all=Object.keys(HEROES);
-    const owned=new Set(S.roster.map(i=>i.heroId));
-    const unowned=all.filter(h=>!owned.has(h));
+    const roll=()=>{const r=Math.random();if(r<0.02){const pool=Object.keys(HEROES).filter(h=>!b.parents.includes(h));if(pool.length)return{h:pool[rnd(0,pool.length-1)],mut:true}}return{h:r<0.51?b.parents[0]:b.parents[1],mut:false}};
+    outs.push(roll());if(Math.random()<TWIN_CHANCE)outs.push(roll()); // 👯 sinh đôi
+  }else{ // rec: 70% ưu tiên chưa sở hữu
+    const all=Object.keys(HEROES),owned=new Set(S.roster.map(i=>i.heroId)),unowned=all.filter(h=>!owned.has(h));
     let pool=(unowned.length&&Math.random()<0.7)?unowned:all.filter(h=>!(b.parents||[]).includes(h));
-    if(!pool.length)pool=all;
-    outs.push({h:pool[rnd(0,pool.length-1)],mut:false});
+    if(!pool.length)pool=all;outs.push({h:pool[rnd(0,pool.length-1)],mut:false});
   }
   S.boxes=S.boxes.filter(x=>x.uid!==uid);
   const insts=outs.map(o=>addInstance(o.h,b.rar));
-  const twin=outs.length>1,mut=outs.some(o=>o.mut);
-  const rarC=`var(--r-${b.rar==='legendary'?'leg':b.rar})`;
+  return {mode:'reveal',boxType:b.t,rar:b.rar,outs,instUids:insts.map(i=>i.uid),twin:outs.length>1,mut:outs.some(o=>o.mut)};
+}
+function renderBoxPicker(d){ // modal CHỌN 1 trong 3
+  const rm=RSTAT[d.rar]||1;
+  $('hd-modal').innerHTML=`
+    <button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <h3>📦 Hộp bật nắp... 3 ứng viên nhảy ra!</h3>
+    <p class="sub" style="margin-top:4px">Xem CHỈ SỐ rồi chọn MỘT người (bậc ${RNAME[d.rar]}). Hai người còn lại chui về hộp.</p>
+    <div class="hgrid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${d.picks.map(h=>{
+      const H=HEROES[h],bs=H.base,own=S.roster.filter(i=>i.heroId===h).length;
+      return `<div class="hcard ${d.rar}">
+        ${sprite(h,84)}<h4>${H.name}</h4>
+        <span class="tag ${H.cls}">${CLS_VI[H.cls]}</span>
+        <div class="pickstats" style="font-size:11px;line-height:1.55;margin:6px 0;text-align:left;width:100%">
+          ❤️ ${fmt(Math.round(bs.hp*rm))} · ⚔️ ${fmt(Math.round(bs.atk*rm))}<br>🛡️ ${fmt(Math.round(bs.def*rm))} · ⚡ ${bs.spd}
+          <div style="color:var(--cyan);margin-top:3px">💥 ${H.skill.name}</div></div>
+        <div class="q" style="margin:2px 0 8px">${own?'Đã có '+own+' bản':'🆕 CHƯA SỞ HỮU'}</div>
+        <button class="btn sm cy" style="width:100%" onclick="pickFromBox(${d.uid},'${h}')">✓ Chọn người này</button>
+      </div>`}).join('')}</div>`;
+  openModal('hd-bg');
+}
+function renderBoxReveal(d){ // reveal trứng/tái-chế (egg có màn lắc lư)
+  const outs=d.outs,insts=d.instUids,twin=d.twin,mut=d.mut,rarC=`var(--r-${d.rar==='legendary'?'leg':d.rar})`;
   const finish=()=>{
-    confettiBurst();SFX.breed();
-    flashScreen(twin||mut?'#ffd23f':'#fff',twin||mut?.6:.35);
+    confettiBurst();SFX.breed();flashScreen(twin||mut?'#ffd23f':'#fff',twin||mut?.6:.35);
     $('res-modal').innerHTML=`
     <div class="result">
       <div class="reveal-wrap">${sunburstHTML(twin||mut?'rgba(255,210,63,.3)':'rgba(255,255,255,.16)')}
         ${outs.map((o,i)=>`<span class="spr reveal-pop" style="width:104px;animation-delay:${i*0.14}s;filter:drop-shadow(0 0 14px ${rarC})">${ART[o.h]}</span>`).join('')}
       </div>
-      <div class="rt win" style="font-size:24px;margin-top:6px">${twin?'👯 SINH ĐÔI!!':mut?'🧬 ĐỘT BIẾN!!':b.t==='egg'?'🐣 TRỨNG NỞ!':'♻️ MÁY NHẢ HÀNG!'}</div>
-      <div class="quip">${outs.map((o,i)=>`<b>${HEROES[o.h].name}</b> #${insts[i].uid} — ${rBadge(b.rar)}`).join('<br>')}
+      <div class="rt win" style="font-size:24px;margin-top:6px">${twin?'👯 SINH ĐÔI!!':mut?'🧬 ĐỘT BIẾN!!':d.boxType==='egg'?'🐣 TRỨNG NỞ!':'♻️ MÁY NHẢ HÀNG!'}</div>
+      <div class="quip">${outs.map((o,i)=>`<b>${HEROES[o.h].name}</b> #${insts[i]} — ${rBadge(d.rar)}`).join('<br>')}
         ${mut?'<br>🧬 Không giống bố, chẳng giống mẹ — khoa học vùng đất hoang là thế!':''}
         ${twin?'<br>👯 Một trứng HAI hero — xác suất 2%, hôm nay là ngày của bạn!':''}</div>
       <button class="btn" onclick="closeModal('res-bg')">Tuyệt vời! 🎉</button>
     </div>`;
-    openModal('res-bg');
-    renderLoot();renderRes();
+    openModal('res-bg');renderLoot();renderRes();
   };
-  if(b.t==='egg'){ // màn dạo đầu: trứng lắc lư rồi mới nở
+  if(d.boxType==='egg'){
     $('res-modal').innerHTML=`
       <div class="result">
         <div class="reveal-wrap"><span class="spr eggwob" style="width:118px">${eggSVG(rarC)}</span></div>
         <div class="quip">🥚 Trứng đang nứt vỏ...</div>
       </div>`;
-    openModal('res-bg');SFX.can();
-    setTimeout(finish,1050);
-    renderLoot();renderRes();
+    openModal('res-bg');SFX.can();setTimeout(finish,1050);
   }else finish();
 }
-function pickFromBox(uid,heroId){
-  const b=S.boxes.find(x=>x.uid===uid);if(!b||!HEROES[heroId])return;
+function openBox(uid){
+  const show=d=>{if(!d)return;if(d.err){if(d.err==='not_ready')toast(`🥚 Trứng chưa nở — còn ~${d.mins} phút. Kiên nhẫn, khoa học cần thời gian ấp.`);return}
+    if(d.mode==='pick')renderBoxPicker(d);else renderBoxReveal(d)};
+  if(SRVMODE){act('openbox',uid).then(r=>show(r&&r.result));return}
+  const d=openBoxLogic(uid);renderRes();renderLoot();scheduleSave();show(d);
+}
+function pickFromBoxLogic(uid,heroId){
+  const b=S.boxes.find(x=>x.uid===uid);if(!b||!HEROES[heroId])return {err:'bad'};
+  if(b.t==='std'&&(!b.picks||!b.picks.includes(heroId)))return {err:'bad_pick'}; // chỉ được CHỌN 1 trong 3 đã roll (chống bịa hero)
   S.boxes=S.boxes.filter(x=>x.uid!==uid);
   const inst=addInstance(heroId,b.rar);
-  closeModal('hd-bg');
-  confettiBurst();SFX.levelup();flashScreen('#fff',.35);
+  return {heroId,instUid:inst.uid,rar:b.rar};
+}
+function renderPickReveal(d){
+  closeModal('hd-bg');confettiBurst();SFX.levelup();flashScreen('#fff',.35);
   $('res-modal').innerHTML=`
     <div class="result">
       <div class="reveal-wrap">${sunburstHTML('rgba(59,232,255,.2)')}
-        <span class="spr reveal-pop" style="width:110px;filter:drop-shadow(0 0 14px var(--r-${b.rar==='legendary'?'leg':b.rar}))">${ART[heroId]}</span>
+        <span class="spr reveal-pop" style="width:110px;filter:drop-shadow(0 0 14px var(--r-${d.rar==='legendary'?'leg':d.rar}))">${ART[d.heroId]}</span>
       </div>
       <div class="rt win" style="font-size:24px;margin-top:6px">📦 CHÀO LÍNH MỚI!</div>
-      <div class="quip"><b>${HEROES[heroId].name}</b> #${inst.uid} — ${rBadge(b.rar)}<br>"${HEROES[heroId].quote}"</div>
+      <div class="quip"><b>${HEROES[d.heroId].name}</b> #${d.instUid} — ${rBadge(d.rar)}<br>"${HEROES[d.heroId].quote}"</div>
       <button class="btn" onclick="closeModal('res-bg')">Vào đội! 🎉</button>
     </div>`;
-  openModal('res-bg');
-  renderLoot();renderRes();
+  openModal('res-bg');renderLoot();renderRes();
+}
+function pickFromBox(uid,heroId){
+  if(SRVMODE){act('pickbox',uid,heroId).then(r=>{const d=r&&r.result;if(d&&!d.err)renderPickReveal(d)});return}
+  const d=pickFromBoxLogic(uid,heroId);if(d.err)return;
+  renderPickReveal(d);
 }
 function renderLoot(){
   const g=$('boxshelf-list');if(!g)return;
@@ -8038,7 +8054,7 @@ function rkAfterResult(){closeModal('res-bg');B=null;RKBUSY=false;if(SRVMODE)srv
 /* ============ SERVER MODE: CẢ GAME chạy trên server (state + action) — bật bằng localStorage.wk_srv ============
    Client = lớp hiển thị; mọi hành động đổi state đi qua /gs/act (server chạy code thật). Sửa localStorage vô nghĩa. */
 let SRVMODE=false;
-const SRV_KEYS=['gas','maxGas','reserve','junk','juice','tape','cans','plv','xp','roster','nextUid','pieces','boxes','nextBoxUid','unlocked','team','inv','nextItemUid','beaten','tower','seasonStart','seasonNo','seasonStats','arena','pendingSeasonWin','tut','daily'];
+const SRV_KEYS=['gas','maxGas','reserve','junk','juice','tape','cans','plv','xp','roster','nextUid','pieces','boxes','nextBoxUid','unlocked','team','inv','nextItemUid','beaten','tower','seasonStart','seasonNo','seasonStats','trophies','arena','pendingSeasonWin','tut','daily'];
 function applyServerState(gs){SRV_KEYS.forEach(k=>{if(k in gs)S[k]=gs[k]})}
 function srvRerender(){try{renderRes()}catch(e){}
   const v=(document.querySelector('.view.active')||{}).id;
@@ -8061,20 +8077,19 @@ async function srvStartBattle(node){
   applyServerState(r.gs);
   replayBattle(r.setup,r.log,{win:r.win,reward:r.reward,node:{ch:n.ch,arena:false,id},gs:r.gs});
 }
+const showT=r=>{if(r&&r.toasts){const seen=new Set();r.toasts.forEach(m=>{if(!seen.has(m)){seen.add(m);toast(m)}})}return r}; // hiện feedback (toast) thu trong vm, bỏ trùng
+const reopenIfOpen=fn=>{if($('hd-bg').classList.contains('open'))try{fn()}catch(e){}}; // vẽ lại sheet đang mở sau khi server trả (tránh data cũ)
 function srvWrap(){ // thay hàm action global -> route qua server (onclick UI tự động đi server)
-  window.craft=id=>act('craft',id);
-  window.buyShop=k=>act('buyshop',k);
-  // upgradeHero/upgradeSkill/equipItem/unequipItem + buyBlack/openCan/claimMission/claimBonus/doForge/salvageInstance
-  // tự rẽ nhánh theo SRVMODE (act() rồi mở lại modal/diễn fx) → KHÔNG ghi đè ở đây (nếu đè sẽ mất bước vẽ lại modal)
-  window.buildBoxFromPieces=()=>act('buildbox');
-  window.openBox=uid=>act('openbox',uid);
-  window.pickFromBox=(uid,h)=>act('pickbox',uid,h);
-  window.doBreed=()=>act('breed',labSel[0],labSel[1]);
-  window.doRecycle=()=>act('recycle',labSel[0]);
-  window.doEnhance=()=>act('enhance',labSel[0],labSel[1]);
+  window.craft=id=>act('craft',id).then(showT).then(()=>{SFX.buy&&SFX.buy();reopenIfOpen(()=>openItemSheet(id))});
+  window.buyShop=k=>act('buyshop',k).then(showT).then(()=>{SFX.buy&&SFX.buy();reopenIfOpen(()=>openShopSheet(k))});
+  // upgradeHero/upgradeSkill/equipItem/unequipItem + buyBlack/openCan/openBox/pickFromBox/doEnhance/claimSeason/startNewSeason/claimMission/claimBonus/doForge/salvageInstance
+  // tự rẽ nhánh theo SRVMODE (act() rồi mở lại modal/diễn fx/result) → KHÔNG ghi đè ở đây (nếu đè sẽ mất bước vẽ lại modal)
+  window.buildBoxFromPieces=()=>act('buildbox').then(showT).then(()=>{SFX.buy&&SFX.buy()});
+  window.doBreed=()=>act('breed',labSel[0],labSel[1]).then(showT).then(()=>{SFX.breed&&SFX.breed();flashScreen&&flashScreen('#b36bff',.25);navPulse&&navPulse('nb-loot')});
+  window.doRecycle=()=>act('recycle',labSel[0]).then(showT).then(()=>{SFX.breed&&SFX.breed();flashScreen&&flashScreen('#b36bff',.25);navPulse&&navPulse('nb-loot')});
   const _pick=window.pickHero,_clear=window.clearSlot;
-  window.pickHero=uid=>{_pick(uid);act('team',S.team.front,S.team.back)};
-  window.clearSlot=()=>{_clear();act('team',S.team.front,S.team.back)};
+  window.pickHero=async uid=>{const prev=JSON.parse(JSON.stringify(S.team));_pick(uid);const r=await act('team',S.team.front,S.team.back);if(!r||!r.ok){S.team=prev;renderTeam()}}; // rollback nếu server từ chối
+  window.clearSlot=async()=>{const prev=JSON.parse(JSON.stringify(S.team));_clear();const r=await act('team',S.team.front,S.team.back);if(!r||!r.ok){S.team=prev;renderTeam()}};
   window.startBattle=node=>srvStartBattle(node);
   window.saveGame=function(){try{localStorage.setItem('wk_net',JSON.stringify(S.net||null))}catch(e){}}; // không lưu state game (server giữ)
 }
