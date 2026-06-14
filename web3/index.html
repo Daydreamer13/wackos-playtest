@@ -5666,7 +5666,7 @@ function simHeal(tgt,amount,src){
 }
 function simSkill(u,units){
   u.energy=0;
-  if(SIMLOG){const sd=skillDef(u);SIMLOG.push({a:'skill',s:u.key,name:(sd&&sd.name)||''})}
+  if(SIMLOG){const sd=skillDef(u);SIMLOG.push({a:'skill',s:u.key,name:(sd&&sd.name)||'',vfx:(sd&&sd.vfx)||'generic',c:(u.hero&&u.hero.ccolor)||'#7a1d2e'})}
   applySkill(u,units,'sim'); // CÙNG executor với trận trực quan — không còn logic trùng lặp
 }
 function simAttack(u,units){
@@ -8070,7 +8070,9 @@ function replayBattle(setup,log,result){
     const ev=log[i++],t=ev.t&&U(ev.t),s=ev.s&&U(ev.s);
     // THANH RAGE: SIMLOG không mang energy → tái dựng từ event để khớp anim live (đánh +35, trúng +12, skill về 0; ×PACE_DMG).
     if(ev.a==='atk'&&s&&t){if(ev.rng){const f=uPos(s);fxProjectile(PROJ.bolt,{x:f.x,y:f.y},uPos(t),360,30)}else lunge(s,t);s.energy=Math.min(100,(s.energy||0)+35*PACE_DMG);refreshUnit(s)}
-    else if(ev.a==='skill'&&s){s.energy=0;refreshUnit(s);cutin(s.name,ev.name||'',s.art,'#7a1d2e');actPop(s);SFX.skill()}
+    else if(ev.a==='skill'&&s){s.energy=0;refreshUnit(s);cutin(s.name,ev.name||'',s.art,ev.c||'#7a1d2e');actPop(s);SFX.skill();
+      const cel=uEl(s);if(cel)cel.animate([{filter:'brightness(1)'},{filter:'brightness(2.1) drop-shadow(0 0 10px #fff)'},{filter:'brightness(1)'}],{duration:750/spd(),easing:'ease-out'});
+      try{(SKILL_VFX[ev.vfx]||SKILL_VFX.generic)(s,()=>{})}catch(e){}}/* projectile/đòn skill rõ ràng tới mục tiêu (no-op impact: dmg đến từ event dmg) */
     else if(ev.a==='dmg'&&t){t.hp=ev.hp;t.energy=Math.min(100,(t.energy||0)+12*PACE_DMG);refreshUnit(t);const p=uPos(t);fxSpark(p.x+rnd(-8,8),p.y+rnd(-8,8),ev.crit?'#ff9f2e':'#ffd23f',ev.crit?60:42);fxFloat(t,'-'+ev.v,ev.crit?'var(--orange)':'#ff8a96',ev.crit);hitJiggle(t);if(ev.crit){shakeArena(8);SFX.crit()}else SFX.hit()}
     else if(ev.a==='heal'&&t){t.hp=ev.hp;refreshUnit(t);fxFloat(t,'+'+ev.v,'var(--green)');const p=uPos(t);fxRing(p.x,p.y,70,'var(--green)');SFX.heal()}
     else if(ev.a==='die'&&t){t.alive=false;const p=uPos(t);fxPoof(p.x,p.y,t.boss?1.8:1);refreshUnit(t);SFX.death()}
