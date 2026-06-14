@@ -1034,7 +1034,8 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
 
   <section class="view" id="v-battle">
     <h2 class="sec">🗺️ Bản Đồ Chiến Dịch</h2>
-    <p class="sub">Bấm địa điểm để xem chi tiết & xuất trận — node vàng nhấp nháy là điểm tiến công kế tiếp. Đội hình chỉnh ở tab 🦸 Heroes.</p>
+    <p class="sub">Bấm địa điểm để xem chi tiết & xuất trận — node vàng nhấp nháy là điểm tiến công kế tiếp. Đội hình chỉnh ở tab 🦸 Heroes.
+      <button class="btn sm pu" style="margin-left:6px" onclick="openRanked()">🏆 RANKED (server)</button></p>
     <div class="mapscene" id="mapscene"></div>
   </section>
 
@@ -7818,6 +7819,52 @@ function defSnapshot(){ // đội hình hiện tại → snapshot chỉ số th�
 }
 function teamPowerScore(){
   return Math.round(teamIds().reduce((a,uid)=>{const st=heroStats(uid);return a+st.atk+st.def+st.hp/8+st.spd},0));
+}
+
+/* ============ RANKED (server-authoritative): mọi số do SERVER giữ & quyết — sửa client vô nghĩa ============ */
+function rkEsc(s){return String(s==null?'':s).replace(/[<>&]/g,'')}
+function rkResLine(gs){return `⚡${gs.gas}/${gs.maxGas} · 🪙${fmt(gs.junk)} · 🩹${gs.tape} · 🔋${gs.juice} · 🥫${gs.cans} · 🧩${gs.pieces} · Lv${gs.plv} (xp ${gs.xp})${gs.surge>1?' · 🔥×'+gs.surge:''}`}
+async function openRanked(){
+  const vi=WLANG==='vi';
+  if(!S.net||!S.net.id)return toast(vi?'🌐 Kết nối toàn cầu trước đã (tab 🎭 Arena → đăng ký tên).':'Connect online first (Arena tab).');
+  $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button><h3>🏆 RANKED</h3><p class="sub">${vi?'Đang tải trạng thái server…':'Loading server state…'}</p>`;
+  openModal('hd-bg');
+  let r;try{r=await netApi('/gs/state',{id:S.net.id,secret:S.net.secret})}catch(e){r=null}
+  if(!r||!r.ok)return $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button><h3>🏆 RANKED</h3><p class="sub">${vi?'Server chưa sẵn sàng':'Server not ready'} (${(r&&r.err)||'mạng'}).</p>`;
+  renderRanked(r.gs);
+}
+function renderRanked(gs){
+  const vi=WLANG==='vi';
+  const camp=NODES.filter(n=>n.ch&&!n.tower&&!n.dungeon&&!n.arena&&!n.rival);
+  const nodes=camp.map(n=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 2px;border-bottom:1px solid var(--line)">
+    <span>${n.boss?'👑 ':''}${n.name} <span style="color:var(--muted);font-size:11px">⚡${n.gas}</span></span>
+    <button class="btn sm or" onclick="rankedBattle('${n.id}')">⚔️ ${vi?'Đánh':'Fight'}</button></div>`).join('');
+  $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <h3>🏆 RANKED <span style="font-size:11px;color:var(--green)">server-authoritative</span></h3>
+    <p class="sub" style="margin-top:2px">${vi?'Mọi số do SERVER giữ & quyết — sửa client vô nghĩa. Đây là tài khoản ranked riêng (đội starter, tự cày lên).':'Everything is server-held & decided — client edits do nothing. Separate ranked account (starter team).'}</p>
+    <div class="panel" id="rk-res" style="font-weight:800;font-size:13px">${rkResLine(gs)}</div>
+    <div id="rk-msg" style="min-height:22px;margin:8px 0;font-weight:700;font-size:13px"></div>
+    <h5 style="color:var(--orange)">⚔️ ${vi?'Chiến dịch':'Campaign'}</h5>${nodes}
+    <h5 style="color:var(--purple);margin-top:12px">🏟️ PvP</h5>
+    <button class="btn sm pu" style="width:100%" onclick="rankedPvp()">⚔️ ${vi?'Đánh 1 đối thủ ngẫu nhiên (server xử)':'Fight a random opponent (server-decided)'}</button>`;
+}
+async function rankedBattle(node){
+  const m=$('rk-msg');if(m)m.textContent='⏳ …';
+  let r;try{r=await netApi('/gs/battle',{id:S.net.id,secret:S.net.secret,node})}catch(e){r=null}
+  if(!r||!r.ok){if(m)m.innerHTML=`<span style="color:var(--red)">✗ ${(r&&r.err)||'mạng'}${r&&r.need?` (cần ${r.need}⚡, có ${r.gas})`:''}</span>`;return}
+  const rw=r.reward||{},I={junk:'🪙',tape:'🩹',juice:'🔋',cans:'🥫',pieces:'🧩'};
+  const loot=Object.keys(I).filter(k=>rw[k]).map(k=>I[k]+'+'+rw[k]).join(' ');
+  if(m)m.innerHTML=(r.win?'<span style="color:var(--green)">🏆 THẮNG!</span> ':'<span style="color:var(--red)">🩹 Thua.</span> ')+loot+(rw.xp?' ✨+'+rw.xp:'')+(rw.leveled?' <b style="color:var(--yellow)">⬆️Lv'+rw.leveled+'</b>':'')+` <span style="color:var(--muted)">(−${r.charged}⚡${r.surge>1?' 🔥×'+r.surge:''})</span>`;
+  if($('rk-res'))$('rk-res').innerHTML=rkResLine(r.gs);
+}
+async function rankedPvp(){
+  const m=$('rk-msg');if(m)m.textContent='⏳ tìm đối thủ…';
+  let o;try{o=await netApi('/api/opponents?id='+S.net.id)}catch(e){o=null}
+  const opps=(o&&o.opps)||[];if(!opps.length){if(m)m.textContent=WLANG==='vi'?'Chưa có đối thủ nào.':'No opponents yet.';return}
+  const opp=opps[0];
+  let r;try{r=await netApi('/gs/pvp',{id:S.net.id,secret:S.net.secret,oid:opp.oid})}catch(e){r=null}
+  if(!r||!r.ok){if(m)m.innerHTML=`<span style="color:var(--red)">✗ ${(r&&r.err)||'mạng'}</span>`;return}
+  if(m)m.innerHTML=(r.win?'<span style="color:var(--green)">🏆 Thắng PvP</span>':'<span style="color:var(--red)">🩹 Thua PvP</span>')+' vs '+rkEsc(opp.name)+` · 🏆${r.delta>=0?'+':''}${r.delta} → ${r.trophies}`;
 }
 function netSync(now){ // đẩy hồ sơ (sức mạnh + đội thủ) lên server — debounce, lỗi mạng thì im lặng
   if(!S.net)return;
