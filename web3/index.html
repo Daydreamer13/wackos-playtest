@@ -996,28 +996,49 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
 
   <section class="view" id="v-heroes">
     <h2 class="sec">🦸 Doanh Trại Đội Quân Kỳ Quặc</h2>
-    <p class="sub">Xếp đội hình xuất trận, bấm hồ sơ hero để nâng cấp và lắp đồ.
-      <button class="btn sm gh" style="margin-left:8px" onclick="go('gallery')">📖 Bộ sưu tập</button></p>
-    <div class="panel teampanel">
-      <div class="poslabel" style="margin-top:0">⚔️ Đội hình xuất trận — Tuyến trước (2): hứng đòn, Tank đứng đây</div>
-      <div class="teambar" id="team-front"></div>
-      <div class="poslabel">Tuyến sau (3) — DPS / Support / Controller núp đây</div>
-      <div class="teambar" id="team-back"></div>
+    <div class="crafttabs" id="hero-subtabs">
+      <button class="ctab on" id="htab-hero" onclick="setHeroTab('hero')">🦸 Hero</button>
+      <button class="ctab" id="htab-gear" onclick="setHeroTab('gear')">🗡️ Vũ khí</button>
+      <button class="ctab" id="htab-pet" onclick="setHeroTab('pet')">🐾 Pet</button>
     </div>
-    <div class="hqscene">
-      <div class="hq-sign">📋 HỒ SƠ QUÂN ĐOÀN — <span id="hq-count">0</span></div>
-      <div class="filterbar" id="hero-filter"></div>
-      <div class="filterbar" id="hero-rarfilter"></div>
-      <div class="hgrid" id="hero-grid"></div>
-    </div>
-    <div class="panel" style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-      <span id="hq-pieceico" style="font-size:32px;line-height:0">🧩</span>
-      <div style="flex:1;min-width:200px">
-        <b>Mảnh Hộp Hero: <span id="hq-pieces">0</span>/10</b>
-        <div class="shardbar" style="margin-top:5px"><i id="hq-piecesbar" style="width:0%"></i></div>
-        <p class="demonote" style="margin-top:4px">Rơi từ 🥫 lon, nhiệm vụ ngày, hầm T5, 🦫 Tiệm. Đủ 10 mảnh → ghép hộp, mở ra <b>chọn 1 trong 3 hero</b>.</p>
+    <div id="hpage-hero">
+      <p class="sub">Xếp đội hình xuất trận, bấm hồ sơ hero để nâng cấp và lắp đồ.
+        <button class="btn sm gh" style="margin-left:8px" onclick="go('gallery')">📖 Bộ sưu tập</button></p>
+      <div class="panel teampanel">
+        <div class="poslabel" style="margin-top:0">⚔️ Đội hình xuất trận — Tuyến trước (2): hứng đòn, Tank đứng đây</div>
+        <div class="teambar" id="team-front"></div>
+        <div class="poslabel">Tuyến sau (3) — DPS / Support / Controller núp đây</div>
+        <div class="teambar" id="team-back"></div>
       </div>
-      <button class="btn sm cy" onclick="go('loot')">📦 Tới Kệ Hộp</button>
+      <div class="hqscene">
+        <div class="hq-sign">📋 HỒ SƠ QUÂN ĐOÀN — <span id="hq-count">0</span></div>
+        <div class="filterbar" id="hero-filter"></div>
+        <div class="filterbar" id="hero-rarfilter"></div>
+        <div class="hgrid" id="hero-grid"></div>
+      </div>
+      <div class="panel" style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <span id="hq-pieceico" style="font-size:32px;line-height:0">🧩</span>
+        <div style="flex:1;min-width:200px">
+          <b>Mảnh Hộp Hero: <span id="hq-pieces">0</span>/10</b>
+          <div class="shardbar" style="margin-top:5px"><i id="hq-piecesbar" style="width:0%"></i></div>
+          <p class="demonote" style="margin-top:4px">Rơi từ 🥫 lon, nhiệm vụ ngày, hầm T5, 🦫 Tiệm. Đủ 10 mảnh → ghép hộp, mở ra <b>chọn 1 trong 3 hero</b>.</p>
+        </div>
+        <button class="btn sm cy" onclick="go('loot')">📦 Tới Kệ Hộp</button>
+      </div>
+    </div>
+    <div id="hpage-gear" style="display:none">
+      <p class="sub">🗡️ Kho vũ khí & trang bị của bạn — bấm 1 món để xem / rèn / rã. Lắp đồ vào hero ở 🦸 hồ sơ hero.
+        <button class="btn sm gh" style="margin-left:8px" onclick="go('craft')">🔨 Chế thêm ở Xưởng</button></p>
+      <div class="filterbar" id="gear-slotf"></div>
+      <div class="filterbar" id="gear-rarf"></div>
+      <div class="craftgrid" id="gear-grid"></div>
+    </div>
+    <div id="hpage-pet" style="display:none">
+      <div class="panel" style="text-align:center;padding:32px 16px">
+        <div style="font-size:54px;line-height:1">🐾</div>
+        <h3 style="margin:8px 0 4px">Pet — sắp ra mắt (Mùa 2)</h3>
+        <p class="sub" style="margin:0">Thú cưng vùng đất hoang: theo bạn ra trận, buff đội & mint NFT riêng. Đang được chế trong phòng Lab… 🧪</p>
+      </div>
     </div>
   </section>
 
@@ -3479,7 +3500,7 @@ function go(v){
   document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('on'));
   $('v-'+v).classList.add('on');
   const nb=$('nb-'+v);if(nb)nb.classList.add('on'); // gallery không có nút nav riêng
-  if(v==='heroes'){renderHeroes();renderTeam()}
+  if(v==='heroes')setHeroTab(heroTab); // 3 trang: Hero / Vũ khí / Pet
   if(v==='battle')renderMap();
   if(v==='craft')renderCraft();
   if(v==='lab')renderLab();
@@ -3759,6 +3780,54 @@ function renderHeroes(){
   const hp=$('hq-pieces');if(hp)hp.textContent=S.pieces;
   const hpb=$('hq-piecesbar');if(hpb)hpb.style.width=Math.min(100,S.pieces/PIECES_PER_BOX*100)+'%';
   renderTut(); // gắn lại glow tutorial sau khi grid render lại
+}
+/* ===== TAB HERO 3 TRANG: 🦸 Hero · 🗡️ Vũ khí · 🐾 Pet ===== */
+let heroTab='hero',gearSlotF='',gearRarF='';
+function setHeroTab(t){
+  heroTab=t;
+  ['hero','gear','pet'].forEach(x=>{
+    const pg=$('hpage-'+x);if(pg)pg.style.display=x===t?'':'none';
+    const tb=$('htab-'+x);if(tb)tb.classList.toggle('on',x===t);
+  });
+  if(t==='hero'){renderHeroes();renderTeam()}
+  else if(t==='gear')renderHeroGear();
+  if(typeof renderTut==='function')renderTut();
+}
+function setGearSlot(s){gearSlotF=s;renderHeroGear()}
+function setGearRar(r){gearRarF=r;renderHeroGear()}
+// Kho vũ khí: liệt kê MỌI bản trang bị (S.inv) — bấm 1 món → instanceSheet (rèn/rã/xem). Lắp đồ ở hồ sơ hero.
+function renderHeroGear(){
+  const grid=$('gear-grid');if(!grid)return;
+  const vi=WLANG==='vi';
+  const inv=S.inv.filter(g=>ITEMS[g.id]); // bỏ instance lỗi
+  const sf=$('gear-slotf');
+  if(sf){
+    const cnt=sl=>inv.filter(g=>!sl||ITEMS[g.id].slot===sl).length;
+    const chips=[['','🧰 '+(vi?'Tất cả':'All')]].concat(SLOTS.map(sl=>[sl,SLOT_VI[sl]]));
+    sf.innerHTML=chips.map(([sl,lbl])=>`<button class="fchip ${gearSlotF===sl?'on':''}" onclick="setGearSlot('${sl}')">${lbl} <span class="fcount">${cnt(sl)}</span></button>`).join('');
+  }
+  const rfb=$('gear-rarf');
+  if(rfb){
+    const present=RARITIES.filter(r=>inv.some(g=>ITEMS[g.id].rarity===r));
+    const cnt=r=>inv.filter(g=>(!gearSlotF||ITEMS[g.id].slot===gearSlotF)&&(!r||ITEMS[g.id].rarity===r)).length;
+    const chips=[['',vi?'Mọi bậc':'Any']].concat(present.map(r=>[r,RNAME[r]]));
+    rfb.innerHTML=chips.map(([r,lbl])=>{
+      const on=gearRarF===r,col=r?rarVar(r):'';
+      const sty=r?`border-color:${col};color:${col}${on?';background:var(--bg2)':''}`:(on?'background:var(--bg2);border-color:var(--yellow);color:var(--yellow)':'');
+      return`<button class="fchip${on?' on':''}" style="${sty}" onclick="setGearRar('${r}')">${r?'●':'◇'} ${lbl} <span class="fcount">${cnt(r)}</span></button>`;
+    }).join('');
+  }
+  let list=inv.filter(g=>(!gearSlotF||ITEMS[g.id].slot===gearSlotF)&&(!gearRarF||ITEMS[g.id].rarity===gearRarF));
+  list.sort((a,b)=>{const A=ITEMS[a.id],B=ITEMS[b.id];return SLOTS.indexOf(A.slot)-SLOTS.indexOf(B.slot)||rIdx(B.rarity)-rIdx(A.rarity)||(b.plus||0)-(a.plus||0)});
+  grid.innerHTML=list.map(g=>{
+    const it=ITEMS[g.id],eq=equippedBy(g.uid),extras=[(g.subs&&g.subs.length)?'✨':'',g.affix?'🎁':''].join('');
+    return`<div class="citem" style="border-color:var(--r-${it.rarity==='legendary'?'leg':it.rarity});cursor:pointer" onclick="instanceSheet(${g.uid})">
+      ${eq?`<span class="inteam" style="background:var(--cyan)">🔗 ${HEROES[eq.heroId].name.split(' ')[0]}</span>`:''}
+      <span class="ce">${itemIcon(g.id,44)}</span>
+      <h4>${it.name}${g.plus?` <span style="color:var(--orange)">+${g.plus}</span>`:''} ${extras}</h4>
+      <b class="rar-${it.rarity}" style="font-size:10px;letter-spacing:.08em">${SLOT_VI[it.slot]} · ${RNAME[it.rarity].toUpperCase()}</b>
+      <p style="font-size:11px">${bonusTxt(it.bonus,1+(g.plus||0)*FORGE_STEP)}${(g.subs&&g.subs.length)?'<br>✨ '+g.subs.map(subTxt).join(', '):''}${g.affix?'<br>🎁 '+affixTxt(g.affix):''}</p></div>`;
+  }).join('')||`<div style="grid-column:1/-1;padding:22px 10px;text-align:center;color:var(--muted);font-weight:700">${vi?'Chưa có trang bị nào — chế ở 🔨 Xưởng hoặc mở 🥫 lon!':'No gear yet — craft at the Workshop or open cans!'}</div>`;
 }
 /* ================= GALLERY / CODEX ================= */
 const ROSTER_TOTAL=48; // theo Hero Roster Design v1.0
@@ -5936,18 +6005,25 @@ function bonusTxt(b,fm){
   if(b.skill)p.push('💥 +'+r(b.skill)+'% Sức mạnh kỹ năng');
   return p.join(' · ');
 }
-function doForge(uid){
-  const g=itemById(uid);if(!g)return;const it=ITEMS[g.id];
+function refreshGearViews(){ if($('gear-grid'))renderHeroGear(); if($('v-craft')&&$('v-craft').classList.contains('on'))renderCraft(); }
+// SYNC rèn (vm-safe) — trả {ok|err,msg}. Server-mode route qua act('forge',uid).
+function forgeLogic(uid){
+  const g=itemById(uid);if(!g)return {err:'no_item'};const it=ITEMS[g.id];
   const lvl=g.plus||0;
-  if(lvl>=FORGE_MAX)return toast(`⚒️ ${it.name} đã đạt cấp rèn tối đa (+${FORGE_MAX})!`);
+  if(lvl>=FORGE_MAX)return {err:'maxed',msg:`⚒️ ${it.name} đã đạt cấp rèn tối đa (+${FORGE_MAX})!`};
   const c=forgeCost(g.id,lvl);
-  if(S.junk<c.junk)return toast('🪙 Thiếu Junk Coins để rèn!');
-  if(S.tape<c.tape)return toast('🩹 Thiếu băng keo để rèn!');
+  if(S.junk<c.junk)return {err:'junk',msg:'🪙 Thiếu Junk Coins để rèn!'};
+  if(S.tape<c.tape)return {err:'tape',msg:'🩹 Thiếu băng keo để rèn!'};
   S.junk-=c.junk;S.tape-=c.tape;g.plus=lvl+1;
+  return {ok:1,msg:`⚒️ Rèn <b>${it.e} ${it.name}</b> lên <b>+${g.plus}</b>!`};
+}
+function doForge(uid){
+  if(SRVMODE){act('forge',uid).then(r=>{const x=r&&r.result;if(!x)return;if(x.err)return toast(x.msg||'✗');
+    SFX.coin();flashScreen('#ff9f2e',.18);feat('craft');toast(x.msg);refreshGearViews();instanceSheet(uid)});return}
+  const r=forgeLogic(uid);if(r.err)return toast(r.msg);
   SFX.coin();flashScreen('#ff9f2e',.18);feat('craft');
-  toast(`⚒️ Rèn <b>${it.e} ${it.name}</b> lên <b>+${lvl+1}</b>!`);
-  if(S.net)netSync();
-  renderRes();instanceSheet(uid);
+  toast(r.msg);if(S.net)netSync();
+  renderRes();refreshGearViews();instanceSheet(uid);
 }
 function openShopSheet(key){
   const s=shopStock().find(x=>x.key===key);if(!s)return;
@@ -6044,16 +6120,26 @@ function buyShop(key){
   toast(`🛒 Đã mua <b>${s.e} ${s.name}</b>! Chú hải ly gật gù hài lòng.`);
   renderRes();renderCraft();
 }
+// SYNC rã (vm-safe) — trả {ok|err,msg}. KHÔNG confirm ở đây (client wrapper hỏi trước). Server-mode route qua act('salvage',uid).
+function salvageLogic(uid){
+  const g=itemById(uid);if(!g)return {err:'no_item'};const it=ITEMS[g.id];
+  if(g.minted)return {err:'minted',msg:'⛓️ Món này đã là NFT — không rã được.'};
+  if(isEquipped(uid))return {err:'equipped',msg:'Đang lắp — tháo ra trước khi rã.'};
+  let rj=Math.floor((it.cost.junk||0)*0.5),rt=Math.floor((it.cost.tape||0)*0.5),ru=Math.floor((it.cost.juice||0)*0.5);
+  for(let l=0;l<(g.plus||0);l++){const fc=forgeCost(g.id,l);rj+=Math.floor(fc.junk*0.5);rt+=Math.floor(fc.tape*0.5);} // hoàn 50% phí rèn
+  removeItemInstance(uid);S.junk+=rj;S.tape+=rt;S.juice+=ru;
+  return {ok:1,msg:`♻️ Rã ${it.e} ${it.name}: +${fmt(rj)} 🪙${rt?` +${rt} 🩹`:''}${ru?` +${ru} 🔋`:''}.`};
+}
 function salvageInstance(uid){
   const g=itemById(uid);if(!g)return;const it=ITEMS[g.id];
   if(g.minted)return toast('⛓️ Món này đã là NFT trên chain — không rã được trong game.');
   if(isEquipped(uid))return toast('Đang lắp — tháo ra trước khi rã.');
   if(rIdx(it.rarity)>=2&&!confirm(`Rã ${it.name}${g.plus?' +'+g.plus:''} (${RNAME[it.rarity]})? Hoàn 50% nguyên liệu (cả phần đã rèn), món đồ biến mất vĩnh viễn.`))return;
-  let rj=Math.floor((it.cost.junk||0)*0.5),rt=Math.floor((it.cost.tape||0)*0.5),ru=Math.floor((it.cost.juice||0)*0.5);
-  for(let l=0;l<(g.plus||0);l++){const fc=forgeCost(g.id,l);rj+=Math.floor(fc.junk*0.5);rt+=Math.floor(fc.tape*0.5);} // hoàn 50% phí rèn
-  removeItemInstance(uid);S.junk+=rj;S.tape+=rt;S.juice+=ru;SFX.coin();
-  toast(`♻️ Rã ${it.e} ${it.name}: +${fmt(rj)} 🪙${rt?` +${rt} 🩹`:''}${ru?` +${ru} 🔋`:''}.`);
-  if(S.net)netSync();renderRes();renderCraft();
+  if(SRVMODE){act('salvage',uid).then(r=>{const x=r&&r.result;if(!x)return;if(x.err)return toast(x.msg||'✗');
+    SFX.coin();toast(x.msg);closeModal('hd-bg');refreshGearViews()});return}
+  const r=salvageLogic(uid);if(r.err)return toast(r.msg);
+  SFX.coin();toast(r.msg);if(S.net)netSync();
+  renderRes();closeModal('hd-bg');refreshGearViews();
 }
 let craftSet='',craftRar='';
 function setCraftFilter(k){craftSet=k;renderCraft()}
@@ -7952,7 +8038,7 @@ const SRV_KEYS=['gas','maxGas','reserve','junk','juice','tape','cans','plv','xp'
 function applyServerState(gs){SRV_KEYS.forEach(k=>{if(k in gs)S[k]=gs[k]})}
 function srvRerender(){try{renderRes()}catch(e){}
   const v=(document.querySelector('.view.active')||{}).id;
-  const R={'v-heroes':()=>{renderHeroes();typeof renderTeam==='function'&&renderTeam()},'v-battle':()=>renderMap(),'v-craft':()=>renderCraft(),'v-lab':()=>renderLab(),'v-loot':()=>typeof renderLoot==='function'&&renderLoot(),'v-missions':()=>typeof renderMissions==='function'&&renderMissions()};
+  const R={'v-heroes':()=>{if(heroTab==='gear')renderHeroGear();else{renderHeroes();typeof renderTeam==='function'&&renderTeam()}},'v-battle':()=>renderMap(),'v-craft':()=>renderCraft(),'v-lab':()=>renderLab(),'v-loot':()=>typeof renderLoot==='function'&&renderLoot(),'v-missions':()=>typeof renderMissions==='function'&&renderMissions()};
   if(R[v])try{R[v]()}catch(e){}
 }
 async function act(fn,...args){
@@ -8492,6 +8578,9 @@ function loadGame(){
     Object.assign(S,{gas:d.gas,maxGas:d.maxGas,reserve:d.reserve||0,junk:d.junk,juice:d.juice,tape:d.tape,cans:d.cans,
       plv:d.plv,xp:d.xp,roster:d.roster,nextUid:d.nextUid,
       team:d.team,beaten:d.beaten||{},daily:d.daily});
+    {const dd={pve:0,upg:0,can:0,boss:0,craft:0,dgn:false,shop:{},arena:0,trash:0,claimed:{},bonus:false,wackoSpent:0}; // chuẩn hóa daily (save cũ thiếu field → tránh crash render)
+     if(S.daily&&typeof S.daily==='object')for(const k in dd)if(S.daily[k]!=null)dd[k]=S.daily[k];
+     if(typeof dd.claimed!=='object'||!dd.claimed)dd.claimed={}; if(typeof dd.shop!=='object'||!dd.shop)dd.shop={}; S.daily=dd;}
     S.maxGas=gasCap(); // trần kho mới (pivot: 100→200, tách khỏi $WACKO)
     // MIGRATION: save cũ có gas (=$WACKO cũ) rất cao → clamp về cap, phần thừa vào Reserve (≤50), bỏ phần còn lại
     if(S.gas>S.maxGas){S.reserve=Math.min(RESERVE_CAP,(S.reserve|0)+Math.floor(S.gas-S.maxGas));S.gas=S.maxGas;
