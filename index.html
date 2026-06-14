@@ -5875,7 +5875,7 @@ function renderRaid(){
 }
 function quickBattle(nodeId,n){
   if(S.busy)return;
-  if(SRVMODE)return toast(WLANG==='vi'?'⚡ Đánh nhanh chưa lên server — dùng đánh thường nhé (sắp có).':'⚡ Sweep not on server yet — use a normal battle.'); // sweep chưa server-authoritative → tránh desync/mất loot
+  if(SRVMODE)return srvSweep(nodeId,n); // server-authoritative: /gs/sweep chạy N trận thật rồi trả tổng loot
   if(!teamIds().length)return toast('Đội hình trống! Vào tab 🦸 Heroes thêm người đã.');
   const node=typeof nodeId==='object'?nodeId:NODES.find(x=>x.id===nodeId);
   if(node&&(node.tower||node.dungeon))return toast(WLANG==='vi'?'🚧 Tháp Hỗn Mang & Hầm Ngục đang tạm khóa — mở lại ở bản cập nhật sau!':'🚧 Chaos Tower & Dungeon are temporarily locked — back in a future update!');
@@ -5896,6 +5896,10 @@ function quickBattle(nodeId,n){
     mergeStats(T,units);
   }
   renderRes();renderMap();closeModal('raid-bg');
+  showSweepResult(T,n,cost);
+}
+// modal tổng kết Quét Nhanh — dùng chung cho casual (T dựng tại client) lẫn server-mode (T dựng từ /gs/sweep)
+function showSweepResult(T,n,cost){
   if(T.wins)confettiBurst();
   T.wins?SFX.win():SFX.lose();
   const quip=T.loss===0?'Càn quét sạch sẽ. Phế liệu còn không kịp bỏ chạy.'
@@ -5912,6 +5916,31 @@ function quickBattle(nodeId,n){
       <button class="btn" onclick="closeModal('res-bg')">${T.wins?'Hốt loot! 🎉':'Đứng dậy đánh tiếp 💪'}</button>
     </div>`;
   openModal('res-bg');
+}
+// SWEEP server-authoritative: server chạy N trận thật + cộng loot, client chỉ dựng modal tổng kết (không replay từng trận)
+async function srvSweep(nodeId,n){
+  if(!teamIds().length)return toast('Đội hình trống! Vào tab 🦸 Heroes thêm người đã.');
+  const node=typeof nodeId==='object'?nodeId:NODES.find(x=>x.id===nodeId);
+  if(!node)return;
+  if(node.tower||node.dungeon)return toast(WLANG==='vi'?'🚧 Tháp Hỗn Mang & Hầm Ngục đang tạm khóa — mở lại ở bản cập nhật sau!':'🚧 Chaos Tower & Dungeon are temporarily locked — back in a future update!');
+  if(node.arena)return toast(WLANG==='vi'?'⚡ Đánh nhanh không áp dụng cho Arena — đánh thường nhé.':'⚡ Sweep is PvE-only.');
+  if(!S.beaten[node.id])return toast('⚡ Đánh nhanh chỉ mở sau khi phá màn lần đầu!');
+  const L=teamLegal(node);if(!L.ok)return toast(L.msg);
+  const per=energyCost(node.gas),cost=per*n;
+  if(S.gas<cost)return toast(`⚡ Cần ${cost} Gas cho ${n} lượt (đang có ${Math.floor(S.gas)}).`);
+  if(S.busy)return;S.busy=true;
+  let r;try{r=await netApi('/gs/sweep',{id:S.net.id,secret:S.net.secret,node:node.id,n})}catch(e){r=null}
+  S.busy=false;
+  if(!r||!r.ok){
+    const em={low_energy:`⚡ Cần ${r&&r.need} Gas (đang có ${r&&r.gas}).`,not_cleared:'⚡ Đánh nhanh chỉ mở sau khi phá màn lần đầu!',bad_node:'Màn này không quét nhanh được.',no_roster:'Đội hình trống.',sim_fail:'Lỗi mô phỏng trận — thử lại.'}[r&&r.err];
+    return toast(em||('✗ '+((r&&r.err)||'mạng')));
+  }
+  applyServerState(r.gs);srvRerender();renderMap&&renderMap();closeModal('raid-bg');
+  const tot=r.tot||{};
+  const T=newTotals();
+  ['junk','tape','juice','cans','xp','wins','loss'].forEach(k=>T[k]=tot[k]||0);
+  Object.entries(tot.stats||{}).forEach(([hid,s])=>{const H=HEROES[hid];T.stats[hid]={name:(H&&H.name)||hid,art:hid,side:'pl',dmg:s.dmg||0,heal:s.heal||0}});
+  showSweepResult(T,r.n||n,r.charged||cost);
 }
 
 function endBattle(win){
