@@ -7909,8 +7909,66 @@ function replayEnd(result){
     <div class="rt ${win?'win':'lose'}">${win?(vi?'CHIẾN THẮNG!':'VICTORY!'):(vi?'THUA RỒI':'DEFEAT')}</div>
     <div class="quip">${vi?'Trận do SERVER xử — kết quả & loot thật, không sửa được.':'Server-decided — real result & loot.'}</div>
     <div class="lootrow">${loot||'<span class="lootchip">—</span>'}</div>
-    <button class="btn" onclick="closeModal('res-bg');B=null;RKBUSY=false;openRanked()">${vi?'Tiếp tục':'Continue'}</button></div>`;
+    <button class="btn" onclick="rkAfterResult()">${vi?'Tiếp tục':'Continue'}</button></div>`;
   openModal('res-bg');
+}
+function rkAfterResult(){closeModal('res-bg');B=null;RKBUSY=false;if(SRVMODE)srvRerender();else if(typeof openRanked==='function')openRanked();}
+
+/* ============ SERVER MODE: CẢ GAME chạy trên server (state + action) — bật bằng localStorage.wk_srv ============
+   Client = lớp hiển thị; mọi hành động đổi state đi qua /gs/act (server chạy code thật). Sửa localStorage vô nghĩa. */
+let SRVMODE=false;
+const SRV_KEYS=['gas','maxGas','junk','juice','tape','cans','plv','xp','roster','nextUid','pieces','boxes','nextBoxUid','unlocked','team','inv','nextItemUid','beaten','tower','seasonStart','seasonNo','seasonStats','arena','pendingSeasonWin','tut','daily'];
+function applyServerState(gs){SRV_KEYS.forEach(k=>{if(k in gs)S[k]=gs[k]})}
+function srvRerender(){try{renderRes()}catch(e){}
+  const v=(document.querySelector('.view.active')||{}).id;
+  const R={'v-heroes':()=>{renderHeroes();typeof renderTeam==='function'&&renderTeam()},'v-battle':()=>renderMap(),'v-craft':()=>renderCraft(),'v-lab':()=>renderLab(),'v-loot':()=>typeof renderLoot==='function'&&renderLoot(),'v-missions':()=>typeof renderMissions==='function'&&renderMissions()};
+  if(R[v])try{R[v]()}catch(e){}
+}
+async function act(fn,...args){
+  if(!S.net)return toast('🌐 Mất kết nối server.');
+  let r;try{r=await netApi('/gs/act',{id:S.net.id,secret:S.net.secret,fn,args})}catch(e){r=null}
+  if(r&&r.ok){applyServerState(r.gs);srvRerender();return r}
+  toast('✗ '+((r&&(r.msg||r.err))||'mạng'));return r;
+}
+async function srvStartBattle(node){
+  if(RKBUSY)return;const id=typeof node==='object'?node.id:node;
+  const n=NODES.find(x=>x.id===id);
+  if(!n||n.tower||n.dungeon){return toast(WLANG==='vi'?'Chế độ này chưa lên server (sắp có).':'Not on server yet.')}
+  if(n.arena){return toast(WLANG==='vi'?'PvP: vào 🎭 Arena.':'PvP: use Arena.')}
+  let r;try{r=await netApi('/gs/battle',{id:S.net.id,secret:S.net.secret,node:id})}catch(e){r=null}
+  if(!r||!r.ok){toast('✗ '+((r&&r.err)||'mạng')+(r&&r.need?` (cần ${r.need}⚡)`:''));return}
+  applyServerState(r.gs);
+  replayBattle(r.setup,r.log,{win:r.win,reward:r.reward,node:{ch:n.ch,arena:false,id},gs:r.gs});
+}
+function srvWrap(){ // thay hàm action global -> route qua server (onclick UI tự động đi server)
+  window.upgradeHero=uid=>act('upgrade',uid);
+  window.upgradeSkill=uid=>act('upskill',uid);
+  window.craft=id=>act('craft',id);
+  window.buyShop=k=>act('buyshop',k);
+  window.buyBlack=k=>act('buyblack',k);
+  window.openCan=()=>act('opencan');
+  window.equipItem=(h,i)=>act('equip',[h,i]);
+  window.unequipItem=(h,s)=>act('unequip',[h,s]);
+  window.buildBoxFromPieces=()=>act('buildbox');
+  window.openBox=uid=>act('openbox',uid);
+  window.pickFromBox=(uid,h)=>act('pickbox',[uid,h]);
+  window.doBreed=()=>act('breed',[labSel[0],labSel[1]]);
+  window.doRecycle=()=>act('recycle',[labSel[0]]);
+  window.doEnhance=()=>act('enhance',[labSel[0],labSel[1]]);
+  const _pick=window.pickHero,_clear=window.clearSlot;
+  window.pickHero=uid=>{_pick(uid);act('team',[S.team.front,S.team.back])};
+  window.clearSlot=()=>{_clear();act('team',[S.team.front,S.team.back])};
+  window.startBattle=node=>srvStartBattle(node);
+  window.saveGame=function(){try{localStorage.setItem('wk_net',JSON.stringify(S.net||null))}catch(e){}}; // không lưu state game (server giữ)
+}
+async function srvBoot(){
+  if(!S.net||!S.net.id)return false;
+  const dump={};SRV_KEYS.forEach(k=>{if(k in S)dump[k]=S[k]});
+  let r;try{r=await netApi('/gs/import',{id:S.net.id,secret:S.net.secret,state:dump})}catch(e){r=null}
+  if(!r||!r.ok){toast(WLANG==='vi'?'🌐 Server chưa sẵn sàng — chạy bản local.':'Server not ready.');return false}
+  applyServerState(r.gs);SRVMODE=true;srvWrap();srvRerender();
+  toast(WLANG==='vi'?'🌐 SERVER MODE: cả game chạy trên server.':'🌐 SERVER MODE on.');
+  return true;
 }
 function netSync(now){ // đẩy hồ sơ (sức mạnh + đội thủ) lên server — debounce, lỗi mạng thì im lặng
   if(!S.net)return;
@@ -8486,6 +8544,8 @@ if(LOADED){ // người chơi cũ: bỏ qua intro
   $('intro-bg').classList.remove('open');
   setTimeout(()=>toast('💾 Đã tải tiến trình — mừng trở lại vùng đất hoang!'),300);
 }
+// 🌐 SERVER MODE: nếu đã bật cờ + có tài khoản online → cả game chạy trên server (đang rollout có cờ để test an toàn)
+if(S.net&&S.net.id&&(typeof localStorage!=='undefined')&&localStorage.getItem('wk_srv'))setTimeout(()=>srvBoot(),700);
 // ⚡ idle $WACKO: cộng theo THỜI GIAN THỰC đã trôi (không phụ thuộc số lần interval chạy).
 // Vì tab nền bị browser throttle/đóng băng, cộng "5s mỗi lần fire" sẽ thiếu rất nhiều khi quay lại.
 let lastGasTs=Date.now(); // loadGame đã cộng phần offline qua d.ts → mốc tính từ bây giờ
