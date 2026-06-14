@@ -3942,7 +3942,7 @@ function openHero(uid){
       <div>
         <h3>${h.name} <small style="color:var(--muted);font-size:13px">#${inst.uid}</small></h3>
         <span class="tag ${h.cls}">${CLS_VI[h.cls]}</span>
-        <span class="hd-lvl">Lv ${inst.lvl}/${LVL_CAP()}</span>
+        <span class="hd-lvl">Lv ${inst.lvl}/${LVL_CAP()}${inst.lvl>=HERO_MAX?' <b style="color:var(--yellow)">MAX</b>':''}</span>
         <b class="rar-${inst.rarity}" style="font-size:12px;margin-left:6px">${RNAME[inst.rarity].toUpperCase()} (x${RSTAT[inst.rarity]} chỉ số)</b>
         <div class="quote">${h.quote}</div>
       </div>
@@ -3962,7 +3962,7 @@ function openHero(uid){
     <div class="skillbox"><h5 style="color:var(--green)">🔁 Nội tại</h5><p>${h.passive}</p></div>
     <div class="skillbox trait"><h5>🤪 Funny Trait</h5><p>${h.trait}</p></div>
     <div class="hd-actions">
-      <button class="btn" onclick="upgradeHero(${uid})" ${inst.lvl>=LVL_CAP()?'disabled':''}>⬆️ Lv ${inst.lvl}→${inst.lvl+1}<small>${inst.lvl>=LVL_CAP()?`🔒 trần Lv ${LVL_CAP()}`:`<span style="${S.junk<upCost(uid)?'color:#7a1f1f':''}">${fmt(upCost(uid))} 🪙</span>`}</small></button>
+      <button class="btn" onclick="upgradeHero(${uid})" ${inst.lvl>=LVL_CAP()?'disabled':''}>${inst.lvl>=HERO_MAX?`🏆 Lv ${HERO_MAX} MAX<small>level tối đa</small>`:`⬆️ Lv ${inst.lvl}→${inst.lvl+1}<small>${inst.lvl>=LVL_CAP()?`🔒 trần Lv ${LVL_CAP()}`:`<span style="${S.junk<upCost(uid)?'color:#7a1f1f':''}">${fmt(upCost(uid))} 🪙</span>`}</small>`}</button>
       <button class="btn cy" onclick="upgradeSkill(${uid})">💥 Skill ${inst.skill}→${inst.skill+1}<small><span style="${S.juice<skillCost(uid)?'color:#7a1f1f':''}">${skillCost(uid)} 🔋</span></small></button>
       <button class="btn pu" onclick="heroBreed(${uid})">💞 Breed<small>${inst.breeds>=BREED_MAX?'hết lượt':inst.lvl<BREED_MIN_LVL?'🔒 cần Lv '+BREED_MIN_LVL:`còn ${BREED_MAX-inst.breeds}/${BREED_MAX} lần`}</small></button>
       ${inst.minted
@@ -4011,7 +4011,8 @@ function heroBreed(uid){
   go('lab');
   toast(`💞 Đã chọn ${HEROES[inst.heroId].name} #${uid} — giờ chọn bố/mẹ thứ 2!`);
 }
-const LVL_CAP=()=>S.plv+4; // trần level hero theo cấp tài khoản — nhịp mùa
+const HERO_MAX=30; // trần level hero TUYỆT ĐỐI (chốt: lv30 = 3.61× chỉ số; trục dài hạn qua rarity, không phải level)
+const LVL_CAP=()=>Math.min(S.plv+4,HERO_MAX); // trần theo cấp tài khoản (nhịp mùa) NHƯNG không bao giờ vượt HERO_MAX
 function refreshActiveView(){ // render lại view đang mở phía sau modal — level/chỉ số cập nhật tức thì
   const v=document.querySelector('.view.on');if(!v)return;
   const id=v.id.slice(2);
@@ -4025,7 +4026,9 @@ function refreshActiveView(){ // render lại view đang mở phía sau modal �
 // Trong vm SRVMODE=false → chạy nhánh local (mutation thật). Pre-check (cap/đủ tài nguyên) chạy trên S đã sync.
 function upgradeHero(uid){
   const inst=instById(uid),c=upCost(uid);
-  if(inst.lvl>=LVL_CAP())return toast(`🔒 Trần Lv ${LVL_CAP()} (cấp tài khoản ${S.plv} + 4). Đánh thêm để lên cấp tài khoản đã!`);
+  if(inst.lvl>=LVL_CAP())return toast(inst.lvl>=HERO_MAX
+    ?`🏆 Đã đạt LEVEL TỐI ĐA ${HERO_MAX}! Mạnh hơn nữa thì nâng RARITY (Enhance/Breed) ở 🧬 Lab.`
+    :`🔒 Trần Lv ${LVL_CAP()} (cấp tài khoản ${S.plv} + 4). Đánh thêm để lên cấp tài khoản đã!`);
   if(S.junk<c)return toast('🪙 Không đủ Junk Coins. Đi nhặt phế liệu thêm đi!');
   const b4=heroStats(uid);
   const done=()=>{const af=heroStats(uid);toast(`⬆️ <b>Lv ${instById(uid).lvl}</b>! ❤️ +${fmt(af.hp-b4.hp)} · ⚔️ +${fmt(af.atk-b4.atk)} · 🛡️ +${fmt(af.def-b4.def)}`);SFX.coin();tutAdvance(3);openHero(uid)};
