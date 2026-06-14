@@ -4009,45 +4009,49 @@ const LVL_CAP=()=>S.plv+4; // trần level hero theo cấp tài khoản — nh�
 function refreshActiveView(){ // render lại view đang mở phía sau modal — level/chỉ số cập nhật tức thì
   const v=document.querySelector('.view.on');if(!v)return;
   const id=v.id.slice(2);
-  if(id==='heroes'){renderHeroes();renderTeam()}
+  if(id==='heroes'){if(heroTab==='gear')renderHeroGear();else{renderHeroes();renderTeam()}}
   else if(id==='hub')renderHub();
   else if(id==='battle')renderMap();
   else if(id==='lab')renderLab(); // nâng cấp hero ngay trong Lab (breed) → giường + grid cập nhật level
 }
+// Các hành động TRONG hồ sơ hero (openHero modal): server-mode self-branch → act() rồi MỞ LẠI modal
+// (act chỉ refresh view phía sau, KHÔNG tự vẽ lại modal → trước đây level không cập nhật cho tới khi refresh).
+// Trong vm SRVMODE=false → chạy nhánh local (mutation thật). Pre-check (cap/đủ tài nguyên) chạy trên S đã sync.
 function upgradeHero(uid){
   const inst=instById(uid),c=upCost(uid);
   if(inst.lvl>=LVL_CAP())return toast(`🔒 Trần Lv ${LVL_CAP()} (cấp tài khoản ${S.plv} + 4). Đánh thêm để lên cấp tài khoản đã!`);
   if(S.junk<c)return toast('🪙 Không đủ Junk Coins. Đi nhặt phế liệu thêm đi!');
   const b4=heroStats(uid);
+  const done=()=>{const af=heroStats(uid);toast(`⬆️ <b>Lv ${instById(uid).lvl}</b>! ❤️ +${fmt(af.hp-b4.hp)} · ⚔️ +${fmt(af.atk-b4.atk)} · 🛡️ +${fmt(af.def-b4.def)}`);SFX.coin();tutAdvance(3);openHero(uid)};
+  if(SRVMODE){act('upgrade',uid).then(r=>{if(r&&r.ok)done()});return} // srvRerender (trong act) lo view phía sau; done() vẽ lại modal
   S.junk-=c;inst.lvl++;S.daily.upg++;
-  const af=heroStats(uid);
-  toast(`⬆️ <b>Lv ${inst.lvl}</b>! ❤️ +${fmt(af.hp-b4.hp)} · ⚔️ +${fmt(af.atk-b4.atk)} · 🛡️ +${fmt(af.def-b4.def)}`);
   if(S.net)netSync();
-  SFX.coin();tutAdvance(3);
-  renderRes();openHero(uid);refreshActiveView();
+  renderRes();refreshActiveView();done();
 }
 function upgradeSkill(uid){
   const inst=instById(uid),c=skillCost(uid);
   if(S.juice<c)return toast('🔋 Không đủ Battery Juice. Đi đánh Battery Slum nhé!');
-  S.juice-=c;inst.skill++;S.daily.upg++;SFX.coin();
-  toast(`💥 Skill của ${HEROES[inst.heroId].name} #${uid} lên <b>Lv ${inst.skill}</b>!`);
+  const done=()=>{SFX.coin();toast(`💥 Skill của ${HEROES[instById(uid).heroId].name} #${uid} lên <b>Lv ${instById(uid).skill}</b>!`);openHero(uid)};
+  if(SRVMODE){act('upskill',uid).then(r=>{if(r&&r.ok)done()});return}
+  S.juice-=c;inst.skill++;S.daily.upg++;
   if(S.net)netSync();
-  renderRes();openHero(uid);
+  renderRes();done();
 }
 function equipItem(uid,itemUid){
   const inst=instById(uid),g=itemById(itemUid);if(!g)return;
   const s=ITEMS[g.id].slot;
+  const done=()=>{toast(`🎒 ${HEROES[inst.heroId].name} #${uid} đã lắp ${ITEMS[g.id].e} ${ITEMS[g.id].name}${g.plus?' +'+g.plus:''}!`);openHero(uid)};
+  if(SRVMODE){act('equip',uid,itemUid).then(r=>{if(r&&r.ok)done()});return}
   if(!inst.gear)inst.gear={weapon:null,armor:null,hat:null};
-  // nếu món đang lắp cho hero khác → gỡ khỏi đó trước (1 món chỉ 1 hero)
-  S.roster.forEach(i=>SLOTS.forEach(sl=>{if(i.gear&&i.gear[sl]===itemUid)i.gear[sl]=null}));
-  inst.gear[s]=itemUid; // ô cũ (nếu có) tự thành đồ rảnh
-  toast(`🎒 ${HEROES[inst.heroId].name} #${uid} đã lắp ${ITEMS[g.id].e} ${ITEMS[g.id].name}${g.plus?' +'+g.plus:''}!`);
+  S.roster.forEach(i=>SLOTS.forEach(sl=>{if(i.gear&&i.gear[sl]===itemUid)i.gear[sl]=null})); // 1 món chỉ 1 hero
+  inst.gear[s]=itemUid;
   if(S.net)netSync();
-  openHero(uid);
+  done();
 }
 function unequipItem(uid,s){
   const inst=instById(uid);
   if(!inst.gear||!inst.gear[s])return;
+  if(SRVMODE){act('unequip',uid,s).then(r=>{if(r&&r.ok)openHero(uid)});return}
   inst.gear[s]=null; // món vẫn ở kho, thành đồ rảnh
   if(S.net)netSync();
   openHero(uid);
@@ -8058,22 +8062,19 @@ async function srvStartBattle(node){
   replayBattle(r.setup,r.log,{win:r.win,reward:r.reward,node:{ch:n.ch,arena:false,id},gs:r.gs});
 }
 function srvWrap(){ // thay hàm action global -> route qua server (onclick UI tự động đi server)
-  window.upgradeHero=uid=>act('upgrade',uid);
-  window.upgradeSkill=uid=>act('upskill',uid);
   window.craft=id=>act('craft',id);
   window.buyShop=k=>act('buyshop',k);
-  // buyBlack/openCan/claimMission/claimBonus tự rẽ nhánh theo SRVMODE (buyBlack → /gs/p2w; có fx/result) → KHÔNG ghi đè ở đây
-  window.equipItem=(h,i)=>act('equip',[h,i]);
-  window.unequipItem=(h,s)=>act('unequip',[h,s]);
+  // upgradeHero/upgradeSkill/equipItem/unequipItem + buyBlack/openCan/claimMission/claimBonus/doForge/salvageInstance
+  // tự rẽ nhánh theo SRVMODE (act() rồi mở lại modal/diễn fx) → KHÔNG ghi đè ở đây (nếu đè sẽ mất bước vẽ lại modal)
   window.buildBoxFromPieces=()=>act('buildbox');
   window.openBox=uid=>act('openbox',uid);
-  window.pickFromBox=(uid,h)=>act('pickbox',[uid,h]);
-  window.doBreed=()=>act('breed',[labSel[0],labSel[1]]);
-  window.doRecycle=()=>act('recycle',[labSel[0]]);
-  window.doEnhance=()=>act('enhance',[labSel[0],labSel[1]]);
+  window.pickFromBox=(uid,h)=>act('pickbox',uid,h);
+  window.doBreed=()=>act('breed',labSel[0],labSel[1]);
+  window.doRecycle=()=>act('recycle',labSel[0]);
+  window.doEnhance=()=>act('enhance',labSel[0],labSel[1]);
   const _pick=window.pickHero,_clear=window.clearSlot;
-  window.pickHero=uid=>{_pick(uid);act('team',[S.team.front,S.team.back])};
-  window.clearSlot=()=>{_clear();act('team',[S.team.front,S.team.back])};
+  window.pickHero=uid=>{_pick(uid);act('team',S.team.front,S.team.back)};
+  window.clearSlot=()=>{_clear();act('team',S.team.front,S.team.back)};
   window.startBattle=node=>srvStartBattle(node);
   window.saveGame=function(){try{localStorage.setItem('wk_net',JSON.stringify(S.net||null))}catch(e){}}; // không lưu state game (server giữ)
 }
