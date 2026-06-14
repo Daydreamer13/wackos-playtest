@@ -8172,7 +8172,7 @@ async function startNetFight(i,quick){
   closeModal('hd-bg');
   let r;try{r=await netApi('/gs/pvp',{id:S.net.id,secret:S.net.secret,oid:o.oid})}catch(e){r=null}
   if(!r||!r.ok){
-    const em={cooldown_opp:'⏳ Vừa đánh người này — chờ 5 phút.',cooldown_hour:'⏳ Đã đánh 30 trận/giờ — nghỉ tay chút!',no_roster:'⚠️ Chưa đồng bộ đội — thử lại sau vài giây.'}[r&&r.err];
+    const em={cooldown_opp:'⏳ Vừa đánh người này — chờ 5 phút.',cooldown_hour:'⏳ Đã đánh 30 trận/giờ — nghỉ tay chút!',no_roster:'⚠️ Chưa đồng bộ đội — thử lại sau vài giây.',not_imported:'⚠️ Đội của bạn chưa đồng bộ — tải lại trang.',opp_no_team:'🌵 Đối thủ chưa lập đội — chọn người khác nhé.',no_opp:'Đối thủ không tồn tại — làm mới danh sách.'}[r&&r.err];
     return toast(em||('✗ '+((r&&r.err)||'mạng')));
   }
   if(SRVMODE&&r.gs)applyServerState(r.gs);
