@@ -3962,7 +3962,7 @@ function openHero(uid){
     <div class="skillbox"><h5 style="color:var(--green)">🔁 Nội tại</h5><p>${h.passive}</p></div>
     <div class="skillbox trait"><h5>🤪 Funny Trait</h5><p>${h.trait}</p></div>
     <div class="hd-actions">
-      <button class="btn" onclick="upgradeHero(${uid})" ${inst.lvl>=LVL_CAP()?'disabled':''}>${inst.lvl>=HERO_MAX?`🏆 Lv ${HERO_MAX} MAX<small>level tối đa</small>`:`⬆️ Lv ${inst.lvl}→${inst.lvl+1}<small>${inst.lvl>=LVL_CAP()?`🔒 trần Lv ${LVL_CAP()}`:`<span style="${S.junk<upCost(uid)?'color:#7a1f1f':''}">${fmt(upCost(uid))} 🪙</span>`}</small>`}</button>
+      <button class="btn" onclick="upgradeHero(${uid})" ${inst.lvl>=LVL_CAP()?'disabled':''}>${inst.lvl>=HERO_MAX?`🏆 Lv ${inst.lvl} MAX<small>level tối đa</small>`:`⬆️ Lv ${inst.lvl}→${inst.lvl+1}<small>${inst.lvl>=LVL_CAP()?`🔒 trần Lv ${LVL_CAP()}`:`<span style="${S.junk<upCost(uid)?'color:#7a1f1f':''}">${fmt(upCost(uid))} 🪙</span>`}</small>`}</button>
       <button class="btn cy" onclick="upgradeSkill(${uid})">💥 Skill ${inst.skill}→${inst.skill+1}<small><span style="${S.juice<skillCost(uid)?'color:#7a1f1f':''}">${skillCost(uid)} 🔋</span></small></button>
       <button class="btn pu" onclick="heroBreed(${uid})">💞 Breed<small>${inst.breeds>=BREED_MAX?'hết lượt':inst.lvl<BREED_MIN_LVL?'🔒 cần Lv '+BREED_MIN_LVL:`còn ${BREED_MAX-inst.breeds}/${BREED_MAX} lần`}</small></button>
       ${inst.minted
@@ -8597,6 +8597,7 @@ function loadGame(){
     Object.assign(S,{gas:d.gas,maxGas:d.maxGas,reserve:d.reserve||0,junk:d.junk,juice:d.juice,tape:d.tape,cans:d.cans,
       plv:d.plv,xp:d.xp,roster:d.roster,nextUid:d.nextUid,
       team:d.team,beaten:d.beaten||{},daily:d.daily});
+    (S.roster||[]).forEach(h=>{if((h.lvl|0)>HERO_MAX)h.lvl=HERO_MAX}); // trần level 30: kẹp hero save cũ/edited > cap
     {const dd={pve:0,upg:0,can:0,boss:0,craft:0,dgn:false,shop:{},arena:0,trash:0,claimed:{},bonus:false,wackoSpent:0}; // chuẩn hóa daily (save cũ thiếu field → tránh crash render)
      if(S.daily&&typeof S.daily==='object')for(const k in dd)if(S.daily[k]!=null)dd[k]=S.daily[k];
      if(typeof dd.claimed!=='object'||!dd.claimed)dd.claimed={}; if(typeof dd.shop!=='object'||!dd.shop)dd.shop={}; S.daily=dd;}
