@@ -5474,6 +5474,8 @@ function simPick(att,units){
   const pool=fronts.length?fronts:foes;
   return pool[rnd(0,pool.length-1)];
 }
+// 🎬 BATTLE LOG: server bật khi cần để client DIỄN LẠI y hệt (server-authoritative replay). null = không log (sweep).
+let SIMLOG=null;function simLogStart(){SIMLOG=[]}function simLogGet(){return SIMLOG}
 function simDamage(src,tgt,mult,units,opts={}){
   if(!tgt||!tgt.alive)return 0;
   if(tgt.invuln>0)return 0;
@@ -5505,6 +5507,7 @@ function simDamage(src,tgt,mult,units,opts={}){
   tgt.hp-=dmg;tgt.energy=Math.min(100,tgt.energy+12*PACE_DMG);
   src.statDmg=(src.statDmg||0)+dmg;
   tgt.wasHit=true;
+  if(SIMLOG)SIMLOG.push({a:'dmg',s:src.key,t:tgt.key,v:dmg,crit:crit?1:0,hp:Math.max(0,Math.round(tgt.hp))});
   if(tgt.hero&&tgt.hero.id==='tiretitan'&&!src.ranged&&src.alive&&dmg>0){
     const rf=Math.max(1,Math.round(dmg*0.1));src.hp-=rf;if(src.hp<=0){src.hp=0;src.alive=false}}
   if(tgt.hero&&tgt.hero.id==='overclock')tgt.ocStacks=0;
@@ -5514,6 +5517,7 @@ function simDamage(src,tgt,mult,units,opts={}){
   if(tgt.hp<=0){
     if(tgt.hero&&tgt.hero.id==='catburglar'&&!tgt.usedRevive){tgt.usedRevive=1;tgt.hp=Math.round(tgt.maxhp*0.3);return dmg}
     tgt.hp=0;tgt.alive=false;
+    if(SIMLOG)SIMLOG.push({a:'die',t:tgt.key});
     if(tgt.hero&&tgt.hero.id==='wifi'){ // No Signal: slow phe địch của wifi (chọn phe động)
       units.filter(u=>u.alive&&u.side===(tgt.side==='pl'?'en':'pl')).forEach(e=>{e.slow=Math.max(e.slow,2)});
     }
@@ -5534,13 +5538,16 @@ function simHeal(tgt,amount,src){
     if(over>0)tgt.shield=Math.min(Math.round(tgt.maxhp*0.6),(tgt.shield||0)+Math.round(over*0.5))}
   tgt.hp=Math.min(tgt.maxhp,tgt.hp+amount);
   if(src)src.statHeal=(src.statHeal||0)+(tgt.hp-before);
+  if(SIMLOG&&tgt.hp>before)SIMLOG.push({a:'heal',t:tgt.key,v:tgt.hp-before,hp:Math.round(tgt.hp)});
 }
 function simSkill(u,units){
   u.energy=0;
+  if(SIMLOG){const sd=skillDef(u);SIMLOG.push({a:'skill',s:u.key,name:(sd&&sd.name)||''})}
   applySkill(u,units,'sim'); // CÙNG executor với trận trực quan — không còn logic trùng lặp
 }
 function simAttack(u,units){
   const t=simPick(u,units);if(!t)return;
+  if(SIMLOG)SIMLOG.push({a:'atk',s:u.key,t:t.key,rng:u.ranged?1:0});
   simDamage(u,t,1,units,{pierce:u.proto&&u.proto.pierce});
   u.energy=Math.min(100,u.energy+35*PACE_DMG);
   if(u.hero&&u.hero.id==='noodle')simHeal(u,u.maxhp*0.03);
@@ -7848,23 +7855,63 @@ function renderRanked(gs){
     <h5 style="color:var(--purple);margin-top:12px">🏟️ PvP</h5>
     <button class="btn sm pu" style="width:100%" onclick="rankedPvp()">⚔️ ${vi?'Đánh 1 đối thủ ngẫu nhiên (server xử)':'Fight a random opponent (server-decided)'}</button>`;
 }
+let RKBUSY=false;
 async function rankedBattle(node){
-  const m=$('rk-msg');if(m)m.textContent='⏳ …';
+  if(RKBUSY)return;const m=$('rk-msg');if(m)m.textContent='⏳ …';
   let r;try{r=await netApi('/gs/battle',{id:S.net.id,secret:S.net.secret,node})}catch(e){r=null}
   if(!r||!r.ok){if(m)m.innerHTML=`<span style="color:var(--red)">✗ ${(r&&r.err)||'mạng'}${r&&r.need?` (cần ${r.need}⚡, có ${r.gas})`:''}</span>`;return}
-  const rw=r.reward||{},I={junk:'🪙',tape:'🩹',juice:'🔋',cans:'🥫',pieces:'🧩'};
-  const loot=Object.keys(I).filter(k=>rw[k]).map(k=>I[k]+'+'+rw[k]).join(' ');
-  if(m)m.innerHTML=(r.win?'<span style="color:var(--green)">🏆 THẮNG!</span> ':'<span style="color:var(--red)">🩹 Thua.</span> ')+loot+(rw.xp?' ✨+'+rw.xp:'')+(rw.leveled?' <b style="color:var(--yellow)">⬆️Lv'+rw.leveled+'</b>':'')+` <span style="color:var(--muted)">(−${r.charged}⚡${r.surge>1?' 🔥×'+r.surge:''})</span>`;
-  if($('rk-res'))$('rk-res').innerHTML=rkResLine(r.gs);
+  closeModal('hd-bg');
+  const n=NODES.find(x=>x.id===node)||{ch:1};
+  replayBattle(r.setup,r.log,{win:r.win,reward:r.reward,node:{ch:n.ch,arena:false,id:node},gs:r.gs});
 }
 async function rankedPvp(){
-  const m=$('rk-msg');if(m)m.textContent='⏳ tìm đối thủ…';
+  if(RKBUSY)return;const m=$('rk-msg');if(m)m.textContent='⏳ tìm đối thủ…';
   let o;try{o=await netApi('/api/opponents?id='+S.net.id)}catch(e){o=null}
   const opps=(o&&o.opps)||[];if(!opps.length){if(m)m.textContent=WLANG==='vi'?'Chưa có đối thủ nào.':'No opponents yet.';return}
   const opp=opps[0];
   let r;try{r=await netApi('/gs/pvp',{id:S.net.id,secret:S.net.secret,oid:opp.oid})}catch(e){r=null}
   if(!r||!r.ok){if(m)m.innerHTML=`<span style="color:var(--red)">✗ ${(r&&r.err)||'mạng'}</span>`;return}
-  if(m)m.innerHTML=(r.win?'<span style="color:var(--green)">🏆 Thắng PvP</span>':'<span style="color:var(--red)">🩹 Thua PvP</span>')+' vs '+rkEsc(opp.name)+` · 🏆${r.delta>=0?'+':''}${r.delta} → ${r.trophies}`;
+  closeModal('hd-bg');
+  replayBattle(r.setup,r.log,{win:r.win,delta:r.delta,trophies:r.trophies,node:{arena:true,id:'pvp'},oppName:opp.name});
+}
+/* ===== REPLAY: diễn lại trận server-authoritative từ (setup, log) — server đã QUYẾT, client chỉ render ===== */
+function replayBattle(setup,log,result){
+  RKBUSY=true;
+  B={node:result.node||{ch:1},over:false,replay:true,result,
+    units:(setup||[]).map(s=>({key:s.key,side:s.side,boss:s.boss,x:s.x,y:s.y,art:s.art,name:s.name,
+      maxhp:s.maxhp,hp:s.hp,alive:true,energy:0,shield:s.shield||0,slow:0,taunt:0,stun:0,stealth:0,dots:[],buffs:[],hero:null,proto:null}))};
+  setupArena();
+  $('roundbadge').textContent='🏆 RANKED';
+  const sb=$('skipbtn');sb.style.display='inline-block';sb.textContent=WLANG==='vi'?'⏭ Kết quả':'⏭ Result';sb.onclick=()=>{log=[];replayEnd(result)};
+  const U=k=>B.units.find(u=>u.key===k);let i=0;
+  function step(){
+    if(!B||!B.replay)return;
+    if(i>=log.length){setTimeout(()=>replayEnd(result),700/spd());return}
+    const ev=log[i++],t=ev.t&&U(ev.t),s=ev.s&&U(ev.s);
+    if(ev.a==='atk'&&s&&t){if(ev.rng){const f=uPos(s);fxProjectile(PROJ.bolt,{x:f.x,y:f.y},uPos(t),360,30)}else lunge(s,t)}
+    else if(ev.a==='skill'&&s){cutin(s.name,ev.name||'',s.art,'#7a1d2e');actPop(s);SFX.skill()}
+    else if(ev.a==='dmg'&&t){t.hp=ev.hp;refreshUnit(t);const p=uPos(t);fxSpark(p.x+rnd(-8,8),p.y+rnd(-8,8),ev.crit?'#ff9f2e':'#ffd23f',ev.crit?60:42);fxFloat(t,'-'+ev.v,ev.crit?'var(--orange)':'#ff8a96',ev.crit);hitJiggle(t);if(ev.crit){shakeArena(8);SFX.crit()}else SFX.hit()}
+    else if(ev.a==='heal'&&t){t.hp=ev.hp;refreshUnit(t);fxFloat(t,'+'+ev.v,'var(--green)');const p=uPos(t);fxRing(p.x,p.y,70,'var(--green)');SFX.heal()}
+    else if(ev.a==='die'&&t){t.alive=false;const p=uPos(t);fxPoof(p.x,p.y,t.boss?1.8:1);refreshUnit(t);SFX.death()}
+    setTimeout(step,(ev.a==='atk'?300:ev.a==='skill'?900:200)/spd());
+  }
+  setTimeout(step,500/spd());
+}
+function replayEnd(result){
+  if(!B||!B.replay)return;B.over=true;
+  const win=result.win,vi=WLANG==='vi';
+  win?SFX.win():SFX.lose();if(win&&typeof confettiBurst==='function')confettiBurst();
+  let loot='';
+  if(result.reward){const rw=result.reward,I={junk:'🪙',tape:'🩹',juice:'🔋',cans:'🥫',pieces:'🧩'};
+    loot=Object.keys(I).filter(k=>rw[k]).map(k=>`<span class="lootchip">${I[k]} +${rw[k]}</span>`).join('')+(rw.xp?`<span class="lootchip">✨ +${rw.xp}</span>`:'')+(rw.leveled?`<span class="lootchip">⬆️ Lv${rw.leveled}</span>`:'');}
+  if(result.delta!=null)loot=`<span class="lootchip">🏆 ${result.delta>=0?'+':''}${result.delta} → ${result.trophies}</span>`+(result.oppName?`<span class="lootchip">vs ${rkEsc(result.oppName)}</span>`:'');
+  $('res-modal').innerHTML=`<div class="result">
+    <div style="font-size:54px">${win?'🏆':'🩹'}</div>
+    <div class="rt ${win?'win':'lose'}">${win?(vi?'CHIẾN THẮNG!':'VICTORY!'):(vi?'THUA RỒI':'DEFEAT')}</div>
+    <div class="quip">${vi?'Trận do SERVER xử — kết quả & loot thật, không sửa được.':'Server-decided — real result & loot.'}</div>
+    <div class="lootrow">${loot||'<span class="lootchip">—</span>'}</div>
+    <button class="btn" onclick="closeModal('res-bg');B=null;RKBUSY=false;openRanked()">${vi?'Tiếp tục':'Continue'}</button></div>`;
+  openModal('res-bg');
 }
 function netSync(now){ // đẩy hồ sơ (sức mạnh + đội thủ) lên server — debounce, lỗi mạng thì im lặng
   if(!S.net)return;
