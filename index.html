@@ -8027,9 +8027,10 @@ function replayBattle(setup,log,result){
     if(!B||!B.replay)return;
     if(i>=log.length){setTimeout(()=>replayEnd(result),700/spd());return}
     const ev=log[i++],t=ev.t&&U(ev.t),s=ev.s&&U(ev.s);
-    if(ev.a==='atk'&&s&&t){if(ev.rng){const f=uPos(s);fxProjectile(PROJ.bolt,{x:f.x,y:f.y},uPos(t),360,30)}else lunge(s,t)}
-    else if(ev.a==='skill'&&s){cutin(s.name,ev.name||'',s.art,'#7a1d2e');actPop(s);SFX.skill()}
-    else if(ev.a==='dmg'&&t){t.hp=ev.hp;refreshUnit(t);const p=uPos(t);fxSpark(p.x+rnd(-8,8),p.y+rnd(-8,8),ev.crit?'#ff9f2e':'#ffd23f',ev.crit?60:42);fxFloat(t,'-'+ev.v,ev.crit?'var(--orange)':'#ff8a96',ev.crit);hitJiggle(t);if(ev.crit){shakeArena(8);SFX.crit()}else SFX.hit()}
+    // THANH RAGE: SIMLOG không mang energy → tái dựng từ event để khớp anim live (đánh +35, trúng +12, skill về 0; ×PACE_DMG).
+    if(ev.a==='atk'&&s&&t){if(ev.rng){const f=uPos(s);fxProjectile(PROJ.bolt,{x:f.x,y:f.y},uPos(t),360,30)}else lunge(s,t);s.energy=Math.min(100,(s.energy||0)+35*PACE_DMG);refreshUnit(s)}
+    else if(ev.a==='skill'&&s){s.energy=0;refreshUnit(s);cutin(s.name,ev.name||'',s.art,'#7a1d2e');actPop(s);SFX.skill()}
+    else if(ev.a==='dmg'&&t){t.hp=ev.hp;t.energy=Math.min(100,(t.energy||0)+12*PACE_DMG);refreshUnit(t);const p=uPos(t);fxSpark(p.x+rnd(-8,8),p.y+rnd(-8,8),ev.crit?'#ff9f2e':'#ffd23f',ev.crit?60:42);fxFloat(t,'-'+ev.v,ev.crit?'var(--orange)':'#ff8a96',ev.crit);hitJiggle(t);if(ev.crit){shakeArena(8);SFX.crit()}else SFX.hit()}
     else if(ev.a==='heal'&&t){t.hp=ev.hp;refreshUnit(t);fxFloat(t,'+'+ev.v,'var(--green)');const p=uPos(t);fxRing(p.x,p.y,70,'var(--green)');SFX.heal()}
     else if(ev.a==='die'&&t){t.alive=false;const p=uPos(t);fxPoof(p.x,p.y,t.boss?1.8:1);refreshUnit(t);SFX.death()}
     setTimeout(step,(ev.a==='atk'?300:ev.a==='skill'?900:200)/spd());
