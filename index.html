@@ -1002,7 +1002,7 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
       <div id="hub-team"></div>
      </div>
     </div>
-    <p class="demonote">🎁 <b>GIẢI THƯỞNG 100$:</b> 20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 <b>— vào 🎭 Arena đăng ký tên để lên sóng!</b> <span>· ⚡ $WACKO hồi theo thời gian (idle, tăng theo cấp) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.</span></p>
+    <p class="demonote">🎁 <b>GIẢI THƯỞNG 100$:</b> 20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 <b>— vào 🎭 Arena đăng ký tên để lên sóng!</b> <span>· ⛽ Gas hồi theo thời gian (idle, 144/ngày) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.</span></p>
   </section>
 
   <section class="view" id="v-heroes">
@@ -3706,13 +3706,13 @@ function openResInfo(k){
     const surge=energySurge();const vi=WLANG==='vi';
     const full=vi?(hh>0?hh+' giờ ':'')+mm+' phút':(hh>0?hh+'h ':'')+mm+'m';
     extra=`<div class="skillbox" style="border-color:var(--orange)"><h5 style="color:var(--orange)">${vi?'⏱️ Mỏ phế liệu (idle)':'⏱️ Scrap Mine (idle)'}</h5>
-      <p>${vi?'Sản lượng':'Output'}: <b>${fmt(wackoRate())} ⚡/${vi?'ngày':'day'}</b> (${vi?'cấp':'lvl'} ${S.plv}) · ${miss<=0?(vi?'KHO ĐẦY — đi tiêu thôi!':'STORAGE FULL — go spend it!'):(vi?'đầy sau ':'full in ')+'<b>'+full+'</b>'}<br>
-      ${vi?'⬆️ Lên cấp tài khoản để tăng sản lượng + kho chứa.':'⬆️ Level up your account to raise output + storage.'}</p></div>
+      <p>${vi?'Sản lượng':'Output'}: <b>${fmt(wackoRate())} ⛽/${vi?'ngày':'day'}</b> · ${miss<=0?(vi?'KHO ĐẦY — đi tiêu thôi!':'STORAGE FULL — go spend it!'):(vi?'đầy sau ':'full in ')+'<b>'+full+'</b>'}<br>
+      ${vi?'⬆️ Lên cấp tài khoản để tăng KHO CHỨA (sản lượng cố định 144/ngày).':'⬆️ Level up your account to raise STORAGE (output is a flat 144/day).'}</p></div>
       ${surge>1?`<div class="skillbox" style="border-color:var(--red)"><h5 style="color:var(--red)">🔥 ${vi?'Giá đang':'Price now'} ×${surge.toFixed(1)}</h5><p>${vi?'Hôm nay tiêu nhiều → mỗi hành động đắt hơn (chống phá đảo bằng kho). Reset ×1 lúc nửa đêm.':'Spent a lot today → each action costs more (anti-steamroll). Resets to ×1 at midnight.'}</p></div>`:''}`;
   }
   if(k==='cans'){
     extra=`<div class="skillbox" style="border-color:var(--yellow)"><h5 style="color:var(--yellow)">🎲 Trong lon có gì?</h5>
-      <p>🪙 500–1.500 Junk — <b>30%</b><br>🧩 3–5 mảnh hộp (10 mảnh = 1 📦 Hộp Hero) — <b>28%</b><br>🩹 30–80 Băng keo — <b>18%</b><br>🔋 30–90 Juice — <b>15%</b><br>🎰 JACKPOT (đầy ⛽ + 2.500–3.500 🪙) — <b>5%</b><br>🗡️ Trang bị ngẫu nhiên — <b>4%</b></p></div>`;
+      <p>🪙 500–1.500 Junk — <b>30%</b><br>🧩 3–5 mảnh hộp (10 mảnh = 1 📦 Hộp Hero) — <b>28%</b><br>🩹 30–80 Băng keo — <b>18%</b><br>🔋 30–90 Juice — <b>15%</b><br>🎰 JACKPOT (3.000–5.000 🪙 + 🗡️ 1 trang bị xịn) — <b>5%</b><br>🗡️ Trang bị ngẫu nhiên — <b>4%</b></p></div>`;
   }
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
@@ -4736,11 +4736,9 @@ function buildUnits(node){
   return units;
 }
 
-/* ===== ⚡ $WACKO NĂNG LƯỢNG (thay Gas — bản web3 Hybrid) =====
-   Idle nhận theo thời gian, SẢN LƯỢNG tăng theo cấp; hành động tốn $WACKO;
-   chống steamroll: càng tiêu nhiều trong ngày càng đắt (surge), reset nửa đêm.
-   Đây là $WACKO "trong game" (off-chain). $WACKO on-chain (ví) là lớp claim/Chợ Đen. */
-// ⛽ GAS — năng lượng OFF-CHAIN THUẦN (pivot 14/06: tách hẳn khỏi token $WACKO; revert economy §3).
+/* ===== ⛽ GAS — NĂNG LƯỢNG OFF-CHAIN THUẦN (pivot 14/06) =====
+   Idle hồi theo thời gian, SẢN LƯỢNG PHẲNG 144/ngày (KHÔNG scale theo cấp — chỉ KHO chứa tăng theo cấp);
+   KHÔNG còn surge (energySurge=1). Gas tách hẳn khỏi token $WACKO; $WACKO on-chain chỉ là thưởng Top PvP. */
 const GAS_PER_DAY=144;                                    // 1 gas / 10 phút
 const RESERVE_CAP=50;                                     // Reserve Tank: hứng gas tràn khi đầy kho
 function wackoRate(){return GAS_PER_DAY}                  // ⛽/ngày idle (regen phẳng 144, KHÔNG scale theo cấp)
@@ -5933,7 +5931,7 @@ async function srvSweep(nodeId,n){
   S.busy=false;
   if(!r||!r.ok){
     const em={low_energy:`⚡ Cần ${r&&r.need} Gas (đang có ${r&&r.gas}).`,not_cleared:'⚡ Đánh nhanh chỉ mở sau khi phá màn lần đầu!',bad_node:'Màn này không quét nhanh được.',no_roster:'Đội hình trống.',sim_fail:'Lỗi mô phỏng trận — thử lại.'}[r&&r.err];
-    return toast(em||('✗ '+((r&&r.err)||'mạng')));
+    return toast(em||srvErrMsg(r));
   }
   applyServerState(r.gs);srvRerender();renderMap&&renderMap();closeModal('raid-bg');
   const tot=r.tot||{};
@@ -6801,7 +6799,7 @@ function resetDaily(){
 /* ================= TUTORIAL (người chơi mới) ================= */
 const TUT=[
   {e:'👋',msg:'Chào lính mới! Mở tab <b>⚔️ Đánh</b> để ra trận đầu tiên.',sel:'#nb-battle',tip:'Bấm nút ⚔️ đang sáng ở thanh dưới'},
-  {e:'⚔️',msg:'Đánh <b>Junkyard</b> (5 ⚡). <b>⚡ $WACKO</b> là năng lượng — tự hồi theo thời gian, lên cấp càng nhiều. Trận tự động, chiến thuật nằm ở xếp đội!',sel:'#tut-junkyard',tip:'Bấm điểm Junkyard đang sáng trên bản đồ'},
+  {e:'⚔️',msg:'Đánh <b>Junkyard</b> (5 ⛽). <b>⛽ Gas</b> là năng lượng — tự hồi theo thời gian (144/ngày). Trận tự động, chiến thuật nằm ở xếp đội!',sel:'#tut-junkyard',tip:'Bấm điểm Junkyard đang sáng trên bản đồ'},
   {e:'🏆',msg:'Thắng rồi! Mở <b>🦸 Heroes</b> để nâng cấp đội bằng 🪙 vừa nhặt.',sel:'#nb-heroes',tip:'Bấm nút 🦸 đang sáng'},
   {e:'⬆️',msg:'Bấm 1 hero rồi bấm <b>⬆️ Nâng Lv</b> (mỗi cấp +9% chỉ số). Mẹo: <b>Tank đứng trước</b>, DPS & healer đứng sau!',sel:'#hero-grid .hcard',tip:'Bấm hero đang sáng → nút Nâng Lv'},
   {e:'🥫',msg:'Mở tab <b>🥫 Loot</b> — lon bí ẩn rơi 🧩 mảnh hộp hero.',sel:'#nb-loot',tip:'Bấm nút 🥫 đang sáng'},
@@ -6858,7 +6856,7 @@ function tutAdvance(step){
   if(S.tut>=TUT.length){ // tốt nghiệp!
     S.junk+=500;S.gas=Math.min(S.maxGas,S.gas+20);
     confettiBurst();SFX.jackpot();
-    toast('🎓 Xong hướng dẫn! Quà tốt nghiệp: <b>+500 🪙 · +20 ⚡ $WACKO</b>. Vùng đất hoang là của bạn!');
+    toast('🎓 Xong hướng dẫn! Quà tốt nghiệp: <b>+500 🪙 · +20 ⛽ Gas</b>. Vùng đất hoang là của bạn!');
     renderRes();
   }
   scheduleSave();renderTut();
@@ -6976,7 +6974,7 @@ arena:['🎭 Meme Arena','Clear Snack Town to unlock'],lab:['🧬 The Lab (Breed
 dgn:['🕳️ Daily Dungeon','Defeat the Chapter 1 Boss to unlock'],tower:['🗼 Chaos Tower','Clear the first Chapter 2 node to unlock'],
 enhance:['⬆️ Enhance','Clear the first Chapter 2 node to unlock'],recycle:['♻️ Recycler','Defeat the Chapter 2 Boss to unlock']},
 tut:['Welcome, rookie! Open the <b>⚔️ Battle</b> tab for your first fight.',
-'Attack <b>Junkyard</b> (5 ⚡). <b>⚡ $WACKO</b> is your energy — it refills over time, faster as you level up. Battles are auto; strategy is your team setup!',
+'Attack <b>Junkyard</b> (5 ⛽). <b>⛽ Gas</b> is your energy — it refills over time (a flat 144/day). Battles are auto; strategy is your team setup!',
 'Victory! Open <b>🦸 Heroes</b> and upgrade your crew with the 🪙 you just looted.',
 'Tap a hero, then <b>⬆️ Level Up</b> (+9% stats each). Tip: <b>Tanks in front</b>, DPS & healers in back!',
 'Open the <b>🥫 Loot</b> tab — mystery cans drop 🧩 hero-box pieces.',
@@ -7102,18 +7100,17 @@ ui:{
 'Xem chỉ số rồi bấm ⬇️ Lắp — không lắp nhầm nữa.':'Check the stats, then tap ⬇️ Equip.',
 /* ---- ⚡ $WACKO năng lượng (thay Gas) ---- */
 '$WACKO (năng lượng)':'$WACKO (energy)',
-'⚡ Không đủ $WACKO. Chờ mỏ phế liệu hồi (idle theo cấp) hoặc nâng cấp tài khoản để tăng sản lượng nhé.':'⚡ Not enough $WACKO. Wait for your scrap mine to refill (idle scales with level), or level up to boost output.',
-'⚡ Không đủ $WACKO cho dù chỉ 1 lượt. Chờ hồi nhé.':'⚡ Not enough $WACKO for even one run. Wait for it to refill.',
+'⚡ Không đủ Gas. Chờ mỏ phế liệu hồi (idle 144/ngày) hoặc nạp Gas từ ví.':'⚡ Not enough Gas. Wait for it to refill (idle 144/day) or top up Gas from your wallet.',
+'⚡ Không đủ Gas cho dù chỉ 1 lượt. Chờ hồi nhé.':'⚡ Not enough Gas for even one run. Wait for it to refill.',
 'Nạp đầy $WACKO':'Refill $WACKO','Nạp đầy kho năng lượng ngay lập tức.':'Instantly refill your energy storage.','Kho đã đầy rồi!':'Storage is already full!',
-'🎁 Rương thưởng ngày: +1000 🪙, +1 🥫, +20 ⚡ $WACKO!':'🎁 Daily chest: +1000 🪙, +1 🥫, +20 ⚡ $WACKO!',
-'🎓 Xong hướng dẫn! Quà tốt nghiệp: <b>+500 🪙 · +20 ⚡ $WACKO</b>. Vùng đất hoang là của bạn!':'🎓 Tutorial complete! Graduation gift: <b>+500 🪙 · +20 ⚡ $WACKO</b>. The wasteland is yours!',
-'🌅 Ngày mới ở vùng đất hoang! +30 ⚡ $WACKO (daily login) · giá hành động về mức gốc. Nhiệm vụ đã reset.':'🌅 A new day in the wasteland! +30 ⚡ $WACKO (daily login) · action prices reset to base. Tasks reset.',
+'🎁 Rương thưởng ngày: +1000 🪙, +1 🥫, +20 ⛽ Gas!':'🎁 Daily chest: +1000 🪙, +1 🥫, +20 ⛽ Gas!',
+'🎓 Xong hướng dẫn! Quà tốt nghiệp: <b>+500 🪙 · +20 ⛽ Gas</b>. Vùng đất hoang là của bạn!':'🎓 Tutorial complete! Graduation gift: <b>+500 🪙 · +20 ⛽ Gas</b>. The wasteland is yours!',
+'🌅 Ngày mới! +30 ⛽ Gas (daily login)':'🌅 A new day! +30 ⛽ Gas (daily login)','· nhiệm vụ đã reset.':'· tasks have reset.',
 'Mô phỏng kết quả ngay, khỏi xem trận.':'Instant results, skip the fight.','đang có':'you have','Tổng chi:':'Total:','🔥(giá cao do dùng nhiều hôm nay)':'🔥(pricier — spent a lot today)',
-'🔄 Đổi $WACKO — game ↔ ví':'🔄 Exchange $WACKO — game ↔ wallet','🔄 Mở cầu đổi $WACKO':'🔄 Open $WACKO exchange',
+'⛽ Nạp Gas từ ví — một chiều':'⛽ Top up Gas from wallet — one-way','🔄 Mở cầu đổi $WACKO':'🔄 Open $WACKO top-up',
 'Tích từ tiến trình:':'From progress:','rút được':'withdrawable','· đã rút':'· withdrawn',
-'⚡ in-game đang có:':'⚡ in-game now:','còn rút hôm nay':'today left',
-'⬇️ Rút ⚡ in-game ra token ví · ⬆️ Nạp token ví thành ⚡ chơi.':'⬇️ Withdraw in-game ⚡ to wallet · ⬆️ Deposit wallet tokens for ⚡.',
-'⬇️ Rút $WACKO tích lũy ra ví · ⬆️ Nạp token ví thành ⚡ năng lượng chơi.':'⬇️ Withdraw earned $WACKO to wallet · ⬆️ Deposit wallet tokens for ⚡ energy.',
+'⛽ Gas in-game đang có:':'⛽ Gas in-game now:',
+'⬆️ Đốt $WACKO trong ví để nạp ⛽ Gas. KHÔNG rút Gas ra ví ($WACKO chỉ kiếm từ thưởng Top PvP).':'⬆️ Burn wallet $WACKO to top up ⛽ Gas. No withdraw back to wallet ($WACKO is earned only via Top-PvP rewards).',
 'Phát một dòng chạy trên bảng tin TOÀN THÀNH PHỐ — mọi người chơi đều thấy.':'Broadcast a line across the WHOLE CITY ticker — every player sees it.',
 '📢 Phát loa toàn thành phố':'📢 Broadcast city-wide','📢 Đang phát…':'📢 Broadcasting…',
 'Đốt token vĩnh viễn (testnet). Cooldown 3 phút/lần. Nội dung bị lọc ký tự lạ.':'Burns token permanently (testnet). 3-min cooldown. Content is sanitized.',
@@ -7168,7 +7165,7 @@ ui:{
 'GIẢI THƯỞNG 100$:':'$100 PRIZE POOL:','GIẢI 100$:':'$100 PRIZES:','GIẢI 100$ ĐANG CHẠY:':'$100 EVENT LIVE:',
 '20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝':'$20 for leaderboard TOP 1 · $40 raffled to 4 players · $40 raffled to 4 feedback writers 📝',
 '— vào 🎭 Arena đăng ký tên để lên sóng!':'— open 🎭 Arena and register a name to join!',
-'· ⚡ $WACKO hồi theo thời gian (idle, tăng theo cấp) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.':'· ⚡ $WACKO refills over time (idle, scales with level) · 💾 Auto-saves in this browser — don\'t clear your history! · 📝 Feedback: round button on the left.',
+'· ⛽ Gas hồi theo thời gian (idle, 144/ngày) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.':'· ⛽ Gas refills over time (idle, 144/day) · 💾 Auto-saves in this browser — don\'t clear your history! · 📝 Feedback: round button on the left.',
 '20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — chốt 23:59 ngày 26/06!':'$20 TOP 1 · $40 raffled to 4 players · $40 raffled to 4 feedback writers 📝 — ends June 26, 23:59 (GMT+7)!',
 '20$ TOP 1 BXH + bốc thăm 80$ — chốt 23:59 ngày 26/06!':'$20 for TOP 1 + $80 in raffles — ends June 26, 23:59 (GMT+7)!',
 '🎟️ Mã nhận thưởng & chuyển máy':'🎟️ Claim code & device transfer','🎟️ Mã định danh của bạn':'🎟️ Your identity code',
@@ -7251,7 +7248,7 @@ ui:{
 'Bấm vào lon để mở (1 🥫)':'Tap the can to open it (1 🥫)',
 'Bên trong có thể là kho báu. Cũng có thể là súp hết hạn. Chỉ một cách để biết.':'Could be treasure inside. Could be expired soup. Only one way to find out.',
 '🎲 Trong lon có gì?':'🎲 What\'s in the can?','🧩 3–5 mảnh hộp (10 mảnh = 1 📦 Hộp Hero) —':'🧩 3–5 box pieces (10 = 1 📦 Hero Box) —',
-'🩹 30–80 Băng keo —':'🩹 30–80 Duct Tape —','🎰 JACKPOT (đầy ⛽ + 2.500–3.500 🪙) —':'🎰 JACKPOT (full ⛽ + 2,500–3,500 🪙) —',
+'🩹 30–80 Băng keo —':'🩹 30–80 Duct Tape —','🎰 JACKPOT (3.000–5.000 🪙 + 🗡️ 1 trang bị xịn) —':'🎰 JACKPOT (3,000–5,000 🪙 + 🗡️ 1 gear item) —',
 '🗡️ Trang bị ngẫu nhiên —':'🗡️ Random gear —','📥 Kiếm từ đâu?':'📥 Where to earn it','📤 Tiêu vào đâu?':'📤 Where to spend it','Trong lon có tài nguyên + 🧩 mảnh hộp. Boss và nhiệm vụ cho thêm lon.':'Cans hold resources + 🧩 box pieces. Bosses and tasks give more cans.',
 '📦 hộp ghép từ mảnh — mở ra':'📦 boxes built from pieces — open and','chọn 1 trong 3':'pick 1 of 3','· 🥚 trứng Lab nở theo giờ (2% sinh đôi!) · ♻️ tái chế hero ra mảnh.':'· 🥚 Lab eggs hatch on a timer (2% twins!) · ♻️ recycle heroes into pieces.',
 '🧩 Mảnh hộp:':'🧩 Box pieces:','🧩 ×10 → Ghép Hộp Hero':'🧩 ×10 → Build a Hero Box','Kệ trống. Ghép hộp từ 🧩 mảnh, hoặc 💞 đẻ trứng ở Lab.':'Shelf is empty. Build boxes from 🧩 pieces, or 💞 breed eggs in the Lab.',
@@ -7388,10 +7385,10 @@ rx:[
 [/^✅ (.+) vào tuyến sau! (.*)$/,'✅ $1 joined the back row! $2'],
 [/^💥 Skill của (.+) #(\d+) lên$/,'💥 $1 #$2\'s skill is now'],
 [/^🪙 \+([\d.,]+) Junk Coins! Ai đó giấu tiền trong lon đậu\.$/,'🪙 +$1 Junk Coins! Someone hid money in a bean can.'],
-[/^🩹 \+(\d+) Duct Tape! Lon này 100% băng keo\. Tuyệt vời\.$/,'🩹 +$1 Duct Tape! This can is 100% tape. Wonderful.'],
+[/^🩹 \+(\d+) Duct Tape! Lon này 100% băng keo\.$/,'🩹 +$1 Duct Tape! This can is 100% tape.'],
 [/^🔋 \+(\d+) Battery Juice! Vị hơi tê tê\. Đúng chuẩn\.$/,'🔋 +$1 Battery Juice! Slightly tingly. As intended.'],
 [/^🧩 \+(\d+) mảnh hộp \((\d+)\/(\d+)\)!?$/,'🧩 +$1 box pieces ($2/$3)!'],
-[/^🎰 JACKPOT! ⛽ đầy bình \+ 🪙 \+([\d.,]+)!$/,'🎰 JACKPOT! Full ⛽ tank + 🪙 +$1!'],
+[/^🎰 JACKPOT! 🪙 \+([\d.,]+) \+ (.+)!$/,'🎰 JACKPOT! 🪙 +$1 + $2!'],
 [/^\((Common|Uncommon|Rare|Epic|Legendary)\)! Ai đó đóng hộp cả trang bị\. Cảm ơn người lạ\.$/,'($1)! Someone canned actual gear. Thanks, stranger.'],
 [/^\((Common|Uncommon|Rare|Epic|Legendary)\)! Băng keo giữ chắc\. Tạm thời\.$/,'($1)! The tape holds. For now.'],
 [/^Hộp Tái Chế (Common|Uncommon|Rare|Epic|Legendary)$/,'$1 Recycle Box'],
@@ -7641,7 +7638,7 @@ arena:['🎭 梗竞技场','通关罐头小镇解锁'],lab:['🧬 实验室（�
 dgn:['🕳️ 每日地牢','击败第一章BOSS解锁'],tower:['🗼 混沌之塔','通关第二章第一关解锁'],
 enhance:['⬆️ 强化','通关第二章第一关解锁'],recycle:['♻️ 回收机','击败第二章BOSS解锁']},
 tut:['新人你好！打开<b>⚔️ 战斗</b>页开始第一战。',
-'进攻<b>废品场</b>（5 ⚡）。<b>⚡ $WACKO</b> 是能量——随时间自动恢复，升级越快。战斗全自动，策略在排兵布阵！',
+'进攻<b>废品场</b>（5 ⛽）。<b>⛽ Gas</b> 是能量——随时间自动恢复（每天固定 144）。战斗全自动，策略在排兵布阵！',
 '赢了！打开<b>🦸 Heroes</b>页，用刚捡的 🪙 升级队伍。',
 '点一名英雄→<b>⬆️ 升级</b>（每级+9%）。提示：<b>坦克在前</b>，输出和奶妈在后！',
 '打开<b>🥫 Loot</b>页——神秘罐头掉落 🧩 英雄箱碎片。',
@@ -7829,7 +7826,7 @@ arena:['🎭 ミームアリーナ','スナックタウン攻略で解放'],lab:
 dgn:['🕳️ デイリーダンジョン','第1章ボス撃破で解放'],tower:['🗼 カオスタワー','第2章最初のステージ攻略で解放'],
 enhance:['⬆️ 強化','第2章最初のステージ攻略で解放'],recycle:['♻️ リサイクル機','第2章ボス撃破で解放']},
 tut:['ようこそ新人！<b>⚔️ バトル</b>タブを開いて初戦闘を。',
-'<b>ジャンクヤード</b>を攻撃（5 ⚡）。<b>⚡ $WACKO</b> はエネルギー——時間で自動回復、レベルが上がるほど速い。戦闘は全自動、戦略は編成！',
+'<b>ジャンクヤード</b>を攻撃（5 ⛽）。<b>⛽ Gas</b> はエネルギー——時間で自動回復（1日144で一定）。戦闘は全自動、戦略は編成！',
 '勝利！<b>🦸 Heroes</b>タブで、拾った 🪙 で仲間を強化。',
 'ヒーローをタップ→<b>⬆️ レベルUP</b>（各+9%）。コツ：<b>タンクは前</b>、火力とヒーラーは後ろ！',
 '<b>🥫 Loot</b>タブを開こう——ミステリー缶から 🧩 ヒーローボックスの欠片。',
@@ -8039,12 +8036,25 @@ rx:[
 // Server playtest: Vultr Singapore, API tự viết (Node, không deps). Cúp do SERVER tính (Elo) — client chỉ báo thắng/thua.
 const NET_URL=localStorage.getItem('wk_api')||'https://139-180-139-201.sslip.io'; // override để test local: localStorage.wk_api
 let netBusy=false,netSyncTimer=null,NET_OPPS=[];
-async function netApi(path,body){
+async function netApi(path,body,_try){
+  _try=_try||0;
   const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),8000);
-  try{
-    const r=await fetch(NET_URL+path,body?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:ctl.signal}:{signal:ctl.signal});
-    return await r.json();
-  }finally{clearTimeout(to)}
+  let r;
+  try{r=await fetch(NET_URL+path,body?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:ctl.signal}:{signal:ctl.signal});}
+  finally{clearTimeout(to)}
+  // 429 = bị giới hạn tốc độ (mở box/đánh dồn dập) → đợi ngắn rồi thử lại, để burst tự lành thay vì lỗi "✗ rate"
+  if(r.status===429&&_try<2){await new Promise(res=>setTimeout(res,1200));return netApi(path,body,_try+1)}
+  return await r.json();
+}
+// đổi mã lỗi server → câu thân thiện (tránh hiện trần "✗ rate" / "✗ auth" khó hiểu)
+function srvErrMsg(r){
+  const vi=WLANG==='vi',e=r&&(r.err||r.msg);
+  const M={
+    rate:vi?'⏳ Thao tác hơi nhanh — nghỉ 1–2 giây rồi bấm lại nhé!':'⏳ Too fast — wait a second, then try again!',
+    auth:vi?'🌐 Phiên đăng nhập lỗi — tải lại trang giúp mình.':'Session error — please reload the page.',
+    core_off:vi?'⚙️ Máy chủ đang khởi động — thử lại sau giây lát.':'Server warming up — retry shortly.'
+  };
+  return M[e]||('✗ '+(e||(vi?'mất mạng':'network')));
 }
 function defSnapshot(){ // đội hình hiện tại → snapshot chỉ số thật (đội thủ của mình trên server)
   const ids=teamIds();if(!ids.length)return null;
@@ -8164,7 +8174,7 @@ async function act(fn,...args){
   if(!S.net)return toast('🌐 Mất kết nối server.');
   let r;try{r=await netApi('/gs/act',{id:S.net.id,secret:S.net.secret,fn,args})}catch(e){r=null}
   if(r&&r.ok){applyServerState(r.gs);srvRerender();return r}
-  toast('✗ '+((r&&(r.msg||r.err))||'mạng'));return r;
+  toast(srvErrMsg(r));return r;
 }
 async function srvStartBattle(node){
   if(RKBUSY)return;const id=typeof node==='object'?node.id:node;
@@ -8172,7 +8182,7 @@ async function srvStartBattle(node){
   if(!n||n.tower||n.dungeon){return toast(WLANG==='vi'?'Chế độ này chưa lên server (sắp có).':'Not on server yet.')}
   if(n.arena){return toast(WLANG==='vi'?'PvP: vào 🎭 Arena.':'PvP: use Arena.')}
   let r;try{r=await netApi('/gs/battle',{id:S.net.id,secret:S.net.secret,node:id})}catch(e){r=null}
-  if(!r||!r.ok){toast('✗ '+((r&&r.err)||'mạng')+(r&&r.need?` (cần ${r.need}⚡)`:''));return}
+  if(!r||!r.ok){toast(r&&r.err==='rate'?srvErrMsg(r):('✗ '+((r&&r.err)||'mạng')+(r&&r.need?` (cần ${r.need}⚡)`:'')));return}
   applyServerState(r.gs);
   replayBattle(r.setup,r.log,{win:r.win,reward:r.reward,node:{ch:n.ch,arena:false,id},gs:r.gs});
 }
@@ -8471,7 +8481,7 @@ async function w3ShoutSend(){
   w3Busy=false;
   if(btn){btn.disabled=false;btn.textContent='📢 Phát loa toàn thành phố'}
 }
-/* ===== 🔄 CẦU ĐỔI $WACKO: game ↔ ví ===== */
+/* ===== ⛽ NẠP GAS TỪ VÍ: ví → game (MỘT CHIỀU, không rút Gas ra ví) ===== */
 async function openBridge(){
   if(!w3Ready())return toast('⛓️ Nối ví ở ⛓️ Ví trước nhé!');
   const vi=WLANG==='vi';
@@ -8562,9 +8572,9 @@ async function openWallet(){
       <div class="skillbox"><h5 style="color:var(--green)">🔗 Ví đã nối</h5>
         <p><b>${w3Short(S.w3.addr)}</b> · <a href="${W3_EXPLORER}/address/${S.w3.addr}" target="_blank" style="color:var(--cyan)">xem trên explorer</a></p>
         <p style="margin-top:4px">💰 Số dư: <b>${balTxt}</b> · 🔥 đã đốt: <b>${fmt(st.burned||0)}</b></p></div>
-      <div class="skillbox" style="border-color:var(--yellow)"><h5 style="color:var(--yellow)">🔄 Đổi $WACKO — game ↔ ví</h5>
-        <p>⚡ in-game đang có: <b style="color:var(--green)">${fmt(Math.floor(S.gas))}</b> · còn rút hôm nay <b>${fmt(st.wdDayLeft||0)}</b>.</p>
-        <p style="font-size:11.5px;color:var(--muted)">⬇️ Rút ⚡ in-game ra token ví · ⬆️ Nạp token ví thành ⚡ chơi.</p>
+      <div class="skillbox" style="border-color:var(--yellow)"><h5 style="color:var(--yellow)">⛽ Nạp Gas từ ví — một chiều</h5>
+        <p>⛽ Gas in-game đang có: <b style="color:var(--green)">${fmt(Math.floor(S.gas))}</b>.</p>
+        <p style="font-size:11.5px;color:var(--muted)">⬆️ Đốt $WACKO trong ví để nạp ⛽ Gas. KHÔNG rút Gas ra ví ($WACKO chỉ kiếm từ thưởng Top PvP).</p>
         <button class="btn or" style="width:100%;margin-top:8px" onclick="openBridge()">⛽ ${WLANG==='vi'?'Nạp Gas từ ví ($WACKO)':'Top up Gas from wallet'}</button></div>
       <div class="skillbox" style="border-color:var(--cyan)"><h5 style="color:var(--cyan)">🔥 Dùng $WACKO (đốt token)</h5>
         ${st.approved
