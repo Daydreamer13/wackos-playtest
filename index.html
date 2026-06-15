@@ -8166,7 +8166,7 @@ let SRVMODE=false;
 const SRV_KEYS=['gas','maxGas','reserve','junk','juice','tape','cans','plv','xp','roster','nextUid','pieces','boxes','nextBoxUid','unlocked','team','inv','nextItemUid','beaten','tower','seasonStart','seasonNo','seasonStats','trophies','arena','pendingSeasonWin','tut','daily'];
 function applyServerState(gs){SRV_KEYS.forEach(k=>{if(k in gs)S[k]=gs[k]})}
 function srvRerender(){try{renderRes()}catch(e){}
-  const v=(document.querySelector('.view.active')||{}).id;
+  const v=(document.querySelector('.view.on')||{}).id; // view active dùng class 'on' (KHÔNG phải 'active') — query sai → renderMap/renderHeroes... không bao giờ chạy sau act/battle
   const R={'v-heroes':()=>{if(heroTab==='gear')renderHeroGear();else{renderHeroes();typeof renderTeam==='function'&&renderTeam()}},'v-battle':()=>renderMap(),'v-craft':()=>renderCraft(),'v-lab':()=>renderLab(),'v-loot':()=>typeof renderLoot==='function'&&renderLoot(),'v-missions':()=>typeof renderMissions==='function'&&renderMissions()};
   if(R[v])try{R[v]()}catch(e){}
 }
