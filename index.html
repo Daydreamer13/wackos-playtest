@@ -4271,6 +4271,28 @@ function arenaNode(ri){
     rival:rv.team.map(h=>({heroId:h,mult:mu})),
     ptsW:t.ptsW,ptsL:t.ptsL,rw:{junk:t.junk,xp:t.xp},rwTxt:''};
 }
+// đấu tập bot: server-mode → /gs/arena (server tự dựng rival + sim + cộng điểm); casual → đánh tại máy
+function arenaFight(i,quick){
+  if(SRVMODE)return srvArenaFight(i,quick);
+  return quick?quickBattle(arenaNode(i),1):startBattle(arenaNode(i));
+}
+async function srvArenaFight(i,quick){
+  if(RKBUSY)return;
+  if(!teamIds().length)return toast('Đội hình trống! Vào tab 🦸 Heroes thêm người đã.');
+  if((S.daily.arena||0)>=5)return toast('Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.');
+  let r;try{r=await netApi('/gs/arena',{id:S.net.id,secret:S.net.secret,tier:i})}catch(e){r=null}
+  if(!r||!r.ok){
+    const em={arena_cap:'Hết 5 lượt arena hôm nay! Các đối thủ thở phào nhẹ nhõm.',no_roster:'Đội hình trống! Vào tab 🦸 Heroes thêm người đã.',bad_tier:'Hạng đấu không hợp lệ.',sim_fail:'Lỗi mô phỏng trận — thử lại.'}[r&&r.err];
+    return toast(em||srvErrMsg(r));
+  }
+  applyServerState(r.gs);
+  if(quick){ // ⏭ Nhanh: hiện kết quả ngay, không diễn lại
+    srvRerender();
+    const win=r.win,rw=r.reward||{};
+    win?SFX.win():SFX.lose();if(win)confettiBurst();
+    toast(`${win?'🏅 Thắng đấu tập!':'🏳️ Thua đấu tập'} · ${rw.arenaPts>=0?'+':''}${rw.arenaPts||0} điểm (${rw.arenaTotal||0})${rw.junk?` · 🪙 +${fmt(rw.junk)}`:''}`);
+  }else replayBattle(r.setup,r.log,{win:r.win,reward:r.reward,node:r.node||{ch:1,arena:true,id:'arena'},gs:r.gs});
+}
 function arenaRank(p){return p<900?'📦 Thùng Các-tông':p<1100?'🥫 Đồng Nát':p<1350?'🩹 Băng Keo Bạc':p<1650?'🪙 Vàng Phế Liệu':'💎 Kim Cương Vỡ'}
 function openArena(){
   const left=5-(S.daily.arena||0);
@@ -4310,8 +4332,8 @@ function openArena(){
         <div style="display:flex;gap:2px;margin-top:5px">${rv.team.map(h=>`<span class="spr" style="width:30px;height:36px;transform:scaleX(-1)">${ART[h]}</span>`).join('')}</div>
         <div style="font-size:12px;color:var(--muted)">Thắng: +${t.ptsW} điểm · 🪙 ${t.junk[0]}–${t.junk[1]} · Thua: ${t.ptsL} điểm</div></div>
       <div style="display:flex;gap:6px;flex-direction:column">
-        <button class="btn sm or" onclick="closeModal('hd-bg');startBattle(arenaNode(${i}))" ${left<=0||S.busy?'disabled':''}>⚔️ Đánh</button>
-        <button class="btn sm gh" onclick="closeModal('hd-bg');quickBattle(arenaNode(${i}),1)" ${left<=0||S.busy?'disabled':''}>⏭ Nhanh</button>
+        <button class="btn sm or" onclick="closeModal('hd-bg');arenaFight(${i},0)" ${left<=0||S.busy?'disabled':''}>⚔️ Đánh</button>
+        <button class="btn sm gh" onclick="closeModal('hd-bg');arenaFight(${i},1)" ${left<=0||S.busy?'disabled':''}>⏭ Nhanh</button>
       </div></div>`}).join('')}
     <button class="btn cy" style="width:100%" onclick="openArenaBoard()">🏅 Bảng xếp hạng Arena</button>`;
   openModal('hd-bg');
@@ -8148,7 +8170,7 @@ function replayEnd(result){
   win?SFX.win():SFX.lose();if(win&&typeof confettiBurst==='function')confettiBurst();
   let loot='';
   if(result.reward){const rw=result.reward,I={junk:'🪙',tape:'🩹',juice:'🔋',cans:'🥫',pieces:'🧩'};
-    loot=Object.keys(I).filter(k=>rw[k]).map(k=>`<span class="lootchip">${I[k]} +${rw[k]}</span>`).join('')+(rw.xp?`<span class="lootchip">✨ +${rw.xp}</span>`:'')+(rw.leveled?`<span class="lootchip">⬆️ Lv${rw.leveled}</span>`:'');}
+    loot=(rw.arenaPts!=null?`<span class="lootchip">🏅 ${rw.arenaPts>=0?'+':''}${rw.arenaPts} điểm (${rw.arenaTotal})</span>`:'')+Object.keys(I).filter(k=>rw[k]).map(k=>`<span class="lootchip">${I[k]} +${rw[k]}</span>`).join('')+(rw.xp?`<span class="lootchip">✨ +${rw.xp}</span>`:'')+(rw.leveled?`<span class="lootchip">⬆️ Lv${rw.leveled}</span>`:'');}
   if(result.delta!=null)loot=`<span class="lootchip">🏆 ${result.delta>=0?'+':''}${result.delta} → ${result.trophies}</span>`+(result.oppName?`<span class="lootchip">vs ${rkEsc(result.oppName)}</span>`:'');
   $('res-modal').innerHTML=`<div class="result">
     <div style="font-size:54px">${win?'🏆':'🩹'}</div>
