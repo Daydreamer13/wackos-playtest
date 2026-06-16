@@ -493,6 +493,16 @@ h2.sec::after{content:'';flex:1;height:3px;border-radius:99px;min-width:28px;
 @media (max-width:560px){
   .hubscene{height:316px}
   #hub-team{gap:7px}
+  /* topbar gọn lại để khỏi tràn nhiều dòng trên màn hẹp */
+  .topbar{padding:8px 4px;gap:5px}
+  .res{padding:3px 10px 3px 7px;font-size:12.5px;gap:4px}
+  .res .ico{font-size:15px;width:18px;height:18px}
+  .plv{padding:4px 11px;font-size:12px}
+  .netchip{font-size:10.5px;padding:3px 9px}
+  /* nav: 7 nút co đều cho vừa mọi bề ngang (trước đây 7×50px tràn ở <375px → Hub bị cắt) */
+  .nav{gap:2px;padding:6px 3px calc(6px + env(safe-area-inset-bottom))}
+  .nav button{min-width:0;flex:1 1 0;padding:7px 2px;font-size:10px}
+  .nav button .e{font-size:19px}
 }
 
 /* ---------- v2.27: BẢN ĐỒ CHIẾN DỊCH interactive ---------- */
@@ -812,8 +822,8 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
     <div class="res" onclick="openResInfo('tape')" title="Duct Tape — bấm xem chi tiết"><span class="ico">🩹</span><span id="r-tape">0</span></div>
     <div class="res" onclick="openResInfo('cans')" title="Mystery Cans — bấm xem chi tiết"><span class="ico">🥫</span><span id="r-cans">0</span></div>
     <div class="res" id="sfxbtn" onclick="toggleSfx()" title="Bật / tắt âm thanh"><span class="ico">🔊</span></div>
-    <button class="plv" id="r-plv" onclick="openPlv()" title="Bấm để xem chi tiết cấp tài khoản">Lv 1</button>
     <div class="res netchip" id="netchip" style="display:none" onclick="netReconnect()"></div>
+    <button class="plv" id="r-plv" onclick="openPlv()" title="Bấm để xem chi tiết cấp tài khoản">Lv 1</button>
   </div>
 
   <section class="view on" id="v-hub">
