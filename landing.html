@@ -147,6 +147,14 @@ h1,h2,h3{line-height:1.08;font-weight:800;letter-spacing:-.5px}
 .callout.go{animation:fightPop .9s ease-out}
 @keyframes fightPop{0%{opacity:0;transform:translateX(-50%) scale(2.4)}22%{opacity:1;transform:translateX(-50%) scale(1)}72%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(1.15)}}
 .kostamp.win{background:var(--green);border-color:#0a3d12;color:#06270d}
+/* skill FX */
+.beam{position:absolute;height:7px;transform-origin:left center;border-radius:4px;z-index:5;pointer-events:none}
+.flashfx{position:absolute;inset:0;z-index:6;background:#fff;pointer-events:none;animation:flashFx .26s ease-out forwards}
+@keyframes flashFx{0%{opacity:.5}100%{opacity:0}}
+.shieldfx{position:absolute;width:62px;height:62px;margin:-31px;border-radius:50%;border:3px solid #3be8ff;box-shadow:0 0 16px #3be8ff,inset 0 0 14px rgba(59,232,255,.4);z-index:5;pointer-events:none;animation:shieldFx .6s ease-out forwards}
+@keyframes shieldFx{0%{transform:scale(.4);opacity:0}30%{opacity:1}100%{transform:scale(1.35);opacity:0}}
+.skilltag{position:absolute;font-weight:800;font-size:14px;z-index:7;white-space:nowrap;text-shadow:0 2px 0 #000,0 0 10px currentColor;pointer-events:none;animation:tagPop 1.1s ease-out forwards}
+@keyframes tagPop{0%{opacity:0;transform:translate(-50%,0) scale(.6)}18%{opacity:1;transform:translate(-50%,0) scale(1.12)}30%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-16px) scale(1)}}
 /* reduced-motion: a clean static face-off frame */
 .canstage.static .can{opacity:0}
 .canstage.static .kostamp{opacity:1;transform:rotate(-6deg) scale(1)}
@@ -476,7 +484,7 @@ if(stage){stage.addEventListener('click',loadGame);stage.addEventListener('keydo
   function mkActor(key,side,lx){
     const a=document.createElement('div');a.className='actor '+side;a.style.left=lx+'%';
     a.innerHTML='<div class="hpbar"><div class="hpfill"></div></div><div class="spr">'+ART[key]+'</div>';
-    field.appendChild(a);return {el:a,fill:a.querySelector('.hpfill'),spr:a.querySelector('.spr'),side,hp:100,dead:false};
+    field.appendChild(a);return {el:a,fill:a.querySelector('.hpfill'),spr:a.querySelector('.spr'),side,key,hp:100,dead:false,acts:0};
   }
   function fnum(at,txt,col){const p=at2xy(at);const n=document.createElement('div');n.className='fnum';n.textContent=txt;n.style.color=col;
     n.style.left=p.x+'px';n.style.top=(p.y-26)+'px';field.appendChild(n);T(()=>n.remove(),1100);}
@@ -486,22 +494,49 @@ if(stage){stage.addEventListener('click',loadGame);stage.addEventListener('keydo
     const p=document.createElement('div');p.className='proj';p.style.color=col;p.style.background=col;
     p.style.left=a.x+'px';p.style.top=a.y+'px';field.appendChild(p);
     requestAnimationFrame(()=>{p.style.transform='translate('+(b.x-a.x)+'px,'+(b.y-a.y)+'px)';});T(()=>p.remove(),320);}
-  function attack(att){
+  const CLR={spam:'#3be8ff',noodle:'#5ee06a',intern:'#ff9f2e',magnet:'#b36bff'};
+  const SKILL={spam:'🛡 SHIELD!',noodle:'💚 HEAL!',intern:'⚡ MEGA LASER!',magnet:'🧲 YANK!'};
+  const weakest=list=>list.reduce((m,a)=>a.hp<m.hp?a:m,list[0]);
+  function ko(t,kb){if(t.hp<=0&&!t.dead){t.dead=true;if(t.el.animate)t.el.animate([{transform:'none',opacity:1},{transform:'rotate('+(80*kb)+'deg) translateY(20px)',opacity:0}],{duration:480,fill:'forwards'});}}
+  function skilltag(at,txt,col){const p=at2xy(at);const n=document.createElement('div');n.className='skilltag';n.textContent=txt;n.style.color=col;n.style.left=p.x+'px';n.style.top=(p.y-46)+'px';field.appendChild(n);T(()=>n.remove(),1100);}
+  function flash(){const f=document.createElement('div');f.className='flashfx';field.appendChild(f);T(()=>f.remove(),280);}
+  function shieldFx(a){const p=at2xy(a);const s=document.createElement('div');s.className='shieldfx';s.style.left=p.x+'px';s.style.top=p.y+'px';field.appendChild(s);T(()=>s.remove(),620);}
+  function beam(att,tgt,col){const a=at2xy(att),b=at2xy(tgt),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)*180/Math.PI;
+    const e=document.createElement('div');e.className='beam';e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=len+'px';e.style.background=col;e.style.boxShadow='0 0 14px '+col;e.style.transform='rotate('+ang+'deg)';field.appendChild(e);
+    if(e.animate)e.animate([{transform:'rotate('+ang+'deg) scaleX(0)',opacity:1},{transform:'rotate('+ang+'deg) scaleX(1)',opacity:1},{transform:'rotate('+ang+'deg) scaleX(1)',opacity:0}],{duration:300,easing:'ease-out',fill:'forwards'});T(()=>e.remove(),320);}
+  function basic(att){
     const foes=actors.filter(a=>a.side!==att.side&&!a.dead);if(!foes.length)return;
-    const tgt=foes.reduce((m,a)=>a.hp<m.hp?a:m,foes[0]);                       // FOCUS FIRE the weakest → decisive
-    const col=att.side==='pl'?'#3be8ff':'#ff5d6c',kb=att.side==='pl'?1:-1;
+    const tgt=weakest(foes),col=att.side==='pl'?'#3be8ff':'#ff5d6c',kb=att.side==='pl'?1:-1;          // FOCUS FIRE
     if(att.el.animate)att.el.animate([{transform:'translateX(0)'},{transform:'translateX('+(22*kb)+'px)'},{transform:'translateX(0)'}],{duration:260,easing:'ease-out'});
     shoot(att,tgt,col);
     T(()=>{if(tgt.dead)return;
       const crit=Math.random()<.24,dmg=Math.round((18+Math.random()*16)*(crit?1.9:1));
-      tgt.hp=Math.max(0,tgt.hp-dmg);tgt.fill.style.width=tgt.hp+'%';
-      spark(tgt);shake(crit);
-      if(tgt.el.animate){tgt.el.animate([{filter:'brightness(3)'},{filter:'none'}],{duration:200});
-        tgt.el.animate([{transform:'translateX(0)'},{transform:'translateX('+(11*kb)+'px)'},{transform:'translateX(0)'}],{duration:230,easing:'ease-out'});}
-      fnum(tgt,(crit?'-'+dmg+'!':'-'+dmg),crit?'#ffd23f':'#fff');
-      if(tgt.hp<=0){tgt.dead=true;if(tgt.el.animate)tgt.el.animate([{transform:'none',opacity:1},{transform:'rotate('+(80*kb)+'deg) translateY(20px)',opacity:0}],{duration:480,fill:'forwards'});}
+      tgt.hp=Math.max(0,tgt.hp-dmg);tgt.fill.style.width=tgt.hp+'%';spark(tgt);shake(crit);
+      if(tgt.el.animate){tgt.el.animate([{filter:'brightness(3)'},{filter:'none'}],{duration:200});tgt.el.animate([{transform:'translateX(0)'},{transform:'translateX('+(11*kb)+'px)'},{transform:'translateX(0)'}],{duration:230,easing:'ease-out'});}
+      fnum(tgt,(crit?'-'+dmg+'!':'-'+dmg),crit?'#ffd23f':'#fff');ko(tgt,kb);
     },230);
   }
+  function skill(att){
+    const col=CLR[att.key]||'#fff',kb=att.side==='pl'?1:-1;
+    skilltag(att,SKILL[att.key]||'SKILL!',col);
+    if(att.el.animate)att.el.animate([{transform:'scale(1)'},{transform:'scale(1.18)'},{transform:'scale(1)'}],{duration:320,easing:'ease-out'});
+    if(att.key==='noodle'){                                                                            // HEAL weakest ally
+      const al=actors.filter(a=>a.side===att.side&&!a.dead);if(!al.length)return;
+      const t=weakest(al),h=24+Math.floor(Math.random()*10);t.hp=Math.min(100,t.hp+h);t.fill.style.width=t.hp+'%';shieldFx(t);fnum(t,'+'+h,'#5ee06a');
+    }else if(att.key==='spam'){                                                                        // SHIELD team + chip heal
+      actors.filter(a=>a.side===att.side&&!a.dead).forEach(a=>{shieldFx(a);a.hp=Math.min(100,a.hp+8);a.fill.style.width=a.hp+'%';fnum(a,'+8','#3be8ff');});shake(true);
+    }else if(att.key==='intern'){                                                                      // MEGA LASER weakest enemy
+      const foes=actors.filter(a=>a.side!==att.side&&!a.dead);if(!foes.length)return;
+      const tgt=weakest(foes);beam(att,tgt,'#ff9f2e');flash();shake(true);
+      T(()=>{if(tgt.dead)return;const dmg=42+Math.floor(Math.random()*18);tgt.hp=Math.max(0,tgt.hp-dmg);tgt.fill.style.width=tgt.hp+'%';spark(tgt);shake(true);fnum(tgt,'-'+dmg+'!','#ffd23f');ko(tgt,kb);},170);
+    }else if(att.key==='magnet'){                                                                      // YANK weakest enemy + bonk
+      const foes=actors.filter(a=>a.side!==att.side&&!a.dead);if(!foes.length)return;
+      const tgt=weakest(foes);
+      if(tgt.el.animate)tgt.el.animate([{transform:'translateX(0)'},{transform:'translateX('+(-42*kb)+'px)'},{transform:'translateX('+(-8*kb)+'px)'},{transform:'translateX(0)'}],{duration:420,easing:'ease-out'});
+      T(()=>{if(tgt.dead)return;const dmg=28+Math.floor(Math.random()*14);tgt.hp=Math.max(0,tgt.hp-dmg);tgt.fill.style.width=tgt.hp+'%';spark(tgt);shake(true);fnum(tgt,'-'+dmg,'#b36bff');ko(tgt,kb);},380);
+    }else basic(att);
+  }
+  function act(att){att.acts=(att.acts||0)+1; if(att.acts%2===0) skill(att); else basic(att);}        // every 2nd action = a SKILL cast
   function resolve(){                                                          // safety: force a TRUTHFUL conclusion
     const pls=actors.filter(a=>a.side==='pl'&&!a.dead),ens=actors.filter(a=>a.side==='en'&&!a.dead);
     if(!pls.length||!ens.length)return;
@@ -529,7 +564,7 @@ if(stage){stage.addEventListener('click',loadGame);stage.addEventListener('keydo
       T(()=>{tickIv=setInterval(()=>{                                                               // brawl
         const live=actors.filter(a=>!a.dead),pls=live.filter(a=>a.side==='pl'),ens=live.filter(a=>a.side==='en');
         if(!pls.length||!ens.length){finish();return;}
-        const team=(turn++%2)?ens:pls;attack(team[Math.floor(Math.random()*team.length)]);
+        const team=(turn++%2)?ens:pls;act(team[Math.floor(Math.random()*team.length)]);
       },500);},1050);
     },1300);
     T(()=>{resolve();finish();},9500);                                                             // never stamp before a side is down
