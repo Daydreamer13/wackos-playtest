@@ -1056,6 +1056,8 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
   <section class="view" id="v-gallery">
     <h2 class="sec">📖 Bộ Sưu Tập Vùng Đất Hoang</h2>
     <p class="sub" id="codex-sub"></p>
+    <div class="filterbar" id="gal-clsfilter"></div>
+    <div class="filterbar" id="gal-ownfilter"></div>
     <div class="hgrid" id="codex-heroes"></div>
     <h2 class="sec" style="margin-top:26px;font-size:22px">🗡️ Vũ khí & Trang bị</h2>
     <p class="sub">Chế tại Xưởng Băng Keo. Kho vũ khí sẽ mở rộng ở các bản sau.</p>
@@ -3848,12 +3850,29 @@ function renderHeroGear(){
 }
 /* ================= GALLERY / CODEX ================= */
 const ROSTER_TOTAL=48; // theo Hero Roster Design v1.0
+let galCls='',galOwn=''; // bộ lọc Bộ sưu tập: class · own('' | 'owned' | 'missing')
+function setGalFilter(type,val){if(type==='cls')galCls=val;else galOwn=val;renderGallery()}
 function renderGallery(){
-  const n=Object.keys(HEROES).length;
-  $('codex-sub').innerHTML=`Đã xuất hiện <b>${n}/${ROSTER_TOTAL} hero</b> — các wave sau sẽ mở thêm. Bấm vào hero để xem hồ sơ.`;
+  const vi=WLANG==='vi';
+  const all=Object.values(HEROES),n=all.length;
+  const ownedN=h=>S.roster.filter(i=>i.heroId===h.id).length;
+  const isOwn=h=>ownedN(h)>0;
+  const mCls=h=>!galCls||h.cls===galCls;
+  const mOwn=h=>!galOwn||(galOwn==='owned'?isOwn(h):!isOwn(h));
+  $('codex-sub').innerHTML=`Đã sở hữu <b>${all.filter(isOwn).length}/${n} hero</b> — bản còn thiếu mở qua 📦 Hộp Hero / 🧬 Breed. Bấm hero để xem hồ sơ.`;
+  // lọc theo class (số đếm tôn trọng bộ lọc sở hữu đang chọn)
+  const cf=$('gal-clsfilter');
+  if(cf){const cnt=c=>all.filter(h=>mOwn(h)&&(!c||h.cls===c)).length;
+    cf.innerHTML=HERO_FCHIPS.map(([c,e])=>`<button class="fchip ${galCls===c?'on':''}" onclick="setGalFilter('cls','${c}')">${e} ${c?CLS_VI[c]:(vi?'Tất cả':'All')} <span class="fcount">${cnt(c)}</span></button>`).join('');}
+  // lọc theo sở hữu (số đếm tôn trọng bộ lọc class)
+  const of=$('gal-ownfilter');
+  if(of){const owns=[['',vi?'Tất cả':'All','🌐'],['owned',vi?'Đã có':'Owned','✅'],['missing',vi?'Chưa có':'Missing','🔍']];
+    of.innerHTML=owns.map(([v,lbl,e])=>{const cnt=all.filter(h=>mCls(h)&&(v===''||(v==='owned'?isOwn(h):!isOwn(h)))).length;
+      return`<button class="fchip ${galOwn===v?'on':''}" onclick="setGalFilter('own','${v}')">${e} ${lbl} <span class="fcount">${cnt}</span></button>`;}).join('');}
   const hg=$('codex-heroes');hg.innerHTML='';
-  Object.values(HEROES).forEach(h=>{
-    const owned=S.roster.filter(i=>i.heroId===h.id).length;
+  const list=all.filter(h=>mCls(h)&&mOwn(h));
+  list.forEach(h=>{
+    const owned=ownedN(h);
     hg.innerHTML+=`<div class="hcard" onclick="openCodex('${h.id}')">
       ${owned?`<span class="inteam" style="background:var(--green)">CÓ ×${owned}</span>`:''}
       ${sprite(h.id,96,owned>0)}
@@ -3861,6 +3880,7 @@ function renderGallery(){
       <span class="tag ${h.cls}">${CLS_VI[h.cls]}</span>
       <div class="q">💥 ${h.skill.name}</div></div>`;
   });
+  if(!list.length)hg.innerHTML=`<div style="grid-column:1/-1;padding:22px 10px;text-align:center;color:var(--muted);font-weight:700">${vi?'Không có hero khớp bộ lọc — đổi lại nhé':'No heroes match — adjust the filters'}</div>`;
   const ig=$('codex-items');ig.innerHTML='';
   Object.values(ITEMS).sort((a,b)=>SLOTS.indexOf(a.slot)-SLOTS.indexOf(b.slot)||rIdx(a.rarity)-rIdx(b.rarity)).forEach(it=>{
     const own=invCount(it.id);
