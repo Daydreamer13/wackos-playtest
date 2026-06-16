@@ -1003,7 +1003,7 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
       <div id="hub-team"></div>
      </div>
     </div>
-    <p class="demonote">🎁 <b>GIẢI THƯỞNG 100$:</b> 20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 <b>— vào 🎭 Arena đăng ký tên để lên sóng!</b> <span>· ⛽ Gas hồi theo thời gian (idle, 144/ngày) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.</span></p>
+    <p class="demonote"><span class="prizeonly" style="display:none">🎁 <b>GIẢI THƯỞNG 100$:</b> 20$ TOP 1 BXH · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 <b>— vào 🎭 Arena đăng ký tên để lên sóng!</b> · </span><span>🌍 Vào 🎭 Arena đăng ký tên để lên BXH toàn cầu · ⛽ Gas hồi theo thời gian (idle, 144/ngày) · 💾 Tự lưu trên trình duyệt này — đừng xóa lịch sử web nhé! · 📝 Góp ý: nút tròn bên trái màn hình.</span></p>
   </section>
 
   <section class="view" id="v-heroes">
@@ -4228,7 +4228,7 @@ function openArena(){
     <p class="sub">PvP kiểu lịch sự: đánh BẢN SAO đội người khác — không ai phải thức canh điện thoại.</p>
     <div class="panel" style="margin:10px 0;border-color:var(--cyan)">
       <b style="color:var(--cyan)">🌐 ĐẤU TRƯỜNG ONLINE</b>
-      <p style="margin:4px 0 0;font-size:12px;color:var(--yellow)">🎁 <b>GIẢI 100$:</b> 20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — chốt 23:59 ngày 26/06!</p>
+      ${PRIZE_ACTIVE?'<p style="margin:4px 0 0;font-size:12px;color:var(--yellow)">🎁 <b>GIẢI 100$:</b> 20$ TOP 1 · 40$ bốc thăm 4 người chơi · 40$ bốc thăm 4 góp ý 📝 — chốt 23:59 ngày 26/06!</p>':''}
       ${S.net?`
       <p class="sub" style="margin:4px 0 6px">Bạn là <b>${S.net.name}</b> · 🏆 <b style="color:var(--yellow)">${S.net.tro!=null?S.net.tro:1000}</b> cúp — đánh đội hình THẬT của người chơi thật, không tốn gas!</p>
       <div style="display:flex;gap:4px;align-items:center;margin:2px 0 6px;flex-wrap:wrap">
@@ -4240,9 +4240,11 @@ function openArena(){
         <button class="btn sm cy" style="flex:1" onclick="openNetBoard()">🌍 BXH Online</button>
         <button class="btn sm gh" onclick="netLoadOpps()">🔄 Đổi đối thủ</button>
         <button class="btn sm gh" onclick="openClaim()" title="Mã nhận thưởng & chuyển máy">🎟️</button>
-      </div>`:`
+      </div>
+      <button class="btn sm or" style="width:100%;margin-top:6px" onclick="openRefPanel()">🎁 ${WLANG==='vi'?'Mời bạn — cả hai nhận quà':'Invite friends — both get gifts'}</button>`:`
       <p class="sub" style="margin:4px 0 6px">Đặt tên là lên sóng: BXH toàn cầu trực tiếp + đánh đội hình THẬT của người chơi khác. Không tốn gas, không giới hạn lượt.</p>
       <button class="btn cy" style="width:100%" onclick="openNetJoin()">🚀 Tham gia BXH Online</button>
+      <button class="btn sm or" style="width:100%;margin-top:6px" onclick="openRefPanel()">🎁 ${WLANG==='vi'?'Mời bạn — cả hai nhận quà':'Invite friends — both get gifts'}</button>
       <button class="btn sm gh" style="width:100%;margin-top:6px" onclick="openClaim()">🎟️ Mã nhận thưởng & chuyển máy</button>`}
     </div>
     ${(()=>{const vi=WLANG==='vi';return `<div class="panel" style="margin:12px 0;border:2px dashed var(--purple);background:linear-gradient(135deg,#241830,#1b1426);opacity:.92" onclick="toast('${vi?'🛡️ Guild đang được xây — rủ bạn bè vào để sớm có băng đông vui nhé!':'🛡️ Guilds are in the works — bring friends so we hit the player count to launch them!'}')" >
@@ -5794,7 +5796,7 @@ function grantRewards(node,win,pandaAlive,T){
     checkUnlocks(); // tiến độ mới → có thể mở khóa tính năng
     if(S.net)netSync(); // hồ sơ online: đội vừa mạnh lên / tiến độ mới
     else if(isU('arena')&&!window._nagNet){window._nagNet=1; // phễu đăng ký: nhắc 1 lần/phiên
-      setTimeout(()=>toast('🎁 Vào 🎭 Arena đăng ký tên để lên BXH toàn cầu — đang có giải 100$!'),1800)}
+      setTimeout(()=>toast(PRIZE_ACTIVE?'🎁 Vào 🎭 Arena đăng ký tên để lên BXH toàn cầu — đang có giải 100$!':(WLANG==='vi'?'🌍 Vào 🎭 Arena đăng ký tên để lên BXH toàn cầu — rủ bạn nhận quà 🎁':'🌍 Open 🎭 Arena to join the global leaderboard — invite friends for gifts 🎁')),1800)}
   }else{
     T.loss++;S.seasonStats.loss++;
     if(S.tele)S.tele.loss++;
@@ -6909,7 +6911,7 @@ function openFeedback(){
   $('hd-modal').innerHTML=`
     <button class="close" onclick="fbKeep();closeModal('hd-bg')">✕</button>
     <h3>📝 Góp ý nhanh (1 phút)</h3>
-    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 Mỗi góp ý có nội dung = 1 vé bốc thăm <b>10$</b> (4 giải cuối đợt)!</p>
+    ${PRIZE_ACTIVE?'<p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 Mỗi góp ý có nội dung = 1 vé bốc thăm <b>10$</b> (4 giải cuối đợt)!</p>':''}
     <p class="sub" style="margin-top:4px">Trả lời lúc nào cũng được, sửa lại được — dữ liệu tự gửi về máy chủ.</p>
     ${L('q1','😄 Game có VUI không?')}
     ${L('q2','🧠 Game có DỄ HIỂU không?')}
@@ -6926,7 +6928,7 @@ function saveFeedback(){
   S.tele.fb={q1:fbTmp.q1||null,q2:fbTmp.q2||null,q3:fbTmp.q3||null,like:fbTmp.like||'',hate:fbTmp.hate||'',ts:Date.now()};
   scheduleSave();closeModal('hd-bg');
   teleUpload(); // góp ý = thứ quý nhất — đẩy lên server ngay, không chờ hết phiên
-  toast('📝 Đã lưu góp ý — cảm ơn! Bạn đã có vé bốc thăm 10$ cuối đợt 🎁');
+  toast(PRIZE_ACTIVE?'📝 Đã lưu góp ý — cảm ơn! Bạn đã có vé bốc thăm 10$ cuối đợt 🎁':(WLANG==='vi'?'📝 Đã lưu góp ý — cảm ơn nhiều! Góp ý của bạn cực kỳ giá trị 🙏':'📝 Feedback saved — thank you! Your input is hugely valuable 🙏'));
 }
 function buildExport(){
   teleInit();
@@ -8252,30 +8254,46 @@ function netSync(now){ // đẩy hồ sơ (sức mạnh + đội thủ) lên ser
   },now?50:3000);
 }
 function openNetJoin(){
+  const pend=(typeof localStorage!=='undefined'&&localStorage.getItem('wk_pending_ref'))||'';const vi=WLANG==='vi';
   $('hd-modal').innerHTML=`
     <button class="close" onclick="closeModal('hd-bg')">✕</button>
-    <h3>🌐 THAM GIA BXH ONLINE</h3>
-    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 <b>GIẢI 100$ ĐANG CHẠY:</b> 20$ TOP 1 BXH + bốc thăm 80$ — chốt 23:59 ngày 26/06!</p>
-    <p class="sub">Chọn tên hiển thị (2–14 ký tự). Tên sẽ nằm trên bảng xếp hạng TOÀN CẦU — chọn tên ngầu vào.</p>
+    <h3>🌐 ${vi?'THAM GIA BXH ONLINE':'JOIN GLOBAL LEADERBOARD'}</h3>
+    ${PRIZE_ACTIVE?'<p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 <b>GIẢI 100$ ĐANG CHẠY:</b> 20$ TOP 1 BXH + bốc thăm 80$ — chốt 23:59 ngày 26/06!</p>':`<p style="margin:6px 0 0;font-size:12px;color:var(--cyan)">🌍 ${vi?'BXH toàn cầu trực tiếp · rủ bạn nhận quà (🎁 Mời bạn) · giải thưởng mở khi đủ người chơi.':'Live global leaderboard · invite friends for gifts · prizes open once enough players join.'}</p>`}
+    <p class="sub">${vi?'Chọn tên hiển thị (2–14 ký tự). Tên sẽ nằm trên bảng xếp hạng TOÀN CẦU — chọn tên ngầu vào.':'Pick a display name (2–14 chars) for the GLOBAL leaderboard.'}</p>
     <input id="net-name" maxlength="14" placeholder="VD: TrùmBãiRác" style="width:100%;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--bg3);color:var(--text);font-family:inherit;font-size:15px;margin:8px 0">
-    <button class="btn cy" style="width:100%" onclick="netRegister()">🚀 Lên sóng!</button>
+    <div style="margin:2px 0 4px">
+      <div style="font-size:11.5px;color:var(--muted)">🎁 ${vi?'Có mã mời của bạn bè? (không bắt buộc)':"Got a friend's invite code? (optional)"}</div>
+      <input id="net-refcode" maxlength="12" value="${pend}" placeholder="${vi?'Dán mã 6 ký tự — cả hai cùng nhận quà':'Paste 6-char code — you both get a bonus'}" style="width:100%;padding:9px;border-radius:10px;border:2px solid ${pend?'var(--green)':'var(--line)'};background:var(--bg3);color:var(--text);font-family:monospace;text-transform:uppercase;font-size:14px;margin:3px 0">
+      ${pend?`<div style="font-size:11px;color:var(--green)">✓ ${vi?'Mã '+pend+' từ link mời đã điền sẵn — giữ nguyên để nhận quà!':'Code '+pend+' from your invite link — keep it for the bonus!'}</div>`:''}
+    </div>
+    <button class="btn cy" style="width:100%" onclick="netRegister()">🚀 ${vi?'Lên sóng!':'Go live!'}</button>
     <p class="demonote" style="margin-top:8px">Server chỉ lưu tên + chỉ số đội hình — KHÔNG có thông tin cá nhân. Dữ liệu có thể reset sau đợt playtest.</p>`;
   openModal('hd-bg');
   setTimeout(()=>{const i=$('net-name');if(i)i.focus()},60);
 }
 async function netRegister(){
   const name=($('net-name')&&$('net-name').value||'').trim();
-  if(name.length<2)return toast('Tên cần ít nhất 2 ký tự!');
+  const refcode=(($('net-refcode')&&$('net-refcode').value)||'').trim().toUpperCase();
+  const vi=WLANG==='vi';
+  if(name.length<2)return toast(vi?'Tên cần ít nhất 2 ký tự!':'Name needs at least 2 chars!');
   if(netBusy)return;netBusy=true;
   try{
     const r=await netApi('/api/register',{name});
     if(r&&r.id){S.net={id:r.id,secret:r.secret,name:r.name,tro:r.trophies};
       scheduleSave();netSync(true);
-      toast(`🌐 Chào mừng <b>${r.name}</b> lên sóng toàn cầu!`);
-      if(typeof localStorage==='undefined'||!localStorage.getItem('wk_srv_off'))setTimeout(()=>srvBoot(),400); // vào server-mode ngay (import tiến trình 1 lần)
+      toast(vi?`🌐 Chào mừng <b>${r.name}</b> lên sóng toàn cầu!`:`🌐 Welcome <b>${r.name}</b> to the global stage!`);
+      const srvOn=(typeof localStorage==='undefined'||!localStorage.getItem('wk_srv_off'));
+      if(srvOn){try{await srvBoot();}catch(e){}} // import tiến trình 1 LẦN xong rồi mới bind (tránh import ghi đè welcome)
+      if(refcode&&refcode.length>=4){
+        let rb;try{rb=await netApi('/gs/ref-bind',{id:S.net.id,secret:S.net.secret,code:refcode});}catch(e){rb=null;}
+        if(rb&&rb.ok){localStorage.removeItem('wk_pending_ref');const w=rb.welcome||{};
+          toast((vi?'🎁 Đã dùng mã của ':'🎁 Code from ')+(rb.by||'?')+'! '+(vi?'Quà chào mừng: ':'Welcome: ')+fmtRw(w));
+          if(rb.gs&&typeof applyServerState==='function'){applyServerState(rb.gs);srvRerender();}}
+        else if(rb&&rb.err){const m={self:vi?'😅 Mã của chính bạn — bỏ qua.':'😅 Your own code — skipped.',no_code:vi?'🤔 Mã mời không tồn tại — bỏ qua.':'🤔 Invalid invite code — skipped.'}[rb.err];if(m)toast(m);}
+      }
       openArena();}
-    else toast('😵 Server từ chối tên này — thử tên khác nhé.');
-  }catch(e){toast('📡 Không nối được server — kiểm tra mạng rồi thử lại.')}
+    else toast(r&&r.err==='reg_rate'?(vi?'⏳ Quá nhiều tài khoản từ mạng này — thử lại sau.':'⏳ Too many accounts from this network — try later.'):(vi?'😵 Server từ chối tên này — thử tên khác nhé.':'😵 Name rejected — try another.'));
+  }catch(e){toast(vi?'📡 Không nối được server — kiểm tra mạng rồi thử lại.':'📡 Connection failed — check network.')}
   netBusy=false;
 }
 async function netLoadOpps(){
@@ -8327,6 +8345,101 @@ const W3_CHAIN={chainId:'0x18c7',chainName:'MegaETH Testnet',nativeCurrency:{nam
   rpcUrls:['https://carrot.megaeth.com/rpc'],blockExplorerUrls:['https://www.megaexplorer.xyz']};
 const W3_EXPLORER='https://www.megaexplorer.xyz';
 const W3_MINT_ENABLED=false; // 🚧 Mint NFT tạm TẮT theo yêu cầu — bật lại = true
+const PRIZE_ACTIVE=false; // 🏆 GIẢI $100 LÙI lại tới khi đủ tester (quyết định owner 16/06) — bật lại = true sẽ hiện lại mọi banner giải
+// ===================== REFERRAL (ref-code) — client =====================
+// Bắt ?ref=CODE 1 lần khi vào (deep-link mời) → lưu tạm rồi xóa khỏi URL (tránh refresh/bookmark kích lại).
+(function(){try{const rc=new URLSearchParams(location.search).get('ref');if(rc){localStorage.setItem('wk_pending_ref',rc.trim().toUpperCase().slice(0,12));history.replaceState(null,'',location.pathname+location.hash);}}catch(e){}})();
+let REF_STATE=null,refBusy=false;
+const REF_EMO={junk:'🪙',tape:'🩹',juice:'🧃',cans:'🥫',pieces:'🧩',xp:'✨'};
+function fmtRw(rw){if(!rw)return'';return Object.keys(rw).filter(k=>rw[k]&&REF_EMO[k]).map(k=>fmt(rw[k])+REF_EMO[k]).join(' ');}
+function refLink(code){return location.origin+location.pathname+'?ref='+code;}
+function refShareText(code,vi){return vi?`🛢️ Mình đang quẩy Wasteland Wackos — auto-battler hero hậu tận thế, web3 testnet. Vào bằng link của mình, cả hai nhận quà khởi đầu! Mã: ${code}`:`🛢️ I'm playing Wasteland Wackos — a post-apocalypse hero auto-battler on web3 testnet. Join with my link and we BOTH get a starter bonus! Code: ${code}`;}
+async function shareRef(){
+  if(!REF_STATE||!REF_STATE.code)return;const vi=WLANG==='vi',link=refLink(REF_STATE.code),data={title:'Wasteland Wackos',text:refShareText(REF_STATE.code,vi),url:link};
+  try{if(navigator.share&&(!navigator.canShare||navigator.canShare(data))){await navigator.share(data);return;}}catch(e){return;}
+  copyRefLink();
+}
+function fallbackCopy(t,vi){try{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast(vi?'📋 Đã copy!':'📋 Copied!');}catch(e){toast((vi?'Copy: ':'Copy: ')+t);}}
+function copyRefLink(){if(!REF_STATE||!REF_STATE.code)return;const vi=WLANG==='vi',link=refLink(REF_STATE.code);try{navigator.clipboard.writeText(link).then(()=>toast(vi?'📋 Đã copy link mời — dán gửi bạn bè!':'📋 Invite link copied — paste it to a friend!'),()=>fallbackCopy(link,vi));}catch(e){fallbackCopy(link,vi);}}
+async function openRefPanel(){
+  const vi=WLANG==='vi';
+  if(!S.net||!S.net.id){openNetJoin();return toast(vi?'Đăng ký tên online trước để có mã mời nhé!':'Register an online name first to get your invite code!');}
+  $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button><h3>🎁 ${vi?'RỦ BẠN — Đội Tuyển Mộ':'INVITE — Recruit Squad'}</h3><div id="ref-body"><p class="sub">📡 ${vi?'Đang tải…':'Loading…'}</p></div>`;
+  openModal('hd-bg');await loadRefState();
+}
+async function loadRefState(){
+  let r;try{r=await netApi('/gs/ref-state',{id:S.net.id,secret:S.net.secret});}catch(e){r=null;}
+  if(!r||!r.ok){const el=$('ref-body');if(el)el.innerHTML='<p class="sub">📡 '+(WLANG==='vi'?'Mất sóng — thử lại sau.':'Connection lost — try again.')+'</p>';return;}
+  REF_STATE=r;renderRefPanel();
+}
+function renderRefPanel(){
+  const el=$('ref-body');if(!el||!REF_STATE)return;const vi=WLANG==='vi',r=REF_STATE,code=r.code,link=refLink(code);
+  const qual=r.qualified||0,referred=r.referred||0,claimQ=(r.claimable&&r.claimable.qualified)||0,claimM=(r.claimable&&r.claimable.milestones)||[];
+  const canClaim=claimQ>0||claimM.length>0;
+  const tiers=[3,10,25],nextTier=tiers.find(t=>qual<t)||25,prevTier=[...tiers].reverse().find(t=>qual>=t)||0;
+  const barPct=nextTier>prevTier?Math.min(100,Math.round((qual-prevTier)/(nextTier-prevTier)*100)):100,remain=Math.max(0,nextTier-qual);
+  const miles=(r.milestones||[]).map(m=>{const done=m.claimed,ready=m.reached&&!m.claimed;const col=done?'var(--muted)':ready?'var(--green)':'var(--line)';const st=done?(vi?'✅ đã nhận':'✅ done'):ready?(vi?'🎁 sẵn sàng':'🎁 ready'):(vi?`cần ${m.at}`:`need ${m.at}`);return `<div style="display:flex;gap:6px;align-items:center;margin:3px 0;padding:5px 7px;border:1px solid ${col};border-radius:8px;font-size:11px"><b style="color:var(--yellow);min-width:20px">${m.at}</b><b style="flex:1;min-width:60px">${m.title}</b><span style="color:var(--muted);font-size:10px">${fmtRw(m.rw)}</span><span style="white-space:nowrap;font-weight:900">${st}</span></div>`;}).join('');
+  const bound=r.refBy;
+  el.innerHTML=`
+    <p class="sub" style="margin:2px 0 8px">${vi?'Mời bạn bè — cả hai nhận quà <b>tài nguyên</b> (không phải $WACKO). Bạn được thưởng khi người được mời <b>chơi thật</b>.':'Invite friends — you both get <b>resource</b> gifts (not $WACKO). You earn once your invite <b>actually plays</b>.'}</p>
+    <div class="panel" style="border-color:var(--cyan);text-align:center;margin:6px 0">
+      <div style="font-size:11px;color:var(--muted)">${vi?'MÃ MỜI CỦA BẠN':'YOUR INVITE CODE'}</div>
+      <div style="font-size:28px;font-weight:900;letter-spacing:3px;color:var(--cyan);font-family:monospace;margin:2px 0">${code}</div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <button class="btn sm cy" style="flex:1" onclick="shareRef()">📤 ${vi?'Chia sẻ':'Share'}</button>
+        <button class="btn sm gh" style="flex:1" onclick="copyRefLink()">📋 ${vi?'Copy link':'Copy link'}</button></div>
+      <input readonly onclick="this.select()" value="${link}" style="width:100%;margin-top:6px;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--bg3);color:var(--muted);font-size:10px"></div>
+    <div style="display:flex;gap:6px;margin:8px 0;text-align:center">
+      <div class="panel" style="flex:1;margin:0"><div style="font-size:20px;font-weight:900">${referred}</div><div style="font-size:10px;color:var(--muted)">👥 ${vi?'Đã mời':'Invited'}</div></div>
+      <div class="panel" style="flex:1;margin:0;border-color:var(--green)"><div style="font-size:20px;font-weight:900;color:var(--green)">${qual}</div><div style="font-size:10px;color:var(--muted)">✅ ${vi?'Đủ ĐK':'Qualified'}</div></div>
+      <div class="panel" style="flex:1;margin:0;border-color:${canClaim?'var(--yellow)':'var(--line)'}"><div style="font-size:20px;font-weight:900;color:${canClaim?'var(--yellow)':'var(--text)'}">${claimQ+claimM.length}</div><div style="font-size:10px;color:var(--muted)">🎒 ${vi?'Quà chờ':'To claim'}</div></div></div>
+    ${canClaim?`<button class="btn or" style="width:100%;margin:2px 0 8px" onclick="refClaim()">🎁 ${vi?'NHẬN QUÀ REFERRAL':'CLAIM REWARDS'}</button>`:''}
+    <div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)"><span>${vi?'Tiến trình mốc':'Milestone'}</span><span>${remain>0?(vi?`còn ${remain} người → mốc ${nextTier}`:`${remain} more → tier ${nextTier}`):(vi?'mốc cao nhất':'max tier')}</span></div>
+      <div style="height:8px;background:var(--bg3);border-radius:99px;overflow:hidden;margin-top:3px"><div style="height:100%;width:${barPct}%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div></div></div>
+    ${miles}
+    <p style="font-size:10px;color:var(--muted);margin:8px 0">${vi?'ℹ️ "Đủ điều kiện" = bạn của bạn đạt <b>Cấp 5 + hạ ≥3 node + chơi ≥2 ngày</b> (chống tài khoản ảo). Mỗi người: ':'ℹ️ "Qualified" = friend reaches <b>Lv5 + 3 nodes + 2 days</b> (anti-bot). Each: '}<b>${fmtRw(r.perQ)}</b>.</p>
+    ${bound?`<div class="panel" style="margin:6px 0;font-size:12px;color:var(--muted)">🔒 ${vi?'Bạn được':'Invited by'} <b style="color:var(--text)">${esc(bound.name)}</b>${vi?' mời':''}</div>`
+      :`<div class="panel" style="margin:6px 0;border-color:var(--purple)"><div style="font-size:11.5px;margin-bottom:4px">🎁 ${vi?'Có mã mời của bạn bè?':'Got a friend\'s code?'}</div>
+        <div style="display:flex;gap:6px"><input id="ref-bindcode" maxlength="12" placeholder="${vi?'Dán mã 6 ký tự':'Paste 6-char code'}" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg3);color:var(--text);text-transform:uppercase;font-family:monospace"><button class="btn sm cy" onclick="refBind(true)">${vi?'Nhập':'Apply'}</button></div></div>`}
+    <button class="btn gh" style="width:100%;margin-top:6px" onclick="openRefBoard()">🏆 ${vi?'BXH Tuyển Mộ':'Recruiter Board'}</button>`;
+}
+async function refBind(fromPanel){
+  const vi=WLANG==='vi',inp=$(fromPanel?'ref-bindcode':'net-refcode'),code=(inp&&inp.value||'').trim().toUpperCase();
+  if(code.length<4)return toast(vi?'Nhập mã 6 ký tự nhé.':'Enter the 6-char code.');
+  if(!S.net||!S.net.id)return toast(vi?'Đăng ký tên online trước.':'Register online first.');
+  if(refBusy)return;refBusy=true;
+  let r;try{r=await netApi('/gs/ref-bind',{id:S.net.id,secret:S.net.secret,code});}catch(e){r=null;}
+  refBusy=false;
+  if(!r||r.err){const m={already_bound:vi?'🔒 Bạn đã nhập mã mời rồi, không đổi được.':'🔒 You already used an invite code.',self:vi?'😅 Đây là mã của chính bạn — rủ người KHÁC mới được quà!':'😅 That\'s your OWN code — invite someone else!',no_code:vi?'🤔 Mã không tồn tại — kiểm tra lại nhé.':'🤔 That code doesn\'t exist.',too_late:vi?'⏰ Tài khoản đã chơi lâu rồi — mã mời chỉ dùng lúc mới tạo.':'⏰ Invite codes only work on new accounts.',bad_code:vi?'Mã không hợp lệ.':'Invalid code.'}[r&&r.err]||(vi?'📡 Lỗi — thử lại.':'📡 Error — retry.');toast(m);return;}
+  const w=r.welcome||{};
+  toast((vi?'🎁 Đã dùng mã của ':'🎁 Code from ')+(r.by||'?')+'! '+(vi?'Quà chào mừng: ':'Welcome: ')+fmtRw(w)+(vi?'. Chơi tới Chương 3 để bạn ấy cũng được thưởng!':'. Reach Chapter 3 so they get rewarded too!'));
+  localStorage.removeItem('wk_pending_ref');
+  if(r.gs&&typeof applyServerState==='function'){applyServerState(r.gs);srvRerender();}
+  await loadRefState();
+}
+async function refClaim(){
+  if(refBusy)return;refBusy=true;const vi=WLANG==='vi';
+  let r;try{r=await netApi('/gs/ref-claim',{id:S.net.id,secret:S.net.secret});}catch(e){r=null;}
+  refBusy=false;
+  if(!r||!r.ok){toast(vi?'📡 Lỗi nhận quà — thử lại.':'📡 Claim failed — retry.');return;}
+  if(r.granted&&Object.keys(r.granted).length){
+    toast((vi?'🎁 Thưởng referral: ':'🎁 Referral reward: ')+fmtRw(r.granted)+(r.titles&&r.titles.length?(vi?' · Danh hiệu: ':' · Title: ')+r.titles.join(', '):''));
+    if(r.gs&&typeof applyServerState==='function'){applyServerState(r.gs);srvRerender();}
+  }else toast(vi?'Chưa có quà để nhận.':'Nothing to claim yet.');
+  await loadRefState();
+}
+async function openRefBoard(){
+  const vi=WLANG==='vi';
+  $('hd-modal').innerHTML=`<button class="close" onclick="openRefPanel()">←</button><h3>🏆 ${vi?'BXH TUYỂN MỘ':'RECRUITER BOARD'}</h3><div id="refboard-body"><p class="sub">📡 ${vi?'Đang tải…':'Loading…'}</p></div>`;
+  openModal('hd-bg');
+  let r;try{r=await netApi('/gs/ref-board',{id:S.net.id,secret:S.net.secret});}catch(e){r=null;}
+  const el=$('refboard-body');if(!el)return;
+  if(!r||!r.ok){el.innerHTML='<p class="sub">📡 '+(vi?'Mất sóng.':'Lost connection.')+'</p>';return;}
+  const medal=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+  let html=(r.top&&r.top.length)?r.top.map((row,i)=>`<div class="panel" style="margin:5px 0;display:flex;gap:8px;align-items:center${r.me&&r.me.rank===row.rank?';border-color:var(--cyan)':''}"><b style="min-width:34px">${medal(i)}</b><b style="flex:1">${esc(row.name)}</b><span style="color:var(--green);font-weight:900">✅ ${row.qualified}</span><span style="color:var(--muted);font-size:11px">👥 ${row.referred}</span></div>`).join(''):'<p class="sub">'+(vi?'Chưa có ai tuyển mộ — bạn là người đầu tiên!':'No recruiters yet — be the first!')+'</p>';
+  if(r.me&&r.me.rank>50)html+=`<div class="panel" style="margin:8px 0;border-color:var(--cyan)"><b>#${r.me.rank}</b> ${vi?'(bạn)':'(you)'} · ✅ ${r.me.qualified} · 👥 ${r.me.referred}</div>`;
+  el.innerHTML=html;
+}
 let ethersLib=null,w3Busy=false,W3_STATUS=null;
 const w3Short=a=>a?a.slice(0,6)+'…'+a.slice(-4):'';
 const w3TxLink=h=>`<a href="${W3_EXPLORER}/tx/${h}" target="_blank" style="color:var(--cyan)">${h.slice(0,10)}…</a>`;
@@ -8625,7 +8738,7 @@ function netPvpReport(){ /* no-op: PvP đã chuyển sang /gs/pvp server-quyết
 async function openNetBoard(){
   $('hd-modal').innerHTML=`<button class="close" onclick="closeModal('hd-bg')">✕</button>
     <h3>🌍 BXH ONLINE — TOÀN CẦU</h3>
-    <p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 GIẢI 100$ — chốt 23:59 ngày 26/06: 20$ TOP 1 + bốc thăm 80$. Leo đi chứ còn chờ gì!</p>
+    ${PRIZE_ACTIVE?'<p style="margin:6px 0 0;font-size:12.5px;color:var(--yellow)">🎁 GIẢI 100$ — chốt 23:59 ngày 26/06: 20$ TOP 1 + bốc thăm 80$. Leo đi chứ còn chờ gì!</p>':''}
     <p class="sub" id="net-bd">📡 Đang tải bảng xếp hạng…</p><div id="net-rows"></div>
     <button class="btn" style="width:100%;margin-top:10px" onclick="openArena()">← Về Arena</button>`;
   openModal('hd-bg');
@@ -8821,6 +8934,7 @@ if(LOADED){ // người chơi cũ: bỏ qua intro
   setTimeout(()=>toast('💾 Đã tải tiến trình — mừng trở lại vùng đất hoang!'),300);
 }
 // 🌐 SERVER MODE giờ là MẶC ĐỊNH cho tài khoản online (anti-cheat). Kill-switch: localStorage.wk_srv_off=1 để về casual.
+if(PRIZE_ACTIVE){try{document.querySelectorAll('.prizeonly').forEach(e=>{e.style.display='';});}catch(e){}} // hiện lại banner giải khi bật PRIZE_ACTIVE
 if(S.net&&S.net.id&&(typeof localStorage==='undefined'||!localStorage.getItem('wk_srv_off')))setTimeout(()=>srvBoot(),700);
 // ⚡ idle $WACKO: cộng theo THỜI GIAN THỰC đã trôi (không phụ thuộc số lần interval chạy).
 // Vì tab nền bị browser throttle/đóng băng, cộng "5s mỗi lần fire" sẽ thiếu rất nhiều khi quay lại.
