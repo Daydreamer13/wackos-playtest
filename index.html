@@ -8378,13 +8378,21 @@ function srvWrap(){ // thay hàm action global -> route qua server (onclick UI t
   window.startBattle=node=>srvStartBattle(node);
   window.saveGame=function(){try{localStorage.setItem('wk_net',JSON.stringify(S.net||null))}catch(e){}}; // không lưu state game (server giữ)
 }
-async function srvBoot(){
-  if(!S.net||!S.net.id)return false;
+let srvBooted=false; // đã vào server-mode chưa → tránh toast "SERVER MODE on" lặp + tránh boot chồng
+async function srvBoot(_try){
+  if(!S.net||!S.net.id||SRVMODE)return false;
+  _try=_try||0;
   const dump={};SRV_KEYS.forEach(k=>{if(k in S)dump[k]=S[k]});
   let r;try{r=await netApi('/gs/import',{id:S.net.id,secret:S.net.secret,state:dump})}catch(e){r=null}
-  if(!r||!r.ok){toast(WLANG==='vi'?'🌐 Server chưa sẵn sàng — chạy bản local.':'Server not ready.');return false}
+  if(!r||!r.ok){
+    // KHÔNG bỏ cuộc ngay (server vừa restart / mạng chập chờn) → thử lại tăng dần, rồi tự reconnect nền
+    if(_try<4){await new Promise(res=>setTimeout(res,1500*(_try+1)));return srvBoot(_try+1);}
+    if(!srvBooted)toast(WLANG==='vi'?'⏳ Đang kết nối server… (chơi tạm bản local, sẽ tự nối lại)':'⏳ Connecting to server… (playing local for now, will retry)');
+    setTimeout(()=>srvBoot(0),15000); // tự thử lại sau 15s — không phiền người chơi
+    return false;
+  }
   applyServerState(r.gs);SRVMODE=true;srvWrap();srvRerender();
-  toast(WLANG==='vi'?'🌐 SERVER MODE: cả game chạy trên server.':'🌐 SERVER MODE on.');
+  if(!srvBooted){toast(WLANG==='vi'?'🌐 SERVER MODE: cả game chạy trên server.':'🌐 Server connected.');srvBooted=true;}
   return true;
 }
 function netSync(now){ // đẩy hồ sơ (sức mạnh + đội thủ) lên server — debounce, lỗi mạng thì im lặng
