@@ -4062,15 +4062,18 @@ function renderPickGrid(){
     g.innerHTML=`<div class="citem"><h4>${vi?'Chưa có hero nào khác':'No other heroes'}</h4><p>${vi?'Săn 🧩 mảnh từ Mystery Cans hoặc 💞 Breed thêm!':'Hunt 🧩 pieces or 💞 Breed more!'}</p></div>`;return}
   const list=heroChips(pickF,'pk-fcls','pk-frar','setPickF',base);
   if(!list.length){g.innerHTML=`<div style="padding:20px 10px;text-align:center;color:var(--muted);font-weight:700">${vi?'Không có hero khớp bộ lọc — đổi lại nhé':'No heroes match — adjust the filters'}</div>`;return}
+  const teamHids=new Set(teamIds().filter(u=>u!==cur).map(u=>{const ii=instById(u);return ii&&ii.heroId})); // heroId đã có trong đội (trừ ô đang sửa)
   g.innerHTML=`<div class="hgrid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">${
-    list.map(inst=>{const it=teamIds().includes(inst.uid);
+    list.map(inst=>{const it=teamIds().includes(inst.uid);const dupF=!it&&teamHids.has(inst.heroId); // bản KHÁC cùng hero đang trong đội
+      const lbl=it?(vi?'🔄 Đổi vào ô này':'🔄 Swap here'):dupF?(vi?'🔄 Thay bản đang dùng':'🔄 Replace fielded'):(vi?'➕ Vào đội':'➕ Add');
       return `<div class="pickcell">${instCard(inst,`openHero(${inst.uid})`)}
-        <button class="btn sm ${it?'pu':'cy'} pickjoin" onclick="event.stopPropagation();pickHero(${inst.uid})">${it?(vi?'🔄 Đổi vào ô này':'🔄 Swap here'):(vi?'➕ Vào đội':'➕ Add')}</button></div>`}).join('')}</div>`;
+        <button class="btn sm ${it||dupF?'pu':'cy'} pickjoin" onclick="event.stopPropagation();pickHero(${inst.uid})">${lbl}</button></div>`}).join('')}</div>`;
 }
 function pickHero(uid){
   if(!pickSlot||!instById(uid))return;
   const {row,idx}=pickSlot;
   const cur=S.team[row][idx];
+  const hid=instById(uid).heroId;
   // hero đang ở ô khác → hoán đổi: ô cũ của nó nhận hero hiện tại (hoặc trống)
   let swapped=false;
   ['front','back'].forEach(r=>S.team[r]=S.team[r].map((x,i2)=>{
@@ -4078,9 +4081,17 @@ function pickHero(uid){
     return x;
   }));
   S.team[row][idx]=uid;
+  // ⚠️ MỖI HERO CHỈ 1 BẢN TRONG ĐỘI: dọn mọi ô KHÁC đang giữ cùng heroId (kể cả bản vừa bị swap về)
+  let dupRemoved=false;
+  ['front','back'].forEach(r=>S.team[r]=S.team[r].map((x,i2)=>{
+    if((r===row&&i2===idx)||x==null)return x;
+    const xi=instById(x);
+    if(xi&&xi.heroId===hid){dupRemoved=true;return null}
+    return x;
+  }));
   pickSlot=null;closeModal('hd-bg');
-  const h=HEROES[instById(uid).heroId];
-  toast(swapped?`🔄 ${h.name} đổi chỗ xong — đội hình mới sẵn sàng!`:`✅ ${h.name} vào ${row==='front'?'tuyến trước':'tuyến sau'}! ${h.quote}`);
+  const h=HEROES[hid];
+  toast(swapped?`🔄 ${h.name} đổi chỗ xong — đội hình mới sẵn sàng!`:dupRemoved?`✅ ${h.name} vào đội — mỗi hero chỉ 1 bản nên bản cũ đã rời đội.`:`✅ ${h.name} vào ${row==='front'?'tuyến trước':'tuyến sau'}! ${h.quote}`);
   if(S.net)netSync(); // đổi đội hình → cập nhật đội thủ trên BXH (debounce)
   renderTeam();renderRes();
 }
@@ -4611,8 +4622,10 @@ function buildUnits(node){
   const tIds=teamIds();
   const hasWifi=tIds.some(uid=>instById(uid).heroId==='wifi');
   const units=[];
+  const seenHid=new Set(); // mỗi hero chỉ 1 bản trong đội — bỏ qua instance trùng heroId (an toàn cả với save/đội cũ)
   const placeHero=(uid,slot)=>{
-    const inst=instById(uid),h=HEROES[inst.heroId],st=heroStats(uid);
+    const inst=instById(uid);if(!inst||seenHid.has(inst.heroId))return;seenHid.add(inst.heroId);
+    const h=HEROES[inst.heroId],st=heroStats(uid);
     units.push({key:'h'+uid,name:h.name,art:inst.heroId,side:'pl',hero:h,
       hp:st.hp,maxhp:st.hp,atk:st.atk,def:st.def,
       spd:st.spd+(hasWifi?Math.round(st.spd*.1):0),
