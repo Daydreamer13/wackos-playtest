@@ -162,6 +162,9 @@ h2.sec{font-size:22px;font-weight:900;margin:18px 2px 4px;letter-spacing:.3px}
 .trait{border-color:rgba(179,107,255,.5)}
 .trait h5{color:var(--purple)}
 .hd-actions{display:flex;gap:8px;margin-top:14px}
+body.act-busy{cursor:progress}
+body.act-busy .hd-actions button,body.act-busy .gp-eq,body.act-busy .pickjoin,body.act-busy .lvquick button{opacity:.5;pointer-events:none}
+body.act-busy::after{content:'⏳';position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:6px 16px;font-size:16px;z-index:9999;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.45)}
 .hd-actions .btn{flex:1;min-width:0;padding:9px 6px;font-size:13px;border-radius:12px;line-height:1.25;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 3px 0 rgba(0,0,0,.35)}
 .hd-actions .btn small{display:block;font-size:10.5px;font-weight:800;opacity:.85;margin-top:2px}
@@ -1021,6 +1024,7 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
         <div class="teambar" id="team-front"></div>
         <div class="poslabel">Tuyến sau (3) — DPS / Support / Controller núp đây</div>
         <div class="teambar" id="team-back"></div>
+        <button class="btn sm cy" style="width:100%;margin-top:8px" onclick="autoFillTeam()">⚡ Tự xếp đội mạnh nhất</button>
       </div>
       <div class="hqscene">
         <div class="hq-sign">📋 HỒ SƠ QUÂN ĐOÀN — <span id="hq-count">0</span></div>
@@ -3897,6 +3901,10 @@ function openHero(uid){
     <div class="skillbox"><h5>💥 ${h.skill.name} — Lv ${inst.skill} (x${s.skillMult.toFixed(2)})</h5><p>${h.skill.desc}</p></div>
     <div class="skillbox"><h5 style="color:var(--green)">🔁 Nội tại</h5><p>${h.passive}</p></div>
     <div class="skillbox trait"><h5>🤪 Funny Trait</h5><p>${h.trait}</p></div>
+    <div class="lvquick" style="display:flex;gap:6px;margin-top:8px">
+      ${inst.lvl<LVL_CAP()?`<button class="btn sm gh" style="flex:1" onclick="upgradeHeroN(${uid},5)">⬆️ Lv ×5</button><button class="btn sm gh" style="flex:1" onclick="upgradeHeroN(${uid},null)">⬆️ Lv MAX</button>`:''}
+      <button class="btn sm gh" style="flex:1" onclick="upgradeSkillN(${uid},5)">💥 Skill ×5</button>
+    </div>
     <div class="hd-actions">
       <button class="btn" onclick="upgradeHero(${uid})" ${inst.lvl>=LVL_CAP()?'disabled':''}>${inst.lvl>=HERO_MAX?`🏆 Lv ${inst.lvl} MAX<small>level tối đa</small>`:`⬆️ Lv ${inst.lvl}→${inst.lvl+1}<small>${inst.lvl>=LVL_CAP()?`🔒 trần Lv ${LVL_CAP()}`:`<span style="${S.junk<upCost(uid)?'color:#7a1f1f':''}">${fmt(upCost(uid))} 🪙</span>`}</small>`}</button>
       <button class="btn cy" onclick="upgradeSkill(${uid})">💥 Skill ${inst.skill}→${inst.skill+1}<small><span style="${S.juice<skillCost(uid)?'color:#7a1f1f':''}">${skillCost(uid)} 🔋</span></small></button>
@@ -3919,13 +3927,14 @@ function pdPick(uid,slot){
   const cur=gearItem(inst,slot);
   const opts=invOfSlot(slot,true); // chỉ đồ CHƯA lắp ở đâu
   const vi=WLANG==='vi';
-  const card=g=>{const it=ITEMS[g.id],fm=1+(g.plus||0)*FORGE_STEP;
-    const sk=ITEM_SET_OF[g.id];
-    return `<div class="gpick">
+  const ranked=opts.map(g=>({g,d:gearDelta(uid,g.uid)})).sort((a,b)=>(b.d?b.d.total:0)-(a.d?a.d.total:0)); // sắp theo lợi ích cho HERO NÀY
+  const card=({g,d},k)=>{const it=ITEMS[g.id],fm=1+(g.plus||0)*FORGE_STEP;
+    const sk=ITEM_SET_OF[g.id],best=k===0&&d&&d.total>0;
+    return `<div class="gpick" style="${best?'border-color:var(--green)':''}">
       <span class="gp-ico">${itemIcon(g.id,38)}</span>
       <div class="gp-mid">
-        <div class="gp-nm"><b>${it.name}${g.plus?` <span style="color:var(--orange)">+${g.plus}</span>`:''}</b> <span class="rar-${it.rarity}">●</span>${sk?` <span class="gp-set">${ITEM_SETS[sk].name}</span>`:''}</div>
-        <div class="gp-b">📈 ${bonusTxt(it.bonus,fm)}${(g.subs&&g.subs.length)?'<br>✨ '+g.subs.map(subTxt).join(' · '):''}${g.affix?'<br>🎁 '+affixTxt(g.affix):''}</div>
+        <div class="gp-nm"><b>${it.name}${g.plus?` <span style="color:var(--orange)">+${g.plus}</span>`:''}</b> <span class="rar-${it.rarity}">●</span>${sk?` <span class="gp-set">${ITEM_SETS[sk].name}</span>`:''}${best?` <span class="gp-set" style="background:var(--green)">${vi?'Tốt nhất':'Best'}</span>`:''}</div>
+        <div class="gp-b">${deltaTxt(d)} <span style="color:var(--muted)">· ${bonusTxt(it.bonus,fm)}</span>${(g.subs&&g.subs.length)?'<br>✨ '+g.subs.map(subTxt).join(' · '):''}${g.affix?'<br>🎁 '+affixTxt(g.affix):''}</div>
       </div>
       <button class="btn sm cy gp-eq" onclick="equipItem(${uid},${g.uid})">⬇️ ${vi?'Lắp':'Equip'}</button>
     </div>`};
@@ -3934,7 +3943,7 @@ function pdPick(uid,slot){
       <button class="close" style="float:right;width:24px;height:24px;font-size:11px" onclick="pdSlot=null;$('pd-chooser').innerHTML=''">✕</button></h5>
     <p style="font-size:11px;color:var(--muted);margin:2px 0 0">${vi?'Xem chỉ số rồi bấm ⬇️ Lắp — không lắp nhầm nữa.':'Check the stats, then tap ⬇️ Equip.'}</p>
     ${cur?`<button class="btn sm gh" style="margin:8px 0 2px" onclick="unequipItem(${uid},'${slot}')">✕ ${vi?'Tháo món đang lắp':'Unequip current'}</button>`:''}
-    ${opts.length?opts.map(card).join(''):`<p style="font-size:12px;color:var(--muted);margin-top:8px">${vi?'Không có đồ rảnh — chế ở 🩹 Xưởng.':'No spare gear — craft at the 🩹 Workshop.'}</p>`}
+    ${ranked.length?ranked.map(card).join(''):`<p style="font-size:12px;color:var(--muted);margin-top:8px">${vi?'Không có đồ rảnh — chế ở 🩹 Xưởng.':'No spare gear — craft at the 🩹 Workshop.'}</p>`}
   </div>`;
 }
 function heroBreed(uid){
@@ -3985,7 +3994,9 @@ function upgradeSkill(uid){
 function equipItem(uid,itemUid){
   const inst=instById(uid),g=itemById(itemUid);if(!g)return;
   const s=ITEMS[g.id].slot;
-  const done=()=>{toast(`🎒 ${HEROES[inst.heroId].name} #${uid} đã lắp ${ITEMS[g.id].e} ${ITEMS[g.id].name}${g.plus?' +'+g.plus:''}!`);openHero(uid)};
+  const prev=equippedBy(itemUid); // ai đang đeo món này → báo khi bị gỡ (hết "sao tank tự nhiên yếu đi?")
+  const lost=(prev&&prev.uid!==uid)?` <span style="color:var(--muted)">— ${WLANG==='vi'?'gỡ khỏi':'taken from'} ${HEROES[prev.heroId].name} #${prev.uid}</span>`:'';
+  const done=()=>{toast(`🎒 ${HEROES[inst.heroId].name} #${uid} ${WLANG==='vi'?'đã lắp':'equipped'} ${ITEMS[g.id].e} ${ITEMS[g.id].name}${g.plus?' +'+g.plus:''}!${lost}`);openHero(uid)};
   if(SRVMODE){act('equip',uid,itemUid).then(r=>{if(r&&r.ok)done()});return}
   if(!inst.gear)inst.gear={weapon:null,armor:null,hat:null};
   S.roster.forEach(i=>SLOTS.forEach(sl=>{if(i.gear&&i.gear[sl]===itemUid)i.gear[sl]=null})); // 1 món chỉ 1 hero
@@ -4001,23 +4012,7 @@ function unequipItem(uid,s){
   if(S.net)netSync();
   openHero(uid);
 }
-function toggleTeam(uid){
-  const inst=instById(uid);
-  const inTeam=teamIds().includes(uid);
-  if(inTeam){
-    S.team.front=S.team.front.map(x=>x===uid?null:x);
-    S.team.back=S.team.back.map(x=>x===uid?null:x);
-    toast(`${HEROES[inst.heroId].name} #${uid} về nhà nghỉ ngơi.`);
-  }else{
-    const h=HEROES[inst.heroId];
-    const tryRows=h.cls==='tank'?['front','back']:['back','front'];
-    let placed=false;
-    for(const r of tryRows){const i=S.team[r].indexOf(null);if(i>-1){S.team[r][i]=uid;placed=true;break}}
-    if(!placed)return toast('Đội hình đầy (5/5). Bỏ bớt một hero ra trước.');
-    toast(`${h.name} #${uid} đã vào đội! ${h.quote}`);
-  }
-  closeModal('hd-bg');renderHeroes();renderTeam();
-}
+/* toggleTeam đã gỡ (16/06): code chết + không enforce luật "1 hero/đội" — mọi thao tác đội đi qua pickHero/autoFillTeam. */
 
 /* ================= TEAM + MAP ================= */
 function renderTeam(){
@@ -4104,6 +4099,70 @@ function clearSlot(){
   pickSlot=null;closeModal('hd-bg');
   if(S.net)netSync(); // đổi đội hình → cập nhật đội thủ
   renderTeam();renderRes();
+}
+/* ===== UX cải tiến (Lô 1, 16/06): ⚡ tự xếp đội · 🎒 lắp đồ từ kho · 📊 delta khi chọn đồ · ⬆️ nâng x5/Max ===== */
+function instPower(uid){const s=heroStats(uid);return s.atk+s.def+s.hp/8+s.spd;} // power 1 instance (như teamPowerScore)
+function commitTeamChange(){renderTeam();if(typeof renderHeroes==='function')renderHeroes();if(S.net)netSync();
+  if(SRVMODE)act('team',S.team.front,S.team.back);} // server tự de-dup + áp state lại trong act()
+function autoFillTeam(){ // top-5 hero KHÁC heroId theo power; tank ra tuyến trước
+  if(!S.roster.length)return toast(WLANG==='vi'?'Chưa có hero nào để xếp.':'No heroes yet.');
+  const seen=new Set(),pick=[];
+  [...S.roster].sort((a,b)=>instPower(b.uid)-instPower(a.uid)).forEach(i=>{
+    if(pick.length>=5||seen.has(i.heroId))return;seen.add(i.heroId);pick.push(i);});
+  const front=[null,null],back=[null,null,null];let fi=0,bi=0;
+  pick.filter(i=>HEROES[i.heroId].cls==='tank').forEach(i=>{if(fi<2)front[fi++]=i.uid;else if(bi<3)back[bi++]=i.uid;});
+  pick.filter(i=>HEROES[i.heroId].cls!=='tank').forEach(i=>{if(bi<3)back[bi++]=i.uid;else if(fi<2)front[fi++]=i.uid;});
+  S.team={front,back};
+  toast(WLANG==='vi'?`⚡ Đã xếp đội mạnh nhất (${pick.length} hero)!`:`⚡ Best team set (${pick.length} heroes)!`);
+  commitTeamChange();
+}
+function gearDelta(uid,gearUid){ // chênh lệch chỉ số nếu hero uid lắp gearUid (so đồ đang đeo) — KHÔNG mutate thật
+  const inst=instById(uid),g=itemById(gearUid);if(!inst||!g)return null;
+  const slot=ITEMS[g.id].slot;if(!inst.gear)inst.gear={weapon:null,armor:null,hat:null};
+  const before=heroStats(uid),keep=inst.gear[slot];
+  inst.gear[slot]=gearUid;const after=heroStats(uid);inst.gear[slot]=keep;
+  return{hp:after.hp-before.hp,atk:after.atk-before.atk,def:after.def-before.def,spd:Math.round(after.spd-before.spd),
+    total:(after.atk-before.atk)+(after.def-before.def)+(after.hp-before.hp)/8+(after.spd-before.spd)};
+}
+function deltaTxt(d){if(!d)return'';const p=(e,v)=>v?`<span style="color:${v>0?'var(--green)':'var(--red)'}">${e}${v>0?'+':''}${fmt(v)}</span>`:'';
+  return[p('❤️',d.hp),p('⚔️',d.atk),p('🛡️',d.def),p('⚡',d.spd)].filter(Boolean).join(' ')||'<span style="color:var(--muted)">±0</span>';}
+function equipChooseHero(gearUid){ // 🎒 lắp 1 món cho hero (mở từ trang Vũ khí / instanceSheet) — kèm delta, sắp tốt-nhất lên đầu
+  const g=itemById(gearUid);if(!g)return;const it=ITEMS[g.id];const vi=WLANG==='vi';
+  const rows=S.roster.map(i=>({i,d:gearDelta(i.uid,gearUid),eq:!!(i.gear&&i.gear[it.slot]===gearUid)}))
+    .sort((a,b)=>(b.eq?1e9:(b.d?b.d.total:0))-(a.eq?1e9:(a.d?a.d.total:0)));
+  $('hd-modal').innerHTML=`<button class="close" onclick="instanceSheet(${gearUid})">←</button>
+    <h3>🎒 ${vi?'Lắp':'Equip'} ${it.e} ${it.name}${g.plus?' +'+g.plus:''}</h3>
+    <p class="sub" style="margin:2px 0 8px">${vi?'Chọn hero — số xanh/đỏ là thay đổi chỉ số của hero đó.':'Pick a hero — green/red = that hero\'s stat change.'}</p>
+    <div style="max-height:62vh;overflow:auto">${rows.map(({i,d,eq},k)=>{const best=k===0&&!eq;
+      return `<div class="gpick" style="${best?'border-color:var(--green)':''}">
+        <span class="gp-ico">${sprite(i.heroId,38)}</span>
+        <div class="gp-mid"><div class="gp-nm"><b>${HEROES[i.heroId].name}</b> <small style="color:var(--muted)">#${i.uid} ${RNAME[i.rarity]} Lv${i.lvl}</small>${best?` <span class="gp-set" style="background:var(--green)">${vi?'Tốt nhất':'Best'}</span>`:''}</div>
+          <div class="gp-b">${eq?(vi?'🔗 đang lắp ở đây':'🔗 equipped here'):deltaTxt(d)}</div></div>
+        ${eq?`<button class="btn sm gh gp-eq" disabled>✓</button>`:`<button class="btn sm cy gp-eq" onclick="equipItem(${i.uid},${gearUid})">⬇️ ${vi?'Lắp':'Equip'}</button>`}
+      </div>`;}).join('')}</div>`;
+  openModal('hd-bg');
+}
+function upgradeHeroN(uid,n){ // n=null => Max. SRVMODE: 1 recipe; local: vòng lặp
+  const inst=instById(uid);if(!inst)return;
+  if(inst.lvl>=LVL_CAP())return toast(inst.lvl>=HERO_MAX?`🏆 Lv ${HERO_MAX} MAX! Nâng RARITY ở 🧬 Lab.`:`🔒 Trần Lv ${LVL_CAP()} (cấp tài khoản +4). Đánh thêm để lên cấp đã!`);
+  if(S.junk<upCost(uid))return toast('🪙 Không đủ Junk Coins. Đi nhặt phế liệu thêm đi!');
+  const b4=heroStats(uid),lv0=inst.lvl;
+  const done=()=>{const af=heroStats(uid),lv=instById(uid).lvl,gain=lv-lv0;SFX.coin();tutAdvance(3);
+    toast(`⬆️ +${gain} cấp → <b>Lv ${lv}</b>! ❤️+${fmt(af.hp-b4.hp)} ⚔️+${fmt(af.atk-b4.atk)} 🛡️+${fmt(af.def-b4.def)}`);openHero(uid)};
+  if(SRVMODE){act('upgradeN',uid,n).then(r=>{if(r&&r.ok)done()});return}
+  let did=0;const max=n==null?99:n;
+  while(did<max&&inst.lvl<LVL_CAP()&&S.junk>=upCost(uid)){S.junk-=upCost(uid);inst.lvl++;S.daily.upg++;did++;}
+  if(S.net)netSync();renderRes();refreshActiveView();done();
+}
+function upgradeSkillN(uid,n){
+  const inst=instById(uid);if(!inst)return;
+  if(S.juice<skillCost(uid))return toast('🔋 Không đủ Battery Juice. Đi đánh Battery Slum nhé!');
+  const sk0=inst.skill;
+  const done=()=>{SFX.coin();toast(`💥 Skill ${HEROES[instById(uid).heroId].name} #${uid}: Lv ${sk0}→<b>${instById(uid).skill}</b>!`);openHero(uid)};
+  if(SRVMODE){act('upskillN',uid,n).then(r=>{if(r&&r.ok)done()});return}
+  let did=0;const max=n==null?99:n;
+  while(did<max&&S.juice>=skillCost(uid)){S.juice-=skillCost(uid);inst.skill++;S.daily.upg++;did++;}
+  if(S.net)netSync();renderRes();done();
 }
 function towerMul(f){return 0.85*Math.pow(1.085,f)} // tháp scale theo TẦNG, khử scale theo cấp
 function towerNode(){
@@ -6243,6 +6302,7 @@ function instanceSheet(uid){
       <p style="font-size:12px">Rèn lên <b>+${fl+1}</b> → hiệu lực <b>${bonusTxt(it.bonus,1+(fl+1)*FORGE_STEP)}</b></p>
       <button class="btn sm or" style="margin-top:6px" onclick="doForge(${uid})">⚒️ Rèn — 🪙 ${fmt(fc.junk)} + 🩹 ${fc.tape}</button>`}</div>
     <div class="hd-actions" style="position:static;background:none;padding:0;margin-top:12px">
+      <button class="btn sm cy" onclick="equipChooseHero(${uid})">🎒 ${WLANG==='vi'?'Lắp cho hero':'Equip on hero'}</button>
       ${g.minted?'<button class="btn gh" disabled>♻️ NFT — không rã được</button>'
         :!eqBy?`<button class="btn gh" onclick="salvageInstance(${uid})">♻️ Rã món này</button>`:'<button class="btn gh" disabled>🔗 Tháo ở hồ sơ hero để rã</button>'}
       ${g.minted
@@ -8215,9 +8275,13 @@ function srvRerender(){try{renderRes()}catch(e){}
   const R={'v-heroes':()=>{if(heroTab==='gear')renderHeroGear();else{renderHeroes();typeof renderTeam==='function'&&renderTeam()}},'v-battle':()=>renderMap(),'v-craft':()=>renderCraft(),'v-lab':()=>renderLab(),'v-loot':()=>typeof renderLoot==='function'&&renderLoot(),'v-missions':()=>typeof renderMissions==='function'&&renderMissions()};
   if(R[v])try{R[v]()}catch(e){}
 }
+let ACTBUSY=false;
 async function act(fn,...args){
   if(!S.net)return toast('🌐 Mất kết nối server.');
+  if(ACTBUSY)return null; // đang có 1 lệnh chạy → bỏ qua tap dồn (chống gửi trùng = nâng/tiêu 2 lần)
+  ACTBUSY=true;try{document.body.classList.add('act-busy')}catch(e){}
   let r;try{r=await netApi('/gs/act',{id:S.net.id,secret:S.net.secret,fn,args})}catch(e){r=null}
+  ACTBUSY=false;try{document.body.classList.remove('act-busy')}catch(e){}
   if(r&&r.ok){applyServerState(r.gs);srvRerender();return r}
   toast(srvErrMsg(r));return r;
 }
