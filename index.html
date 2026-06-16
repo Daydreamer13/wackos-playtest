@@ -3883,7 +3883,7 @@ function openHero(uid){
       :`<div class="pdslot empty" onclick="pdPick(${uid},'${sl}')"><span class="ghost">${pdMeta[sl].e}</span><span class="pd-tag">+</span></div>`};
   const canBreed=inst.breeds<BREED_MAX&&inst.lvl>=BREED_MIN_LVL;
   $('hd-modal').innerHTML=`
-    <button class="close" onclick="closeModal('hd-bg')">✕</button>
+    <button class="close" onclick="closeHeroSheet()">${pickSlot?'←':'✕'}</button>
     <div class="hd-top">
       <div class="pdoll">
         <div class="pdcol">${pdslot('weapon')}${pdslot('armor')}</div>
@@ -4197,6 +4197,10 @@ function advancePicker(){ // sau khi xếp 1 ô → nhảy sang ô TRỐNG kế 
   const next=order.find(([r,i])=>S.team[r][i]==null);
   if(next)openPicker(next[0],next[1],true);
   else{pickSlot=null;closeModal('hd-bg')}
+}
+function closeHeroSheet(){ // ✕ trang chỉ số: mở TỪ picker (pickSlot còn set) → quay lại picker chọn tiếp, KHÔNG đóng hẳn
+  if(pickSlot){const{row,idx}=pickSlot;openPicker(row,idx,true);}
+  else closeModal('hd-bg');
 }
 function dedupTeamInPlace(){const seen=new Set();['front','back'].forEach(r=>S.team[r]=S.team[r].map(u=>{if(u==null)return null;const i=instById(u);if(!i||seen.has(i.heroId))return null;seen.add(i.heroId);return u;}));}
 // 💾 Đội mẫu (loadout) — lưu localStorage, độc lập server (chỉ là danh sách uid tiện lợi)
