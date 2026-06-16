@@ -8387,8 +8387,14 @@ let srvBooted=false; // đã vào server-mode chưa → tránh toast "SERVER MOD
 async function srvBoot(_try){
   if(!S.net||!S.net.id||SRVMODE)return false;
   _try=_try||0;
-  const dump={};SRV_KEYS.forEach(k=>{if(k in S)dump[k]=S[k]});
-  let r;try{r=await netApi('/gs/import',{id:S.net.id,secret:S.net.secret,state:dump})}catch(e){r=null}
+  const acc={id:S.net.id,secret:S.net.secret};
+  // B1: hỏi /gs/state (body NHỎ) — đã import trước đó thì vào luôn, KHỎI gửi lại dump lớn (tránh lỗi 'big' khi state >16KB)
+  let st;try{st=await netApi('/gs/state',acc)}catch(e){st=null}
+  let r=st;
+  if(st&&st.ok&&!st.imported){ // CHƯA import lần nào → import 1 lần (gửi dump localStorage)
+    const dump={};SRV_KEYS.forEach(k=>{if(k in S)dump[k]=S[k]});
+    try{r=await netApi('/gs/import',Object.assign({state:dump},acc))}catch(e){r=null}
+  }
   if(!r||!r.ok){
     if(r&&r.err&&r.err!=='rate'){ // server TỪ CHỐI (auth/bad_state/full…) — không phải mạng, retry vô ích
       toast(WLANG==='vi'?('🌐 Server báo lỗi: '+r.err+' — thử tải lại trang.'):('Server error: '+r.err+' — try reloading.'));
