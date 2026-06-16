@@ -243,6 +243,7 @@ h2.sec{font-size:22px;font-weight:900;margin:18px 2px 4px;letter-spacing:.3px}
 .hpwrap .ghost{position:absolute;inset:0;background:#fff;opacity:.6;border-radius:99px;transition:width .7s ease .15s}
 .hpwrap .fill{position:absolute;inset:0;background:linear-gradient(90deg,var(--green),#a5ee5e);border-radius:99px;transition:width .18s}
 .hpwrap .fill.low{background:linear-gradient(90deg,#ff5d6c,#ff9f2e)}
+.hpwrap .shfill{position:absolute;top:0;bottom:0;background:linear-gradient(90deg,#3be8ff,#bdf3ff);border-radius:99px;transition:width .18s,left .18s;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);z-index:2}
 .enwrap{height:5px;border-radius:99px;background:rgba(0,0,0,.5);overflow:hidden;margin-top:2px}
 .enwrap i{display:block;height:100%;background:var(--cyan);transition:width .25s;border-radius:99px}
 .unit.dead .uspr{filter:grayscale(1) brightness(.6) drop-shadow(0 3px 2px rgba(0,0,0,.4))}
@@ -4746,7 +4747,7 @@ function setupArena(){
         <span class="inner" style="animation-delay:${(Math.random()*1.5).toFixed(2)}s">${ART[u.art]}</span>
         <span class="bubblezone"></span>
       </span>
-      <div class="hpwrap"><span class="ghost" style="width:100%"></span><span class="fill" style="width:100%"></span></div>
+      <div class="hpwrap"><span class="ghost" style="width:100%"></span><span class="fill" style="width:100%"></span><span class="shfill" style="left:100%;width:0%"></span></div>
       <div class="enwrap"><i style="width:0%"></i></div>`;
     L.appendChild(el);
   });
@@ -4769,8 +4770,13 @@ function refreshUnit(u){
   const el=uEl(u);if(!el)return;
   el.classList.toggle('dead',!u.alive);
   el.querySelector('.fill').classList.toggle('low',u.alive&&u.hp/u.maxhp<0.3); // máu nguy kịch → đỏ
-  el.querySelector('.fill').style.width=Math.max(0,u.hp/u.maxhp*100)+'%';
-  el.querySelector('.ghost').style.width=Math.max(0,u.hp/u.maxhp*100)+'%';
+  // thanh "máu hiệu dụng": HP (xanh lá) + KHIÊN (cyan) cùng 1 thanh; khiên vỡ = đoạn cyan co lại → thấy rõ
+  const sh=u.alive?Math.max(0,u.shield||0):0;
+  const denom=Math.max(u.maxhp,u.hp+sh); // overshield → nén theo tỉ lệ để thanh đầy
+  const hpW=Math.max(0,u.hp/denom*100),shW=sh>0?u.shield/denom*100:0;
+  el.querySelector('.fill').style.width=hpW+'%';
+  el.querySelector('.ghost').style.width=hpW+'%';
+  const shf=el.querySelector('.shfill');if(shf){shf.style.left=hpW+'%';shf.style.width=shW+'%'}
   el.querySelector('.enwrap i').style.width=Math.min(100,u.energy)+'%';
   el.classList.toggle('charged',u.alive&&u.energy>=100); // ulti sẵn sàng → phát sáng
   const bz=el.querySelector('.bubblezone');
@@ -5208,6 +5214,7 @@ function applySkill(u,units,mode){
       case 'loot':{if(live){S.junk+=eff.amt||0;fxFloat(u,'🪙 +'+(eff.amt||0),'var(--yellow)')}break}
       case 'shield':{const ts=resolveT(u,units,eff.target||'team');
         ts.forEach(t=>{t.shield=Math.min(Math.round(t.maxhp*0.6*PACE_DMG),t.shield+Math.round(t.maxhp*eff.pct*m*PACE_DMG)); // trần & lượng khiên ×nhịp
+          if(SIMLOG)SIMLOG.push({a:'shield',t:t.key,v:t.shield}); // log để replay server-mode dựng lại khiên + thanh
           if(live){fxFloat(t,'🛡 KHIÊN!','var(--cyan)');refreshUnit(t)}});last=ts;break}
       case 'heal':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'lowest_ally');
         ts.forEach(t=>{let amt=t.maxhp*eff.pct*m*PACE_DMG;
@@ -5271,7 +5278,7 @@ function applySkill(u,units,mode){
       case 'heal_block':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'highest_atk');
         ts.forEach(t=>{t.healBlock=Math.max(t.healBlock||0,eff.dur);if(live){fxFloat(t,'🚫 CẤM HỒI','var(--red)');refreshUnit(t)}});last=ts;break}
       case 'purge':{const ts=resolveT(u,units,eff.target||'all'); // xóa buff + khiên của ĐỊCH
-        ts.forEach(t=>{if(t.alive){t.buffs=(t.buffs||[]).filter(b=>b.pct<0);t.regen=0;t.haste=0;t.fortify=null;t.thorns=null;t.counter=null;t.evade=null;if(eff.shield)t.shield=0;
+        ts.forEach(t=>{if(t.alive){t.buffs=(t.buffs||[]).filter(b=>b.pct<0);t.regen=0;t.haste=0;t.fortify=null;t.thorns=null;t.counter=null;t.evade=null;if(eff.shield){t.shield=0;if(SIMLOG)SIMLOG.push({a:'shield',t:t.key,v:0})}
           if(live){fxFloat(t,'🧾 HỦY BUFF!','var(--purple)');refreshUnit(t)}}});last=ts;break}
       case 'thorns':{const ts=resolveT(u,units,eff.target||'team');
         ts.forEach(t=>{t.thorns={pct:eff.pct,dur:eff.dur};if(live){fxFloat(t,'🌵 GAI!','var(--green)');refreshUnit(t)}});last=ts;break}
@@ -5663,11 +5670,12 @@ function simDamage(src,tgt,mult,units,opts={}){
   if(tgt.mark&&tgt.mark.dur>0)dmg*=1+tgt.mark.pct;          // 🎯 mark (khớp dealDamage)
   if(tgt.fortify&&tgt.fortify.dur>0)dmg*=(1-tgt.fortify.pct); // 🪨 fortify
   dmg=Math.max(1,Math.round(dmg));
-  if(tgt.shield>0){const ab=Math.min(tgt.shield,dmg);tgt.shield-=ab;dmg-=ab;src.statDmg=(src.statDmg||0)+ab}
+  let _ab=0;
+  if(tgt.shield>0){const ab=Math.min(tgt.shield,dmg);tgt.shield-=ab;dmg-=ab;src.statDmg=(src.statDmg||0)+ab;_ab=ab}
   tgt.hp-=dmg;tgt.energy=Math.min(100,tgt.energy+12*PACE_DMG);
   src.statDmg=(src.statDmg||0)+dmg;
   tgt.wasHit=true;
-  if(SIMLOG)SIMLOG.push({a:'dmg',s:src.key,t:tgt.key,v:dmg,crit:crit?1:0,hp:Math.max(0,Math.round(tgt.hp))});
+  if(SIMLOG)SIMLOG.push({a:'dmg',s:src.key,t:tgt.key,v:dmg,crit:crit?1:0,hp:Math.max(0,Math.round(tgt.hp)),sh:Math.round(tgt.shield||0),ab:_ab}); // sh=khiên còn, ab=khiên hấp thụ → replay co thanh cyan
   if(tgt.hero&&tgt.hero.id==='tiretitan'&&!src.ranged&&src.alive&&dmg>0){
     const rf=Math.max(1,Math.round(dmg*0.1));src.hp-=rf;if(src.hp<=0){src.hp=0;src.alive=false}}
   if(tgt.sleeping&&dmg>0){tgt.sleeping=0;tgt.stun=0} // 😴 ngủ sâu vỡ khi trúng đòn
@@ -5699,7 +5707,7 @@ function simHeal(tgt,amount,src){
   if(tgt.healBlock>0)return; // 🚫 anti-heal (khớp heal)
   const before=tgt.hp;amount=Math.round(amount);
   if(src&&src.hero&&src.hero.id==='smoothie'){const over=Math.max(0,before+amount-tgt.maxhp);
-    if(over>0)tgt.shield=Math.min(Math.round(tgt.maxhp*0.6),(tgt.shield||0)+Math.round(over*0.5))}
+    if(over>0){tgt.shield=Math.min(Math.round(tgt.maxhp*0.6),(tgt.shield||0)+Math.round(over*0.5));if(SIMLOG)SIMLOG.push({a:'shield',t:tgt.key,v:tgt.shield})}}
   tgt.hp=Math.min(tgt.maxhp,tgt.hp+amount);
   if(src)src.statHeal=(src.statHeal||0)+(tgt.hp-before);
   if(SIMLOG&&tgt.hp>before)SIMLOG.push({a:'heal',t:tgt.key,v:tgt.hp-before,hp:Math.round(tgt.hp)});
@@ -8153,7 +8161,11 @@ function replayBattle(setup,log,result){
     if(ev.a==='atk'&&s&&t){if(ev.rng){const f=uPos(s);fxProjectile(PROJ.bolt,{x:f.x,y:f.y},uPos(t),360,30)}else lunge(s,t);s.energy=Math.min(100,(s.energy||0)+35*PACE_DMG);refreshUnit(s)}
     else if(ev.a==='skill'&&s){s.energy=0;refreshUnit(s);castTelegraph(s,ev.c);cutin(s.name,ev.name||'',s.art,ev.c||'#7a1d2e');SFX.skill();
       try{(SKILL_VFX[ev.vfx]||SKILL_VFX.generic)(s,()=>{})}catch(e){}}/* telegraph làm rõ con cast + projectile skill (no-op impact: dmg đến từ event dmg) */
-    else if(ev.a==='dmg'&&t){t.hp=ev.hp;t.energy=Math.min(100,(t.energy||0)+12*PACE_DMG);refreshUnit(t);const p=uPos(t);fxSpark(p.x+rnd(-8,8),p.y+rnd(-8,8),ev.crit?'#ff9f2e':'#ffd23f',ev.crit?60:42);fxFloat(t,'-'+ev.v,ev.crit?'var(--orange)':'#ff8a96',ev.crit);hitJiggle(t);if(ev.crit){shakeArena(8);SFX.crit()}else SFX.hit()}
+    else if(ev.a==='dmg'&&t){t.hp=ev.hp;if(ev.sh!=null)t.shield=ev.sh;t.energy=Math.min(100,(t.energy||0)+12*PACE_DMG);refreshUnit(t);const p=uPos(t);
+      if(ev.ab>0){fxSpark(p.x+rnd(-8,8),p.y+rnd(-8,8),'#3be8ff',40);fxFloat(t,'🛡-'+ev.ab,'var(--cyan)')} // khiên hấp thụ
+      if(ev.v>0){fxSpark(p.x+rnd(-8,8),p.y+rnd(-8,8),ev.crit?'#ff9f2e':'#ffd23f',ev.crit?60:42);fxFloat(t,'-'+ev.v,ev.crit?'var(--orange)':'#ff8a96',ev.crit);hitJiggle(t)}
+      if(ev.crit){shakeArena(8);SFX.crit()}else SFX.hit()}
+    else if(ev.a==='shield'&&t){const was=t.shield||0;t.shield=ev.v;refreshUnit(t);if(ev.v>was){const p=uPos(t);fxRing(p.x,p.y,62,'#3be8ff');fxFloat(t,'🛡 KHIÊN!','var(--cyan)')}} // server-mode: dựng lại khiên skill cấp
     else if(ev.a==='heal'&&t){t.hp=ev.hp;refreshUnit(t);fxFloat(t,'+'+ev.v,'var(--green)');const p=uPos(t);fxRing(p.x,p.y,70,'var(--green)');SFX.heal()}
     else if(ev.a==='die'&&t){t.alive=false;const p=uPos(t);fxPoof(p.x,p.y,t.boss?1.8:1);refreshUnit(t);SFX.death()}
     setTimeout(step,(ev.a==='atk'?300:ev.a==='skill'?900:200)/spd());
