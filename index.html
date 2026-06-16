@@ -167,9 +167,9 @@ body.act-busy .hd-actions button,body.act-busy .gp-eq,body.act-busy .pickjoin,bo
 body.act-busy::after{content:'⏳';position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--line);border-radius:99px;padding:6px 16px;font-size:16px;z-index:9999;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.45)}
 .tslot{position:relative}
 .tslot-x{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;z-index:3;border:1.5px solid var(--bg2);line-height:1}
-.upbadge{position:absolute;top:6px;right:6px;font-size:9px;font-weight:900;padding:1px 5px;border-radius:99px;z-index:2}
-.upbadge.max{background:var(--yellow);color:#3a2a00}
-.upbadge.can{background:var(--green);color:#04210f}
+.upinline{font-size:9px;font-weight:900;padding:1px 5px;border-radius:99px;vertical-align:middle}
+.upinline.max{background:var(--yellow);color:#3a2a00}
+.upinline.can{background:var(--green);color:#04210f}
 .loadrow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .loadchip{font-size:11px;font-weight:800;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--bg3);color:var(--text);cursor:pointer}
 .loadchip.on{display:inline-flex;align-items:center;gap:0;padding:0;border-color:var(--cyan);overflow:hidden}
@@ -3658,11 +3658,10 @@ function instCard(inst,onclick,extraCls=''){
   const maxed=inst.lvl>=LVL_CAP(),canUp=!maxed&&S.junk>=upCost(inst.uid); // badge triage: MAX / đủ tiền nâng
   return`<div class="hcard ${inst.rarity} ${extraCls}" onclick="${onclick}">
     ${inTeam?'<span class="inteam">ĐỘI HÌNH</span>':''}
-    ${maxed?'<span class="upbadge max">MAX</span>':canUp?'<span class="upbadge can" title="Đủ tiền nâng cấp">⬆️</span>':''}
     <span class="uidtag">#${inst.uid}</span>
     ${sprite(inst.heroId,96)}
     <h4>${h.name}</h4>
-    <div class="lv">${rBadge(inst.rarity)} · Lv ${inst.lvl}</div>
+    <div class="lv">${rBadge(inst.rarity)} · Lv ${inst.lvl}${maxed?' <span class="upinline max">MAX</span>':canUp?' <span class="upinline can" title="Đủ tiền nâng cấp">⬆️</span>':''}</div>
     <span class="tag ${h.cls}">${CLS_VI[h.cls]}</span>
     <div class="q">${h.quote}</div></div>`;
 }
@@ -3973,9 +3972,16 @@ function heroBreed(uid){
   if(inst.breeds>=BREED_MAX)return toast(`${HEROES[inst.heroId].name} #${uid} đã hết lượt breed (${BREED_MAX}/${BREED_MAX}).`);
   if(inst.lvl<BREED_MIN_LVL)return toast(`💞 Hero cần đạt Lv ${BREED_MIN_LVL} mới breed được (đang Lv ${inst.lvl}) — nuôi lớn đã!`);
   closeModal('hd-bg');
-  labMode='breed';labSel=[uid];
-  go('lab');
-  toast(`💞 Đã chọn ${HEROES[inst.heroId].name} #${uid} — giờ chọn bố/mẹ thứ 2!`);
+  const inLab=(document.querySelector('.view.on')||{}).id==='v-lab'; // chỉ THÊM khi đang ở Lab breed dở; mở từ tab Hero = breed mới
+  if(inLab&&labMode==='breed'&&labSel.length===1&&!labSel.includes(uid)){
+    labSel.push(uid); // đang breed dở (đã chọn bố/mẹ 1) → THÊM làm bố/mẹ 2, GIỮ con đã chọn (không reset)
+    go('lab');
+    toast(`💞 Đã thêm ${HEROES[inst.heroId].name} #${uid} làm bố/mẹ thứ 2!`);
+  }else{
+    labMode='breed';labSel=[uid];
+    go('lab');
+    toast(`💞 Đã chọn ${HEROES[inst.heroId].name} #${uid} — giờ chọn bố/mẹ thứ 2!`);
+  }
 }
 const HERO_MAX=30; // trần level hero TUYỆT ĐỐI (chốt: lv30 = 3.61× chỉ số; trục dài hạn qua rarity, không phải level)
 const LVL_CAP=()=>Math.min(S.plv+4,HERO_MAX); // trần theo cấp tài khoản (nhịp mùa) NHƯNG không bao giờ vượt HERO_MAX
@@ -6598,7 +6604,7 @@ function labTap(uid){
   renderLab();
 }
 function renderLab(){
-  labSel=labSel.filter(u=>instById(u)); // self-heal: bỏ uid đã bị tiêu (breed/recycle/enhance server-mode) → tránh crash render
+  labSel=labSel.filter(u=>{const i=instById(u);return i&&!(labMode==='breed'&&i.breeds>=BREED_MAX);}); // self-heal: bỏ uid đã tiêu; breed: bỏ bố/mẹ HẾT LƯỢT khỏi giường (giữ con còn lượt để breed tiếp)
   $('labtab-breed').className='btn sm'+(labMode==='breed'?'':' gh');
   $('labtab-enh').className='btn sm'+(labMode==='enh'?'':' gh')+(isU('enhance')?'':' locked');
   $('labtab-rec').className='btn sm'+(labMode==='rec'?'':' gh')+(isU('recycle')?'':' locked');
@@ -6731,7 +6737,7 @@ function doBreed(){
   const idx=Math.min(INCUBATE_MIN.length-1,Math.max(a.breeds,b.breeds)-1);
   const egg=addBox('egg',RARITIES[t],{parents:[a.heroId,b.heroId],ready:Date.now()+INCUBATE_MIN[idx]*60000});
   SFX.breed();flashScreen('#b36bff',.25);navPulse('nb-loot');feat('breed');
-  labSel=[];renderLab();renderRes();
+  renderLab();renderRes(); // GIỮ bố/mẹ trên giường để breed tiếp luôn (renderLab tự bỏ bản hết lượt)
   toast(`🥚 Trứng <b>${RNAME[egg.rar]}</b> đang ấp — nở sau ~${INCUBATE_MIN[idx]} phút. Xem ở 📦 Kệ Hộp (tab 🥫 Loot)!`);
 }
 // SYNC enhance (vm-safe) — gate + validate + mutation, trả descriptor reveal hoặc {err}. KHÔNG DOM.
