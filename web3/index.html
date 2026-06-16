@@ -2771,9 +2771,9 @@ const HEROES={
     trait:'Bàn DJ chế từ lò nướng bánh mì, tai nghe là nồi cơm điện. Bỏ học để theo nhạc.',ccolor:'#235a73'},
   mime:{id:'mime',name:'Mime Master',cls:'controller',starter:false,
     base:{hp:690,atk:74,def:60,spd:96},quote:'"..." (that was the skill name)',
-    skill:{name:'Invisible Box',shout:'...!',desc:'Nhốt kẻ địch mạnh nhất vào hộp vô hình 1 lượt — không hành động, không nhận sát thương.',
-      vfx:'generic',blog:'🤫 <b>Invisible Box</b>: kẻ địch mạnh nhất mắc kẹt trong... không có gì cả!',
-      fx:[{t:'banish',dur:1,target:'highest_atk'}]},
+    skill:{name:'Invisible Box',shout:'...!',desc:'Đấm kẻ mạnh nhất 100% rồi NHỐT nó ra khỏi trận 1 lượt — không hành động, không bị đánh (real_banish, khác stun).',
+      vfx:'generic',blog:'🤫 <b>Invisible Box</b>: kẻ địch mạnh nhất ăn một đấm rồi mắc kẹt trong... không có gì cả!',
+      fx:[{t:'nuke',pow:1.0,target:'highest_atk'},{t:'real_banish',dur:1,target:'last'}]},
     passive:'Tường Vô Hình: 15% né đòn đánh thường (giả vờ có tường, mà có thật).',
     trait:'Mặt vẽ trắng, áo kẻ ngang, tựa vào không khí. Im lặng tuyệt đối kể cả khi trúng đòn.',ccolor:'#235a73'},
   /* ---- ASSASSIN ---- */
@@ -2807,9 +2807,9 @@ const HEROES={
     trait:'Vòi hút từ ống bơm xe đạp, cánh túi nilon. Kêu vo ve khiến địch mất ngủ.',ccolor:'#4d2a6e'},
   papercut:{id:'papercut',name:'Paper Cut Prince',cls:'assassin',starter:false,
     base:{hp:565,atk:134,def:37,spd:110},quote:'"Death by a thousand cuts. Literally."',
-    skill:{name:'A Thousand Cuts',shout:'NGÀN VẾT CẮT!',desc:'Chém 100% vào địch yếu nhất + gây chảy máu 12% mỗi lượt trong 3 lượt.',
-      vfx:'ambush',blog:'📄 <b>A Thousand Cuts</b>: từng tờ giấy sắc lẹm, từng vết cắt rỉ máu!',
-      fx:[{t:'nuke',pow:1.0,target:'lowest_hp'},{t:'dot_burn',pct:0.12,dur:3,target:'last'}]},
+    skill:{name:'A Thousand Cuts',shout:'NGÀN VẾT CẮT!',desc:'Chém kẻ yếu nhất — càng ít máu càng đau (100% → tới ~250% lúc gần chết) + chảy máu 12% mỗi lượt trong 3 lượt.',
+      vfx:'ambush',blog:'📄 <b>A Thousand Cuts</b>: từng tờ giấy sắc lẹm, càng yếu càng sâu!',
+      fx:[{t:'execute_scaling',pow:1.0,bonus:1.5,target:'lowest_hp'},{t:'dot_burn',pct:0.12,dur:3,target:'last'}]},
     passive:'Càng Đau Càng Sâu: +20% sát thương lên mục tiêu đang chảy máu.',
     trait:'Vương miện origami, kiếm là tờ A4 cứng, giáp bìa carton. Sắc một cách bất ngờ.',ccolor:'#4d2a6e'},
   sewer:{id:'sewer',name:'Sewer Surfer',cls:'assassin',starter:false,
@@ -5028,7 +5028,7 @@ function blog(msg,imp){const d=document.createElement('div');if(imp)d.className=
 /* ---------- combat core ---------- */
 function aliveOf(side){return B.units.filter(u=>u.alive&&u.side===side)}
 function pickTarget(att){
-  let foes=aliveOf(att.side==='pl'?'en':'pl');
+  let foes=aliveOf(att.side==='pl'?'en':'pl').filter(f=>!(f.banished>0)); // 🌀 banished = ngoài trận, không nhắm được
   if(!foes.length)return null;
   const vis=foes.filter(f=>!(f.stealth>0)); // tàng hình = không thể nhắm (trừ khi cả đội tàng hình)
   if(vis.length)foes=vis;
@@ -5041,8 +5041,10 @@ function pickTarget(att){
 function dealDamage(src,tgt,mult,opts={}){
   if(!B||B.over)return 0;
   if(!tgt.alive)return 0;
+  if(tgt.banished>0)return 0; // 🌀 đang bị nhốt ngoài trận → miễn sát thương
   if(tgt.invuln>0){fxFloat(tgt,'🧊 MIỄN!','var(--cyan)');return 0} // Fridge đóng băng
   if(tgt.gDodge&&Math.random()<tgt.gDodge){fxFloat(tgt,'💨 NÉ!','var(--cyan)');return 0} // 🎁 affix né đòn
+  if(tgt.evade&&tgt.evade.dur>0&&Math.random()<tgt.evade.pct){fxFloat(tgt,'💨 NÉ!','var(--cyan)');return 0} // skill né tạm thời
   let critC=src.hero&&src.hero.id==='panda'?0.3:0.1;
   if(src.hero&&src.hero.id==='nina')critC+=0.1; // đinh găm đúng khớp
   if(src.hero&&hpassCrit[src.hero.id])critC+=hpassCrit[src.hero.id](src,tgt); // crit-up passive theo id
@@ -5063,6 +5065,8 @@ function dealDamage(src,tgt,mult,opts={}){
   if(src.ranged&&aliveOf(tgt.side).some(a=>a.hero&&a.hero.id==='magnet'))dmg*=0.9; // Magnet hút đạn bay
   if(opts.aoe&&tgt.alive){if(aliveOf(tgt.side).some(a=>a.hero&&a.hero.id==='umbrella'))dmg*=0.75;
     if(tgt.hero&&tgt.hero.id==='sewer')dmg*=0.8}
+  if(tgt.mark&&tgt.mark.dur>0)dmg*=1+tgt.mark.pct;          // 🎯 đánh dấu: nhận thêm % dmg
+  if(tgt.fortify&&tgt.fortify.dur>0)dmg*=(1-tgt.fortify.pct); // 🪨 cố thủ: giảm % dmg nhận
   dmg=Math.max(1,Math.round(dmg));
   if(tgt.shield>0){const ab=Math.min(tgt.shield,dmg);tgt.shield-=ab;dmg-=ab;
     if(ab>0)fxFloat(tgt,'🛡-'+ab,'var(--cyan)');src.statDmg=(src.statDmg||0)+ab}
@@ -5072,6 +5076,12 @@ function dealDamage(src,tgt,mult,opts={}){
   if(tgt.hero&&tgt.hero.id==='tiretitan'&&!src.ranged&&src.alive&&dmg>0){ // Lốp phản đòn
     const rf=Math.max(1,Math.round(dmg*0.1));src.hp-=rf;fxFloat(src,'🛞-'+rf,'var(--orange)');
     if(src.hp<=0){src.hp=0;src.alive=false;refreshUnit(src)}}
+  if(tgt.sleeping&&dmg>0){tgt.sleeping=0;tgt.stun=0;fxFloat(tgt,'☀️ TỈNH GIẤC!','var(--yellow)')} // 😴 ngủ sâu vỡ khi trúng đòn
+  if(tgt.thorns&&tgt.thorns.dur>0&&!src.ranged&&src.alive&&dmg>0){ // 🌵 gai phản đòn cả đội
+    const rf=Math.max(1,Math.round(dmg*tgt.thorns.pct));src.hp-=rf;fxFloat(src,'🌵-'+rf,'var(--green)');
+    if(src.hp<=0){src.hp=0;src.alive=false;refreshUnit(src)}}
+  if(tgt.counter&&tgt.counter.dur>0&&!src.ranged&&src.alive&&!opts.counter&&!opts.chain){ // 🥋 phản công theo ATK
+    fxFloat(tgt,'🥋 PHẢN CÔNG!','var(--orange)');dealDamage(tgt,src,tgt.counter.pct,{counter:true})}
   if(tgt.hero&&tgt.hero.id==='overclock')tgt.ocStacks=0; // bị đánh: mất stack
   if(tgt.hero&&tgt.hero.id==='queen'&&src.alive){ // Sổ Đen
     src.buffs=src.buffs||[];src.buffs.push({stat:'atk',pct:-0.05,dur:99});
@@ -5112,6 +5122,7 @@ function dealDamage(src,tgt,mult,opts={}){
 function heal(tgt,amount,silent,src){
   if(!B||B.over)return;
   if(!tgt.alive)return;
+  if(tgt.healBlock>0){if(!silent)fxFloat(tgt,'🚫 CẤM HỒI','var(--red)');return} // 🚫 anti-heal
   const before=tgt.hp;
   amount=Math.round(amount);
   if(src&&src.hero&&src.hero.id==='smoothie'){const over=Math.max(0,before+amount-tgt.maxhp); // 🥤 hồi tràn → khiên
@@ -5167,7 +5178,7 @@ const hpassCrit={
   glasscannon:(s)=> 0.15,               // tay mơ thủy tinh: luôn +15% crit
 };
 function resolveT(u,units,spec){
-  let foes=units.filter(x=>x.alive&&x.side===(u.side==='pl'?'en':'pl'));
+  let foes=units.filter(x=>x.alive&&x.side===(u.side==='pl'?'en':'pl')&&!(x.banished>0)); // 🌀 banished ngoài trận
   const visF=foes.filter(f=>!(f.stealth>0));
   if(visF.length&&spec!=='all')foes=visF; // AoE vẫn trúng kẻ tàng hình (nổ to quá mà)
   const allies=units.filter(x=>x.alive&&x.side===u.side);
@@ -5204,6 +5215,18 @@ function startTurnStatus(u,units,live){
   if(u.invuln>0){u.invuln--;if(live)refreshUnit(u)}
   if(u.slow>0){u.slow--;if(live)refreshUnit(u)}
   if(u.taunt>0){u.taunt--;if(live)refreshUnit(u)}
+  // ⏳ giảm thời lượng các trạng thái MỚI (dùng chung live+sim)
+  if(u.haste>0)u.haste--;
+  if(u.healBlock>0)u.healBlock--;
+  if(u.banished>0){u.banished--;if(live)refreshUnit(u)}
+  if(u.mark&&u.mark.dur>0){if(--u.mark.dur<=0)u.mark=null}
+  if(u.fortify&&u.fortify.dur>0){if(--u.fortify.dur<=0)u.fortify=null}
+  if(u.evade&&u.evade.dur>0){if(--u.evade.dur<=0)u.evade=null}
+  if(u.thorns&&u.thorns.dur>0){if(--u.thorns.dur<=0)u.thorns=null}
+  if(u.counter&&u.counter.dur>0){if(--u.counter.dur<=0)u.counter=null}
+  if(u.bomb){if(--u.bomb.dur<=0){const v=u.bomb.dmg;u.hp-=v;u.bomb=null; // 💣 bom hẹn giờ nổ
+    if(live){fxFloat(u,'💥-'+v,'var(--red)');refreshUnit(u)}
+    if(u.hp<=0){u.hp=0;u.alive=false;if(live){refreshUnit(u);blog(`💥 <b>${u.name}</b> bị bom hẹn giờ thổi bay!`)}return{stunned:true}}}}
   if(u.buffs&&u.buffs.length){u.buffs.forEach(b=>b.dur--);u.buffs=u.buffs.filter(b=>b.dur>0)}
   u.turns=(u.turns||0)+1;
   if(u.arenaRage&&u.turns>=8){ // 🎭 khán giả la ó: từ vòng 8 ai cũng hăng máu +10% ATK/lượt
@@ -5299,9 +5322,50 @@ function applySkill(u,units,mode){
         .forEach(t=>{if(t.alive){t.dots=t.dots||[];t.dots.push({pct:eff.pct,dur:eff.dur});
           if(live){fxFloat(t,'🔥 CHÁY!','var(--orange)');refreshUnit(t)}}});break}
       case 'cleanse':{(eff.target==='last'?last:resolveT(u,units,eff.target||'lowest_ally'))
-        .forEach(t=>{const had=(t.buffs||[]).some(b=>b.pct<0)||t.slow>0||(t.dots||[]).length;
-          t.buffs=(t.buffs||[]).filter(b=>b.pct>=0);t.slow=0;t.dots=[];
+        .forEach(t=>{const had=(t.buffs||[]).some(b=>b.pct<0)||t.slow>0||(t.dots||[]).length||t.mark||t.healBlock>0||t.bomb;
+          t.buffs=(t.buffs||[]).filter(b=>b.pct>=0);t.slow=0;t.dots=[];t.mark=null;t.healBlock=0;t.bomb=null; // xóa cả debuff MỚI
           if(live&&had){fxFloat(t,'✨ SẠCH DEBUFF!','var(--green)');refreshUnit(t)}});break}
+      /* ===== TAG MỚI (heroes-v2.0 §8) — engine dùng chung live+sim, móc thêm ở dealDamage/simDamage/startTurnStatus/effSpd/heal ===== */
+      case 'execute_scaling':{const ts=resolveT(u,units,eff.target||'lowest_hp'); // dmg tăng theo % máu ĐÃ MẤT
+        ts.forEach(t=>{const miss=1-t.hp/t.maxhp;D(u,t,eff.pow*(1+(eff.bonus||1.5)*miss)*m,eff)});last=ts;break}
+      case 'chain_nuke':{let hit=resolveT(u,units,eff.target||'highest_atk')[0],p=eff.pow*m,done=[]; // nuke nảy qua nhiều con
+        const jumps=eff.jumps||3,fo=eff.falloff||0.6;
+        for(let i=0;i<jumps&&hit;i++){D(u,hit,p,eff);done.push(hit);p*=fo;
+          hit=resolveT(u,units,'all').filter(f=>f.alive&&!done.includes(f))[0]}
+        last=done;break}
+      case 'mark':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'highest_atk');
+        ts.forEach(t=>{t.mark={pct:eff.pct,dur:eff.dur};if(live){fxFloat(t,'🎯 +'+Math.round(eff.pct*100)+'% NHẬN','var(--orange)');refreshUnit(t)}});last=ts;break}
+      case 'fortify':{const ts=resolveT(u,units,eff.target||'team');
+        ts.forEach(t=>{t.fortify={pct:eff.pct,dur:eff.dur};if(live){fxFloat(t,'🪨 -'+Math.round(eff.pct*100)+'% DMG','var(--cyan)');refreshUnit(t)}});last=ts;break}
+      case 'haste':{const ts=resolveT(u,units,eff.target||'team');
+        ts.forEach(t=>{t.haste=Math.max(t.haste||0,eff.dur);if(live){fxFloat(t,'💨 +TỐC ĐỘ','var(--cyan)');refreshUnit(t)}});last=ts;break}
+      case 'dodge_buff':{const ts=resolveT(u,units,eff.target||'self');
+        ts.forEach(t=>{t.evade={pct:eff.pct,dur:eff.dur};if(live){fxFloat(t,'💨 LÁCH!','var(--cyan)');refreshUnit(t)}});last=ts;break}
+      case 'drain_atk':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'highest_atk');
+        ts.forEach(t=>{t.buffs=t.buffs||[];t.buffs.push({stat:'atk',pct:-eff.pct,dur:eff.dur});if(live)fxFloat(t,'⚔️ -'+Math.round(eff.pct*100)+'%','var(--red)')});
+        u.buffs=u.buffs||[];u.buffs.push({stat:'atk',pct:eff.pct,dur:eff.dur});if(live){fxFloat(u,'⚔️ +'+Math.round(eff.pct*100)+'%','var(--orange)');refreshUnit(u)}last=ts;break}
+      case 'heal_block':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'highest_atk');
+        ts.forEach(t=>{t.healBlock=Math.max(t.healBlock||0,eff.dur);if(live){fxFloat(t,'🚫 CẤM HỒI','var(--red)');refreshUnit(t)}});last=ts;break}
+      case 'purge':{const ts=resolveT(u,units,eff.target||'all'); // xóa buff + khiên của ĐỊCH
+        ts.forEach(t=>{if(t.alive){t.buffs=(t.buffs||[]).filter(b=>b.pct<0);t.regen=0;t.haste=0;t.fortify=null;t.thorns=null;t.counter=null;t.evade=null;if(eff.shield)t.shield=0;
+          if(live){fxFloat(t,'🧾 HỦY BUFF!','var(--purple)');refreshUnit(t)}}});last=ts;break}
+      case 'thorns':{const ts=resolveT(u,units,eff.target||'team');
+        ts.forEach(t=>{t.thorns={pct:eff.pct,dur:eff.dur};if(live){fxFloat(t,'🌵 GAI!','var(--green)');refreshUnit(t)}});last=ts;break}
+      case 'counter':{u.counter={pct:eff.pct,dur:eff.dur};if(live){fxFloat(u,'🥋 THỦ THẾ!','var(--orange)');refreshUnit(u)}break}
+      case 'real_banish':{(eff.target==='last'?last:resolveT(u,units,eff.target||'random'))
+        .forEach(t=>{if(t.alive){if(t.boss&&Math.random()<0.5){if(live)fxFloat(t,'💢 KHÁNG!','var(--red)');return}
+          t.banished=eff.dur;t.stun=Math.max(t.stun||0,eff.dur); // ngoài trận + bỏ lượt cùng nhịp
+          if(live){fxFloat(t,'🌀 NHỐT NGOÀI TRẬN!','var(--purple)');refreshUnit(t)}}});break}
+      case 'sleep_breakable':{(eff.target==='last'?last:resolveT(u,units,eff.target||'all'))
+        .forEach(t=>{if(t.alive){if(t.boss&&Math.random()<0.5){if(live)fxFloat(t,'💢 KHÁNG!','var(--red)');return}
+          t.stun=Math.max(t.stun||0,eff.dur);t.sleeping=1; // ngủ vỡ khi trúng đòn (xem dealDamage/simDamage)
+          if(live){fxFloat(t,'😴 NGỦ SÂU...','var(--yellow)');refreshUnit(t)}}});break}
+      case 'resurrect':{const dead=units.filter(x=>x.side===u.side&&!x.alive&&!x.wasRezzed);
+        if(dead.length){const t=dead[0];t.alive=true;t.wasRezzed=1;t.hp=Math.round(t.maxhp*(eff.pct||0.4));t.stun=0;t.dots=[];t.shield=0;t.banished=0;
+          if(live){refreshUnit(t);fxFloat(t,'⚡ SỐNG LẠI!','var(--green)');const p=uPos(t);fxRing(p.x,p.y,140,'var(--green)')}}break}
+      case 'delayed_bomb':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'highest_atk');
+        ts.forEach(t=>{t.bomb={dur:eff.dur,dmg:Math.round(u.atk*atkMod(u)*(eff.pct||2.5)*PACE_DMG)};
+          if(live){fxFloat(t,'💣 BOM '+eff.dur+' LƯỢT','var(--red)');refreshUnit(t)}});last=ts;break}
       case 'chance':{if(Math.random()<eff.chance)run(eff.eff);break}
       case 'flavor':{if(live&&last[0])fxFloat(last[0],eff.msg,'var(--purple)');break}
     }
@@ -5574,7 +5638,7 @@ function useSkill(u){
 /* ---------- basic attack with anim ---------- */
 function basicAttack(u){
   const t=pickTarget(u);if(!t)return;
-  const gain=()=>{u.energy=Math.min(100,u.energy+35);
+  const gain=()=>{u.energy=Math.min(100,u.energy+35*PACE_DMG); // ×nhịp để KHỚP simAttack (5720) + replay (vá lệch cadence live↔sim)
     if(u.hero&&u.hero.id==='noodle')heal(u,u.maxhp*0.03,true);refreshUnit(u)};
   if(u.ranged){
     actPop(u);
@@ -5592,7 +5656,7 @@ function basicAttack(u){
 }
 
 /* ---------- turn loop ---------- */
-function effSpd(u){return u.slow>0?u.spd*0.6:u.spd}
+function effSpd(u){return u.spd*(u.haste>0?1.3:1)*(u.slow>0?0.6:1)} // haste +30% / slow −40% (cùng nhịp live+sim)
 function tick(){
   if(!B||B.over)return;
   if(!B.queue.length){
@@ -5632,7 +5696,7 @@ function checkEnd(){
    Phải giữ đồng bộ công thức với engine trực quan ở trên!
 ================================================================ */
 function simPick(att,units){
-  let foes=units.filter(u=>u.alive&&u.side===(att.side==='pl'?'en':'pl'));
+  let foes=units.filter(u=>u.alive&&u.side===(att.side==='pl'?'en':'pl')&&!(u.banished>0)); // 🌀 banished không nhắm được
   if(!foes.length)return null;
   const vis=foes.filter(f=>!(f.stealth>0));
   if(vis.length)foes=vis;
@@ -5646,8 +5710,10 @@ function simPick(att,units){
 let SIMLOG=null;function simLogStart(){SIMLOG=[]}function simLogGet(){return SIMLOG}
 function simDamage(src,tgt,mult,units,opts={}){
   if(!tgt||!tgt.alive)return 0;
+  if(tgt.banished>0)return 0; // 🌀 nhốt ngoài trận
   if(tgt.invuln>0)return 0;
   if(tgt.gDodge&&Math.random()<tgt.gDodge)return 0; // 🎁 né
+  if(tgt.evade&&tgt.evade.dur>0&&Math.random()<tgt.evade.pct)return 0; // skill né tạm thời
   let critC=src.hero&&src.hero.id==='panda'?0.3:0.1;
   if(src.hero&&src.hero.id==='nina')critC+=0.1;
   if(src.hero&&hpassCrit[src.hero.id])critC+=hpassCrit[src.hero.id](src,tgt);
@@ -5670,6 +5736,8 @@ function simDamage(src,tgt,mult,units,opts={}){
     if(units.some(a=>a.alive&&a.side===tgt.side&&a.hero&&a.hero.id==='umbrella'))dmg*=0.75;
     if(tgt.hero&&tgt.hero.id==='sewer')dmg*=0.8;
   }
+  if(tgt.mark&&tgt.mark.dur>0)dmg*=1+tgt.mark.pct;          // 🎯 mark (khớp dealDamage)
+  if(tgt.fortify&&tgt.fortify.dur>0)dmg*=(1-tgt.fortify.pct); // 🪨 fortify
   dmg=Math.max(1,Math.round(dmg));
   if(tgt.shield>0){const ab=Math.min(tgt.shield,dmg);tgt.shield-=ab;dmg-=ab;src.statDmg=(src.statDmg||0)+ab}
   tgt.hp-=dmg;tgt.energy=Math.min(100,tgt.energy+12*PACE_DMG);
@@ -5678,6 +5746,9 @@ function simDamage(src,tgt,mult,units,opts={}){
   if(SIMLOG)SIMLOG.push({a:'dmg',s:src.key,t:tgt.key,v:dmg,crit:crit?1:0,hp:Math.max(0,Math.round(tgt.hp))});
   if(tgt.hero&&tgt.hero.id==='tiretitan'&&!src.ranged&&src.alive&&dmg>0){
     const rf=Math.max(1,Math.round(dmg*0.1));src.hp-=rf;if(src.hp<=0){src.hp=0;src.alive=false}}
+  if(tgt.sleeping&&dmg>0){tgt.sleeping=0;tgt.stun=0} // 😴 ngủ sâu vỡ khi trúng đòn
+  if(tgt.thorns&&tgt.thorns.dur>0&&!src.ranged&&src.alive&&dmg>0){const rf=Math.max(1,Math.round(dmg*tgt.thorns.pct));src.hp-=rf;if(src.hp<=0){src.hp=0;src.alive=false}} // 🌵 gai
+  if(tgt.counter&&tgt.counter.dur>0&&!src.ranged&&src.alive&&!opts.counter&&!opts.chain)simDamage(tgt,src,tgt.counter.pct,units,{counter:true}); // 🥋 phản công
   if(tgt.hero&&tgt.hero.id==='overclock')tgt.ocStacks=0;
   if(tgt.hero&&tgt.hero.id==='queen'&&src.alive){
     src.buffs=src.buffs||[];src.buffs.push({stat:'atk',pct:-0.05,dur:99});
@@ -5701,6 +5772,7 @@ function simDamage(src,tgt,mult,units,opts={}){
 }
 function simHeal(tgt,amount,src){
   if(!tgt.alive)return;
+  if(tgt.healBlock>0)return; // 🚫 anti-heal (khớp heal)
   const before=tgt.hp;amount=Math.round(amount);
   if(src&&src.hero&&src.hero.id==='smoothie'){const over=Math.max(0,before+amount-tgt.maxhp);
     if(over>0)tgt.shield=Math.min(Math.round(tgt.maxhp*0.6),(tgt.shield||0)+Math.round(over*0.5))}
