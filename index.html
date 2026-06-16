@@ -175,6 +175,10 @@ body.act-busy::after{content:'⏳';position:fixed;left:50%;bottom:16px;transform
 .loadchip.on{display:inline-flex;align-items:center;gap:0;padding:0;border-color:var(--cyan);overflow:hidden}
 .loadchip.on button{background:none;border:none;color:var(--cyan);font-weight:800;font-size:11px;padding:4px 8px;cursor:pointer}
 .loadchip.on .lc-x{color:var(--muted);padding:4px 7px;border-left:1px solid var(--line)}
+.netchip{font-weight:800;font-size:11px;cursor:pointer}
+.netchip.netok{color:var(--green)}
+.netchip.netoff{color:var(--yellow);animation:netpulse 1.6s ease-in-out infinite}
+@keyframes netpulse{0%,100%{opacity:1}50%{opacity:.55}}
 .hd-actions .btn{flex:1;min-width:0;padding:9px 6px;font-size:13px;border-radius:12px;line-height:1.25;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 3px 0 rgba(0,0,0,.35)}
 .hd-actions .btn small{display:block;font-size:10.5px;font-weight:800;opacity:.85;margin-top:2px}
@@ -809,6 +813,7 @@ body.ptopen #pt-toggle{transform:rotate(90deg);border-color:var(--yellow);opacit
     <div class="res" onclick="openResInfo('cans')" title="Mystery Cans — bấm xem chi tiết"><span class="ico">🥫</span><span id="r-cans">0</span></div>
     <div class="res" id="sfxbtn" onclick="toggleSfx()" title="Bật / tắt âm thanh"><span class="ico">🔊</span></div>
     <button class="plv" id="r-plv" onclick="openPlv()" title="Bấm để xem chi tiết cấp tài khoản">Lv 1</button>
+    <div class="res netchip" id="netchip" style="display:none" onclick="netReconnect()"></div>
   </div>
 
   <section class="view on" id="v-hub">
@@ -8385,15 +8390,36 @@ async function srvBoot(_try){
   const dump={};SRV_KEYS.forEach(k=>{if(k in S)dump[k]=S[k]});
   let r;try{r=await netApi('/gs/import',{id:S.net.id,secret:S.net.secret,state:dump})}catch(e){r=null}
   if(!r||!r.ok){
+    if(r&&r.err&&r.err!=='rate'){ // server TỪ CHỐI (auth/bad_state/full…) — không phải mạng, retry vô ích
+      toast(WLANG==='vi'?('🌐 Server báo lỗi: '+r.err+' — thử tải lại trang.'):('Server error: '+r.err+' — try reloading.'));
+      if(typeof renderNetStatus==='function')renderNetStatus();return false;
+    }
     // KHÔNG bỏ cuộc ngay (server vừa restart / mạng chập chờn) → thử lại tăng dần, rồi tự reconnect nền
     if(_try<4){await new Promise(res=>setTimeout(res,1500*(_try+1)));return srvBoot(_try+1);}
     if(!srvBooted)toast(WLANG==='vi'?'⏳ Đang kết nối server… (chơi tạm bản local, sẽ tự nối lại)':'⏳ Connecting to server… (playing local for now, will retry)');
+    if(typeof renderNetStatus==='function')renderNetStatus();
     setTimeout(()=>srvBoot(0),15000); // tự thử lại sau 15s — không phiền người chơi
     return false;
   }
   applyServerState(r.gs);SRVMODE=true;srvWrap();srvRerender();
+  if(typeof renderNetStatus==='function')renderNetStatus();
   if(!srvBooted){toast(WLANG==='vi'?'🌐 SERVER MODE: cả game chạy trên server.':'🌐 Server connected.');srvBooted=true;}
   return true;
+}
+// 🟢/🟡 chỉ báo kết nối server (topbar) — biết ngay đang Online hay chạy Local; bấm để thử nối lại
+function renderNetStatus(){
+  const el=$('netchip');if(!el)return;const vi=WLANG==='vi';
+  if(!S.net||!S.net.id){el.style.display='none';return;}
+  el.style.display='';
+  if(SRVMODE){el.className='res netchip netok';el.innerHTML='<span class="ico">🟢</span>'+(vi?'Đã nối':'Online');el.title=vi?'✅ Đã kết nối server — tiến trình lưu trên server.':'Connected — progress saved on server.';}
+  else{el.className='res netchip netoff';el.innerHTML='<span class="ico">🟡</span>'+(vi?'Cục bộ':'Local');el.title=vi?'Chưa nối được server — bấm để thử nối lại.':'Not connected — tap to reconnect.';}
+}
+function netReconnect(){
+  const vi=WLANG==='vi';
+  if(!S.net||!S.net.id)return toast(vi?'Chưa có tài khoản online — đăng ký ở 🎭 Arena.':'No online account yet — register in 🎭 Arena.');
+  if(SRVMODE)return toast(vi?'🟢 Đang online — đã kết nối server rồi.':'🟢 Already connected.');
+  toast(vi?'🔄 Đang thử nối lại server…':'🔄 Reconnecting…');
+  srvBoot(0);
 }
 function netSync(now){ // đẩy hồ sơ (sức mạnh + đội thủ) lên server — debounce, lỗi mạng thì im lặng
   if(!S.net)return;
@@ -9087,6 +9113,7 @@ if(LOADED){ // người chơi cũ: bỏ qua intro
 }
 // 🌐 SERVER MODE giờ là MẶC ĐỊNH cho tài khoản online (anti-cheat). Kill-switch: localStorage.wk_srv_off=1 để về casual.
 if(PRIZE_ACTIVE){try{document.querySelectorAll('.prizeonly').forEach(e=>{e.style.display='';});}catch(e){}} // hiện lại banner giải khi bật PRIZE_ACTIVE
+try{renderNetStatus()}catch(e){} // hiện chip 🟡 Cục bộ ngay khi vào (nếu có tài khoản online) — srvBoot sẽ đổi sang 🟢 khi nối được
 if(S.net&&S.net.id&&(typeof localStorage==='undefined'||!localStorage.getItem('wk_srv_off')))setTimeout(()=>srvBoot(),700);
 // ⚡ idle $WACKO: cộng theo THỜI GIAN THỰC đã trôi (không phụ thuộc số lần interval chạy).
 // Vì tab nền bị browser throttle/đóng băng, cộng "5s mỗi lần fire" sẽ thiếu rất nhiều khi quay lại.
