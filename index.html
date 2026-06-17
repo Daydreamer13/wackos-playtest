@@ -2486,9 +2486,9 @@ const HEROES={
     trait:'Trả giá mọi thứ, kể cả sát thương nhận vào. Đôi khi thành công.',ccolor:'#235a73'},
   queen:{id:'queen',name:'The Complaint Queen',cls:'controller',starter:false,
     base:{hp:660,atk:80,def:54,spd:97},quote:'"I have time. ALL of it."',
-    skill:{name:'Speak To The Manager',shout:'CHO GẶP QUẢN LÝ NGAY!',desc:'Gây 110% sát thương lên địch ATK cao nhất + choáng 1 lượt (nó phải đi gọi quản lý).',
+    skill:{name:'Speak To The Manager',shout:'CHO GẶP QUẢN LÝ NGAY!',desc:'Gây 110% sát thương lên địch ATK cao nhất + choáng 1 lượt + 🚫 CẤM HỒI 2 lượt (đơn khiếu nại: miễn hoàn tiền, miễn hồi máu).',
       vfx:'complaint',blog:'📋 <b>Speak To The Manager</b>: kẻ địch bỏ vị trí đi tìm cấp trên.',
-      fx:[{t:'nuke',pow:1.1,target:'highest_atk'},{t:'stun',dur:1,target:'last'}]},
+      fx:[{t:'nuke',pow:1.1,target:'highest_atk'},{t:'stun',dur:1,target:'last'},{t:'heal_block',dur:2,target:'last'}]},
     passive:'Sổ Đen: kẻ nào đánh bà ấy bị -5% ATK (cộng dồn không giới hạn... gần như).',
     trait:'Viết review 1 sao ngay giữa trận đánh. Có kèm ảnh.',ccolor:'#235a73'},
   roomba:{id:'roomba',name:'Roomba Rider',cls:'assassin',starter:false,
@@ -2507,9 +2507,9 @@ const HEROES={
     trait:'Nằm thử mọi chiến trường trước khi đánh. Đánh giá: "3 sao, hơi nhiều mảnh vỡ".',ccolor:'#3d4a7a'},
   micromage:{id:'micromage',name:'Microwave Mage',cls:'dps',starter:false,
     base:{hp:620,atk:112,def:44,spd:86},quote:'"30 seconds. Maximum power."',
-    skill:{name:'Reheat Ray',shout:'HÂM NÓNG LẠI!!',desc:'Tia vi sóng 180% vào địch yếu nhất + đốt cháy 8% máu mỗi lượt trong 2 lượt.',
+    skill:{name:'Reheat Ray',shout:'HÂM NÓNG LẠI!!',desc:'Tia vi sóng 160% vào địch yếu nhất + 💥 PHÁ KHIÊN địch nhiều khiên nhất (gỡ tới ~45% khiên, 35% lượng vỡ → sát thương xuyên) + đốt 8% máu/lượt (2 lượt).',
       vfx:'reheat',blog:'📡 <b>Reheat Ray</b>: kẻ địch được hâm nóng đều từ trong ra ngoài!',
-      fx:[{t:'nuke',pow:1.8,target:'lowest_hp'},{t:'dot_burn',pct:0.08,dur:2,target:'last'}]},
+      fx:[{t:'nuke',pow:1.6,target:'lowest_hp'},{t:'shield_break',maxpct:0.45,spill:0.35,target:'highest_shield'},{t:'dot_burn',pct:0.08,dur:2,target:'last'}]},
     passive:'Xuyên Hộp Nhựa: +20% sát thương lên mục tiêu đang có khiên.',
     trait:'Đội lò vi sóng làm mũ phép. Thỉnh thoảng có mùi bỏng ngô tỏa ra — không ai biết từ đâu.',ccolor:'#7a2e3a'},
   nina:{id:'nina',name:'Nail Gun Nina',cls:'dps',starter:false,
@@ -2528,9 +2528,9 @@ const HEROES={
     trait:'Chẩn đoán mọi bệnh là "thiếu băng keo". Tỉ lệ chữa khỏi cao đáng ngờ.',ccolor:'#1f5c4a'},
   steve:{id:'steve',name:'Stink Bomb Steve',cls:'controller',starter:false,
     base:{hp:650,atk:74,def:52,spd:94},quote:'"You smell that? That\'s victory."',
-    skill:{name:'Eau de Sewer',shout:'NƯỚC HOA CỐNG CHÍNH HÃNG!',desc:'Ném lọ "nước hoa" gây 70% sát thương toàn địch + toàn bộ chúng -20% ATK trong 2 lượt vì bận bịt mũi.',
+    skill:{name:'Eau de Sewer',shout:'NƯỚC HOA CỐNG CHÍNH HÃNG!',desc:'Ném lọ "nước hoa" gây 70% sát thương toàn địch + toàn bộ -20% ATK (2 lượt) + 🩸 vết thương nhiễm trùng: -35% hồi máu (2 lượt).',
       vfx:'stink',blog:'🧪 <b>Eau de Sewer</b>: kẻ địch đánh yếu hẳn vì phải đánh bằng một tay (tay kia bịt mũi).',
-      fx:[{t:'aoe',pow:0.7},{t:'debuff_atk',pct:0.20,dur:2,target:'last'}]},
+      fx:[{t:'aoe',pow:0.7},{t:'debuff_atk',pct:0.20,dur:2,target:'last'},{t:'heal_reduce',pct:0.35,dur:2,target:'all'}]},
     passive:'Vùng Mùi Cá Nhân: địch đánh CẬN CHIẾN vào đội bạn bị -10% sát thương (không ai muốn lại gần).',
     trait:'Tự gọi bộ sưu tập lọ thủy tinh xanh lè của mình là "phòng thí nghiệm nước hoa".',ccolor:'#235a73'},
   sockninja:{id:'sockninja',name:'Sock Ninja',cls:'assassin',starter:false,
@@ -5213,6 +5213,7 @@ function heal(tgt,amount,silent,src){
   if(tgt.healBlock>0){if(!silent)fxFloat(tgt,'🚫 CẤM HỒI','var(--red)');return} // 🚫 anti-heal
   const before=tgt.hp;
   amount=Math.round(amount);
+  if(tgt.healCut&&tgt.healCut.dur>0)amount=Math.round(amount*(1-tgt.healCut.pct)); // 🩸 giảm hồi (mortal wounds) — TRƯỚC tính tràn để overheal→khiên cũng giảm theo
   if(src&&src.hero&&src.hero.id==='smoothie'){const over=Math.max(0,before+amount-tgt.maxhp); // 🥤 hồi tràn → khiên
     if(over>0){tgt.shield=Math.min(Math.round(tgt.maxhp*0.6),(tgt.shield||0)+Math.round(over*0.5));fxFloat(tgt,'🥤🛡','var(--green)')}}
   tgt.hp=Math.min(tgt.maxhp,tgt.hp+amount);
@@ -5281,6 +5282,7 @@ function resolveT(u,units,spec){
     case 'random':return foes.length?[foes[rnd(0,foes.length-1)]]:[];
     case 'front':{const f=foes.filter(x=>x.front);return f.length?f:foes}
     case 'back':{const b=foes.filter(x=>!x.front);return b.length?b:foes}
+    case 'highest_shield':return foes.length?[foes.reduce((a,b)=>(b.shield||0)>(a.shield||0)?b:a)]:[]; // địch nhiều khiên nhất (cho shield_break)
     case 'all':default:return foes;
   }
 }
@@ -5306,6 +5308,7 @@ function startTurnStatus(u,units,live){
   // ⏳ giảm thời lượng các trạng thái MỚI (dùng chung live+sim)
   if(u.haste>0)u.haste--;
   if(u.healBlock>0)u.healBlock--;
+  if(u.healCut&&u.healCut.dur>0){if(--u.healCut.dur<=0)u.healCut=null} // 🩸 giảm thời lượng mortal-wounds
   if(u.banished>0){u.banished--;if(live)refreshUnit(u)}
   if(u.mark&&u.mark.dur>0){if(--u.mark.dur<=0)u.mark=null}
   if(u.fortify&&u.fortify.dur>0){if(--u.fortify.dur<=0)u.fortify=null}
@@ -5411,8 +5414,8 @@ function applySkill(u,units,mode){
         .forEach(t=>{if(t.alive){t.dots=t.dots||[];t.dots.push({pct:eff.pct,dur:eff.dur});
           if(live){fxFloat(t,'🔥 CHÁY!','var(--orange)');refreshUnit(t)}}});break}
       case 'cleanse':{(eff.target==='last'?last:resolveT(u,units,eff.target||'lowest_ally'))
-        .forEach(t=>{const had=(t.buffs||[]).some(b=>b.pct<0)||t.slow>0||(t.dots||[]).length||t.mark||t.healBlock>0||t.bomb;
-          t.buffs=(t.buffs||[]).filter(b=>b.pct>=0);t.slow=0;t.dots=[];t.mark=null;t.healBlock=0;t.bomb=null; // xóa cả debuff MỚI
+        .forEach(t=>{const had=(t.buffs||[]).some(b=>b.pct<0)||t.slow>0||(t.dots||[]).length||t.mark||t.healBlock>0||t.healCut||t.bomb;
+          t.buffs=(t.buffs||[]).filter(b=>b.pct>=0);t.slow=0;t.dots=[];t.mark=null;t.healBlock=0;t.healCut=null;t.bomb=null; // xóa cả debuff MỚI (gồm 🩸 giảm hồi)
           if(live&&had){fxFloat(t,'✨ SẠCH DEBUFF!','var(--green)');refreshUnit(t)}});break}
       /* ===== TAG MỚI (heroes-v2.0 §8) — engine dùng chung live+sim, móc thêm ở dealDamage/simDamage/startTurnStatus/effSpd/heal ===== */
       case 'execute_scaling':{const ts=resolveT(u,units,eff.target||'lowest_hp'); // dmg tăng theo % máu ĐÃ MẤT
@@ -5433,8 +5436,22 @@ function applySkill(u,units,mode){
       case 'drain_atk':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'highest_atk');
         ts.forEach(t=>{t.buffs=t.buffs||[];t.buffs.push({stat:'atk',pct:-eff.pct,dur:eff.dur});if(live)fxFloat(t,'⚔️ -'+Math.round(eff.pct*100)+'%','var(--red)')});
         u.buffs=u.buffs||[];u.buffs.push({stat:'atk',pct:eff.pct,dur:eff.dur});if(live){fxFloat(u,'⚔️ +'+Math.round(eff.pct*100)+'%','var(--orange)');refreshUnit(u)}last=ts;break}
-      case 'heal_block':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'highest_atk');
-        ts.forEach(t=>{t.healBlock=Math.max(t.healBlock||0,eff.dur);if(live){fxFloat(t,'🚫 CẤM HỒI','var(--red)');refreshUnit(t)}});last=ts;break}
+      case 'heal_block':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'highest_atk'); // 🚫 cấm hồi HOÀN TOÀN (anti-heal cứng) — boss kháng 50%
+        ts.forEach(t=>{if(!t.alive)return;if(t.boss&&Math.random()<0.5){if(live)fxFloat(t,'💢 KHÁNG!','var(--red)');return}
+          t.healBlock=Math.max(t.healBlock||0,eff.dur);if(live){fxFloat(t,'🚫 CẤM HỒI','var(--red)');refreshUnit(t)}});last=ts;break}
+      case 'heal_reduce':{const ts=eff.target==='last'?last:resolveT(u,units,eff.target||'highest_atk'); // 🩸 giảm % hồi (mortal wounds) — nhẹ hơn cấm hồi; boss kháng 50%
+        ts.forEach(t=>{if(!t.alive)return;if(t.boss&&Math.random()<0.5){if(live)fxFloat(t,'💢 KHÁNG!','var(--red)');return}
+          if(!t.healCut||eff.pct>t.healCut.pct)t.healCut={pct:eff.pct,dur:Math.max(t.healCut?t.healCut.dur:0,eff.dur)};else t.healCut.dur=Math.max(t.healCut.dur,eff.dur); // mạnh nhất thắng + refresh dur (KHÔNG chồng thành cấm-hồi vĩnh viễn)
+          if(live){fxFloat(t,'🩸 -'+Math.round(eff.pct*100)+'% HỒI','var(--red)');refreshUnit(t)}});last=ts;break}
+      case 'shield_break':{const ts=resolveT(u,units,eff.target||'highest_shield'); // 💥 phá khiên: gỡ tối đa maxpct×maxhp×nhịp khiên + spill % thành sát thương XUYÊN (chống stack khiên, KHÔNG hại tank ít khiên)
+        ts.forEach(t=>{if(!t.alive)return;const had=t.shield||0;
+          if(had>0){const cap=Math.round(t.maxhp*(eff.maxpct||0.45)*PACE_DMG),removed=Math.min(had,cap);t.shield=Math.max(0,had-removed);
+            if(SIMLOG)SIMLOG.push({a:'shield',t:t.key,v:Math.round(t.shield)});
+            if(eff.spill){const bd=Math.max(1,Math.round(removed*eff.spill));t.hp-=bd;u.statDmg=(u.statDmg||0)+bd;
+              if(SIMLOG)SIMLOG.push({a:'dmg',s:u.key,t:t.key,v:bd,crit:0,hp:Math.max(0,Math.round(t.hp)),sh:Math.round(t.shield||0),ab:0});
+              if(t.hp<=0){t.hp=0;t.alive=false;if(SIMLOG)SIMLOG.push({a:'die',t:t.key})}}
+            if(live){fxFloat(t,'💥 VỠ KHIÊN -'+removed,'var(--purple)');const p=uPos(t);fxRing(p.x,p.y,80,'var(--purple)');refreshUnit(t)}}
+          else if(live)fxFloat(t,'🚫 KHÔNG KHIÊN','var(--muted)');});last=ts;break}
       case 'purge':{const ts=resolveT(u,units,eff.target||'all'); // xóa buff + khiên của ĐỊCH
         ts.forEach(t=>{if(t.alive){t.buffs=(t.buffs||[]).filter(b=>b.pct<0);t.regen=0;t.haste=0;t.fortify=null;t.thorns=null;t.counter=null;t.evade=null;if(eff.shield){t.shield=0;if(SIMLOG)SIMLOG.push({a:'shield',t:t.key,v:0})}
           if(live){fxFloat(t,'🧾 HỦY BUFF!','var(--purple)');refreshUnit(t)}}});last=ts;break}
@@ -5864,6 +5881,7 @@ function simHeal(tgt,amount,src){
   if(!tgt.alive)return;
   if(tgt.healBlock>0)return; // 🚫 anti-heal (khớp heal)
   const before=tgt.hp;amount=Math.round(amount);
+  if(tgt.healCut&&tgt.healCut.dur>0)amount=Math.round(amount*(1-tgt.healCut.pct)); // 🩸 parity với heal()
   if(src&&src.hero&&src.hero.id==='smoothie'){const over=Math.max(0,before+amount-tgt.maxhp);
     if(over>0){tgt.shield=Math.min(Math.round(tgt.maxhp*0.6),(tgt.shield||0)+Math.round(over*0.5));if(SIMLOG)SIMLOG.push({a:'shield',t:tgt.key,v:tgt.shield})}}
   tgt.hp=Math.min(tgt.maxhp,tgt.hp+amount);
@@ -7177,13 +7195,13 @@ sleepy:['Heals self 25% + taunts all enemies for 2 turns.','Tactical Snooze: +5%
 granny:['Jump-starts the slowest ally: +50 energy and +15% HP.','Power Bank: at the start of her turn, the ally with least energy gets +8.'],
 overclock:['Buffs own ATK +40% for 2 turns, then instantly fires a 120% damage shot.','Overclock: +3% ATK per turn (max 5 stacks), resets when hit.'],
 coupon:['Throws an expired coupon: 100% damage to the fastest enemy + its ATK -25% for 2 turns.','Grand Opening Deal: at battle start, one random enemy gets -10% DEF.'],
-queen:['110% damage to the highest-ATK enemy + stuns it 1 turn (it has to go find its manager).','The Blacklist: whoever hits her gets -5% ATK (stacks... basically forever).'],
+queen:['110% damage to the highest-ATK enemy + stuns it 1 turn + 🚫 HEAL-BLOCK 2 turns (complaint filed: no refunds, no healing).','The Blacklist: whoever hits her gets -5% ATK (stacks... basically forever).'],
 roomba:['The roomba rams 3 random targets for 110% damage each.','Deep Clean: finishing off an enemy sends the roomba into a bonus basic attack.'],
 mattress:['Slams a mattress on the battlefield: 90% damage to all enemies + each loses 15 energy (too comfy).','Premium Springs: takes 20% less damage from critical hits.'],
-micromage:['180% microwave ray at the weakest enemy + burns 8% HP per turn for 2 turns.','Plastic-Safe: +20% damage to shielded targets.'],
+micromage:['160% microwave ray at the weakest enemy + 💥 SHIELD-BREAK the most-shielded enemy (strips up to ~45% shield, 35% of it pierces as damage) + burns 8% HP/turn (2 turns).','Plastic-Safe: +20% damage to shielded targets.'],
 nina:['Fires 5 nails, each 45% damage at random targets.','Right In The Joint: +10% crit chance.'],
 ducttape:['Heals the weakest ally 25% + cleanses all debuffs (ATK down, slow, burn).','Emergency Patch: Doc\'s heals are 20% stronger on allies below 30% HP.'],
-steve:['Throws "perfume": 70% damage to all enemies + all get -20% ATK for 2 turns (busy holding their noses).','Personal Stink Zone: melee attackers deal -10% damage to your team (nobody wants to get close).'],
+steve:['Throws "perfume": 70% damage to all enemies + all -20% ATK (2 turns) + 🩸 infected wounds: -35% healing (2 turns).','Personal Stink Zone: melee attackers deal -10% damage to your team (nobody wants to get close).'],
 sockninja:['Stabs the weakest enemy for 230% damage. On kill — vanishes into the laundry basket for 1 turn (untargetable).','Mystery Odd Sock: untargetable on the first turn (like every odd sock in the dryer).'],
 tiretitan:['Gives himself a shield worth 35% of max HP + taunts all enemies for 2 turns.','Rubber Recoil: reflects 10% of melee damage taken.'],
 manhole:['Shields the whole team for 18% of max HP, himself for an extra 30%.','Cast-Iron Lid: immune to slow effects.'],
@@ -7840,13 +7858,13 @@ sleepy:['自疗25%+嘲讽全体敌人2回合。','战术打盹：每回合没被
 granny:['给最慢的队友搭电：+50能量并回复其15%生命。','移动充电宝：她回合开始时，能量最少的队友+8能量。'],
 overclock:['自身攻击+40%持续2回合，并立刻射出一发120%伤害。','超频：每回合攻击+3%（最多5层），被打则重置。'],
 coupon:['扔出过期优惠券：对最快的敌人100%伤害+其攻击-25%持续2回合。','开业大酬宾：开战时随机一名敌人防御-10%。'],
-queen:['对攻击最高的敌人110%伤害+眩晕1回合（它得去找经理）。','黑名单：打她的人攻击-5%（无限叠加……基本上）。'],
+queen:['对攻击最高的敌人110%伤害+眩晕1回合+🚫禁疗2回合（投诉单：不退款，不回血）。','黑名单：打她的人攻击-5%（无限叠加……基本上）。'],
 roomba:['扫地机疯狂冲撞3个随机目标，每次110%伤害。','深度清洁：终结敌人后扫地机兴奋追加一次普攻。'],
 mattress:['床垫砸向全场：90%全体伤害+每人扣15能量（太舒服了）。','优质弹簧：受到的暴击伤害-20%。'],
-micromage:['180%微波射线打最弱敌人+灼烧每回合8%生命，持续2回合。','穿透塑料盒：对有护盾的目标伤害+20%。'],
+micromage:['160%微波射线打最弱敌人+💥击碎护盾最多的敌人护盾（移除至多约45%，35%化为穿透伤害）+灼烧每回合8%生命（2回合）。','穿透塑料盒：对有护盾的目标伤害+20%。'],
 nina:['连射5发钉子，每发45%伤害随机目标。','正中关节：暴击率+10%。'],
 ducttape:['治疗最弱队友25%+清除全部负面效果（降攻、减速、灼烧）。','紧急包扎：对30%血以下队友的治疗强20%。'],
-steve:['扔出「香水」：全体敌人70%伤害+全体攻击-20%持续2回合（忙着捂鼻子）。','个人臭味结界：近战敌人对你队伤害-10%（没人想靠近）。'],
+steve:['扔出「香水」：全体敌人70%伤害+全体攻击-20%（2回合）+🩸伤口感染：治疗-35%（2回合）。','个人臭味结界：近战敌人对你队伤害-10%（没人想靠近）。'],
 sockninja:['对最弱敌人刺出230%伤害。若击杀——躲进洗衣篮1回合（无法被瞄准）。','神秘单只袜：开场第一回合无法被瞄准（就像烘干机里的每只单袜）。'],
 tiretitan:['给自己套上等于35%最大生命的护盾＋嘲讽全体敌人2回合。','橡胶反弹：反弹受到的近战伤害的10%。'],
 manhole:['给全队套18%最大生命护盾，自己额外多30%。','生铁井盖：免疫减速效果。'],
@@ -8028,13 +8046,13 @@ sleepy:['自分を25%回復+敵全体を2ターン挑発。','戦術的居眠り
 granny:['一番遅い味方にジャンプスタート：エネルギー+50、HP15%回復。','モバイルバッテリー：自分のターン開始時、エネルギー最少の味方に+8。'],
 overclock:['自分のATK+40%（2ターン）、即座に120%ダメージを発射。','オーバークロック：毎ターンATK+3%（最大5スタック）、被弾でリセット。'],
 coupon:['期限切れクーポンを投げる：最速の敵に100%ダメージ+そのATK-25%（2ターン）。','開店セール：戦闘開始時、ランダムな敵1体のDEF-10%。'],
-queen:['ATK最高の敵に110%ダメージ+1ターンスタン（マネージャーを呼びに行く）。','ブラックリスト：彼女を殴った者はATK-5%（ほぼ無限にスタック）。'],
+queen:['ATK最高の敵に110%ダメージ+1ターンスタン+🚫回復禁止2ターン（苦情受理：返金なし、回復なし）。','ブラックリスト：彼女を殴った者はATK-5%（ほぼ無限にスタック）。'],
 roomba:['ルンバがランダムな3体に突撃、各110%ダメージ。','徹底清掃：敵にトドメを刺すとルンバが興奮して追加攻撃。'],
 mattress:['マットレスを戦場に叩きつける：敵全体90%ダメージ+各15エネルギー減（気持ちよすぎて）。','高級スプリング：クリティカル被ダメージ-20%。'],
-micromage:['最弱の敵に180%の電子レンジ光線+毎ターンHP8%の火傷（2ターン）。','プラ容器貫通：シールド持ちへのダメージ+20%。'],
+micromage:['最弱の敵に160%の電子レンジ光線+💥シールド最多の敵のシールド破壊（最大約45%除去、35%を貫通ダメージ化）+毎ターンHP8%火傷（2ターン）。','プラ容器貫通：シールド持ちへのダメージ+20%。'],
 nina:['釘を5連射、各45%ダメージでランダムな標的へ。','関節にジャスト：クリティカル率+10%。'],
 ducttape:['最弱の味方を25%回復+全デバフ解除（ATK低下・スロウ・火傷）。','緊急テーピング：HP30%以下の味方への回復が20%強化。'],
-steve:['「香水」を投げる：敵全体に70%ダメージ+全員ATK-20%（2ターン、鼻をつまむのに忙しい）。','パーソナル異臭ゾーン：近接攻撃の敵からのダメージ-10%（誰も近寄りたくない）。'],
+steve:['「香水」を投げる：敵全体に70%ダメージ+全員ATK-20%（2ターン）+🩸傷の感染：回復-35%（2ターン）。','パーソナル異臭ゾーン：近接攻撃の敵からのダメージ-10%（誰も近寄りたくない）。'],
 sockninja:['最弱の敵に230%ダメージ。トドメを刺すと洗濯カゴに消える（1ターン、標的にされない）。','謎の片方靴下：初ターンは標的にされない（乾燥機の中の片方靴下のように）。'],
 tiretitan:['自分に最大HP35%のシールド＋敵全体を2ターン挑発。','ゴム反射：受けた近接ダメージの10%を反射。'],
 manhole:['味方全体に最大HP18%のシールド、自分はさらに+30%。','鋳鉄のフタ：スロウ効果を無効化。'],
